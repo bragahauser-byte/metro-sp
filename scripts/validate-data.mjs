@@ -56,12 +56,23 @@ for (const t of transferencias) {
 
 // Grafo conexo: toda estação alcançável a partir de qualquer outra (trechos + passagens).
 const adj = new Map([...bySlug.keys()].map((s) => [s, new Set()]));
-for (const t of trechos) adj.get(t.de)?.add(t.para), adj.get(t.para)?.add(t.de);
-for (const t of transferencias) if (t.tipo === "passagem") adj.get(t.de)?.add(t.para), adj.get(t.para)?.add(t.de);
+const link = (a, b) => {
+  adj.get(a)?.add(b);
+  adj.get(b)?.add(a);
+};
+for (const t of trechos) link(t.de, t.para);
+for (const t of transferencias) if (t.tipo === "passagem") link(t.de, t.para);
 const start = bySlug.keys().next().value;
 const seen = new Set([start]);
 const queue = [start];
-while (queue.length) for (const n of adj.get(queue.shift())) if (!seen.has(n)) seen.add(n), queue.push(n);
+while (queue.length) {
+  for (const n of adj.get(queue.shift())) {
+    if (!seen.has(n)) {
+      seen.add(n);
+      queue.push(n);
+    }
+  }
+}
 if (seen.size !== bySlug.size) {
   const missing = [...bySlug.keys()].filter((s) => !seen.has(s));
   fail(`grafo desconexo: ${missing.length} estações isoladas (${missing.slice(0, 8).join(", ")}…)`);

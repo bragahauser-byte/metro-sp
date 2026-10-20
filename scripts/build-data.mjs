@@ -114,7 +114,10 @@ function simplify(points, tol = 2) {
     let max = 0, idx = -1;
     for (let i = a + 1; i < b; i++) {
       const d = Math.abs(dy * xy[i][0] - dx * xy[i][1] + bx * ay - by * ax) / len;
-      if (d > max) (max = d), (idx = i);
+      if (d > max) {
+        max = d;
+        idx = i;
+      }
     }
     if (max > tol) {
       keep[idx] = 1;
@@ -133,7 +136,8 @@ function trackGraph(ways) {
   const adj = new Map();
   const link = (a, b) => {
     const ka = key(a), kb = key(b);
-    coords.set(ka, a), coords.set(kb, b);
+    coords.set(ka, a);
+    coords.set(kb, b);
     const w = haversine(a, b);
     if (!adj.has(ka)) adj.set(ka, []);
     if (!adj.has(kb)) adj.set(kb, []);
@@ -152,9 +156,15 @@ function trackGraph(ways) {
     for (const [k2, c2] of coords) {
       if (k2 === k || adj.get(k).some(([n]) => n === k2)) continue;
       const d = haversine(c, c2);
-      if (d < bestD && d > 0) (bestD = d), (best = k2);
+      if (d < bestD && d > 0) {
+        bestD = d;
+        best = k2;
+      }
     }
-    if (best) adj.get(k).push([best, bestD]), adj.get(best).push([k, bestD]);
+    if (best) {
+      adj.get(k).push([best, bestD]);
+      adj.get(best).push([k, bestD]);
+    }
   }
   return { coords, adj };
 }
@@ -163,7 +173,10 @@ function nearestVertex(graph, p) {
   let best = null, bestD = Infinity;
   for (const [k, c] of graph.coords) {
     const d = haversine(p, c);
-    if (d < bestD) (bestD = d), (best = k);
+    if (d < bestD) {
+      bestD = d;
+      best = k;
+    }
   }
   return { k: best, d: bestD };
 }
@@ -181,7 +194,11 @@ function shortestPath(graph, from, to) {
     done.add(u);
     for (const [v, w] of graph.adj.get(u) ?? []) {
       const nd = d + w;
-      if (nd < (dist.get(v) ?? Infinity)) dist.set(v, nd), prev.set(v, u), queue.push([nd, v]);
+      if (nd < (dist.get(v) ?? Infinity)) {
+        dist.set(v, nd);
+        prev.set(v, u);
+        queue.push([nd, v]);
+      }
     }
   }
   if (!dist.has(to)) return null;
@@ -295,7 +312,10 @@ for (const [lineIdNum, relIds] of Object.entries(ROUTE_RELATIONS)) {
       if (va.d < 150 && vb.d < 150) {
         const sp = shortestPath(graph, va.k, vb.k);
         // Caminho absurdo (>2,5x a distância em linha reta) indica trilho faltando no meio.
-        if (sp && sp.length < 2.5 * haversine(pa, pb) + 200) geometry = [pa, ...sp.path, pb], (length = sp.length);
+        if (sp && sp.length < 2.5 * haversine(pa, pb) + 200) {
+          geometry = [pa, ...sp.path, pb];
+          length = sp.length;
+        }
       }
       if (!geometry) {
         geometry = [pa, pb];
@@ -384,6 +404,7 @@ await writeFile(
   new URL("edges.json", root),
   JSON.stringify(
     {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- a geometria vai só para tracks.geojson
       trechos: segments.map(({ geometria, ...s }) => s),
       transferencias: transfers,
     },
