@@ -1,0 +1,33 @@
+import { getLine } from "./lines";
+
+const SIZES = {
+  sm: "size-2.5 text-caption",
+  md: "size-4 text-body",
+  lg: "size-7 text-title-s",
+} as const;
+
+type Props = {
+  line: string;
+  size?: keyof typeof SIZES;
+};
+
+/** Número da linha sobre a cor da linha. Círculo na direção A, quadrado na B. */
+export function LineBadge({ line, size = "md" }: Props) {
+  const { nome, cor, tinta, id } = getLine(line);
+  return (
+    <span
+      role="img"
+      aria-label={nome}
+      title={nome}
+      className={`inline-flex shrink-0 items-center justify-center font-bold tabular-nums leading-none ${SIZES[size]}`}
+      style={{
+        backgroundColor: cor,
+        color: tinta,
+        borderRadius: "var(--radius-badge)",
+        boxShadow: "inset 0 0 0 1px var(--badge-edge)",
+      }}
+    >
+      {id}
+    </span>
+  );
+}

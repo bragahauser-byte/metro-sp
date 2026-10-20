@@ -1,0 +1,122 @@
+/*
+ * Tokens de design.
+ * Cores de linha: Guia Rápido da Identidade Visual do Metrô, REV.2 (nov/2022), p. 26 — ver docs/inventario.md.
+ * Grid de 8px: --spacing vale 8px, então p-1 = 8px, p-2 = 16px (p-0.5 = 4px só para ajustes finos).
+ */
+
+@theme {
+  /* Cores de linha (não mudam entre claro e escuro) */
+  --color-line-1: #0063ba;
+  --color-line-2: #097a5e;
+  --color-line-3: #f02137;
+  --color-line-4: #fcc917;
+  --color-line-5: #874dbf;
+  --color-line-6: #ff8300;
+  --color-line-7: #ab0450;
+  --color-line-8: #a5a596;
+  --color-line-9: #64b396;
+  --color-line-10: #007687;
+  --color-line-11: #f55f1a;
+  --color-line-12: #262670;
+  --color-line-13: #00b052;
+  --color-line-15: #8d8f8c;
+  --color-line-17: #d58405;
+
+  /* Grid */
+  --spacing: 0.5rem;
+
+  /* Escala tipográfica modular, razão 1,25 sobre 16px */
+  --text-caption: 0.8rem;
+  --text-caption--line-height: 1.25;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-lead: 1.25rem;
+  --text-lead--line-height: 1.4;
+  --text-title-s: 1.5625rem;
+  --text-title-s--line-height: 1.2;
+  --text-title-m: 1.953rem;
+  --text-title-m--line-height: 1.1;
+  --text-title-l: 2.441rem;
+  --text-title-l--line-height: 1.05;
+  --text-display: 3.815rem;
+  --text-display--line-height: 1;
+  --text-hero: 4.768rem;
+  --text-hero--line-height: 0.95;
+
+  /* Movimento */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Neutros: claro */
+:root {
+  --bg: #f5f5f5;
+  --surface: #ffffff;
+  --ink: #111111;
+  --ink-muted: #5c5c5c;
+  --rule: #e0e0e0;
+  --rule-strong: #111111;
+  --map-street: #dde3e6;
+  --map-park: #e3f0df;
+  --focus: #0063ba;
+  --badge-edge: transparent;
+
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 400ms;
+
+  /* Direção A (padrão) — "Mapa vivo" */
+  --radius-card: 12px;
+  --radius-control: 999px;
+  --radius-badge: 999px;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.08);
+  --card-border: transparent;
+}
+
+/* Neutros: escuro (sistema, a não ser que o usuário tenha fixado claro) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #000000;
+    --surface: #161616;
+    --ink: #f2f2f2;
+    --ink-muted: #a3a3a3;
+    --rule: #2b2b2b;
+    --rule-strong: #f2f2f2;
+    --map-street: #1f1f1f;
+    --map-park: #13201a;
+    --focus: #5ea8ff;
+    --badge-edge: rgb(255 255 255 / 0.28);
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 4px 16px rgb(0 0 0 / 0.5);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #000000;
+  --surface: #161616;
+  --ink: #f2f2f2;
+  --ink-muted: #a3a3a3;
+  --rule: #2b2b2b;
+  --rule-strong: #f2f2f2;
+  --map-street: #1f1f1f;
+  --map-park: #13201a;
+  --focus: #5ea8ff;
+  --badge-edge: rgb(255 255 255 / 0.28);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 4px 16px rgb(0 0 0 / 0.5);
+}
+
+/* Direção B — "Cauduro": módulos quadrados, fio divisor, sem sombra */
+[data-direction="b"] {
+  --radius-card: 0px;
+  --radius-control: 0px;
+  --radius-badge: 0px;
+  --shadow-card: none;
+  --card-border: var(--rule-strong);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-base: 0ms;
+    --duration-slow: 0ms;
+  }
+}

@@ -7,7 +7,7 @@ Este arquivo fica na raiz do repositório. Leia-o no início de toda sessão e s
 Um site conceitual e não oficial sobre a rede de metrô de São Paulo, feito como projeto de design/portfólio por Malu (github.com/bragahauser-byte). Foco: interface excepcional, responsiva, com mapa interativo, geolocalização (GPS), linguagem visual do modernismo paulista e minimalismo.
 
 - Não é o site oficial e não deve se passar por ele. Rodapé fixo em todas as páginas: "Projeto conceitual independente, sem vínculo com a Companhia do Metropolitano de São Paulo. Informações oficiais em metro.sp.gov.br."
-- Não usar o domínio, o nome "Metrô" como marca do site, nem o logotipo oficial como identidade do site. Referências à identidade histórica (cores de linha, grid, tipografia de inspiração suíça) são homenagem/estudo, não cópia da marca.
+- Nome do site: **"Metrô" + selo BETA** (decisão da Malu em 20/10/2026), sempre acompanhado do aviso de projeto não oficial. Não usar o domínio oficial nem o logotipo/símbolo oficial; o nome aparece só em texto. Referências à identidade histórica (cores de linha, grid, tipografia de inspiração suíça) são homenagem/estudo, não cópia da marca.
 
 ## Referência visual principal
 
