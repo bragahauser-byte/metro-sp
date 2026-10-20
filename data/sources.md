@@ -11,6 +11,7 @@ Toda informação factual do site precisa de uma linha aqui, com data de consult
 | `stations.geojson` | Estações: nome, complemento, linhas, status (geral e por linha), parada de cada linha | `npm run data:build` |
 | `edges.json` | Grafo: trechos estação→estação por linha (distância em m) e transferências | `npm run data:build` |
 | `tracks.geojson` | Geometria real de cada trecho (traçado dos trilhos) e `faixa` (posição no feixe de linhas paralelas) | `npm run data:build` |
+| `entrances.geojson` | Entradas das estações (OSM), ligadas à estação mais próxima (até 400 m) | `npm run data:build` |
 | `schematic.json` | Diagrama esquemático próprio: posição de cada estação e caminho octilinear de cada trecho | `npm run data:schematic` |
 
 Atualizar: `npm run data:fetch` (baixa do OSM para `data/raw/`, fora do git) → `npm run data:build` → `npm run data:schematic` → `npm run validate`.
@@ -27,6 +28,7 @@ Atualizar: `npm run data:fetch` (baixa do OSM para `data/raw/`, fora do git) →
 | Linha 6-Laranja: 15 estações na ordem Brasilândia–São Joaquim | Linha Uni — https://www.linhauni.com.br | 20/10/2026 |
 | Linha 6-Laranja: operação assistida de João Paulo I a Perdizes (6 estações); demais em obras | Agência SP, "Veja o funcionamento do primeiro trecho da Linha 6-Laranja", 01/07/2026; Secretaria de Parcerias em Investimentos, 03/08/2026 | 20/10/2026 |
 | Linha 15-Prata até Jardim Colonial | Metrô, notícia de 19/01/2024 sobre alterações nas Linhas 3 e 15 ("de Vila Prudente a Jardim Colonial") | 20/10/2026 |
+| Entradas das estações e marca de acessibilidade (wheelchair) | © OpenStreetMap contributors, ODbL — nós railway=subway_entrance/train_station_entrance e railway=station (base OSM de 20/10/2026) | 20/10/2026 |
 | Mapa de fundo (ruas, parques, água, nomes de lugares) | OpenFreeMap, tiles vetoriais no esquema OpenMapTiles — dados © OpenStreetMap contributors | 20/10/2026 |
 | Fontes do mapa: Source Serif 4 (nomes de rua) e Inter Bold (cidades) | Google Fonts, licença SIL Open Font License | 20/10/2026 |
 
@@ -38,3 +40,5 @@ Atualizar: `npm run data:fetch` (baixa do OSM para `data/raw/`, fora do git) →
 - **Cores no PDF do mapa:** o *Mapa do Transporte Metropolitano* usa CMYK de impressão, ligeiramente diferente do RGB do Guia; para tela vale o RGB do Guia.
 - As relações do OSM da Linha 10 não têm Juventus-Mooca, Tamanduateí e Utinga; essas paradas são inseridas por `scripts/build-data.mjs` conforme o mapa oficial.
 - **Diagrama esquemático** é gerado por algoritmo próprio (`scripts/build-schematic.mjs`): lupa radial no centro, direções arredondadas para múltiplos de 45°, ajuste por mínimos quadrados e cadeias octilineares entre estações-chave. Não copia o mapa oficial. Com a camada de trens ligada ainda há trechos encavalados perto da Barra Funda e de Osasco (a refinar).
+- **Acessibilidade:** só 58 estações têm a marca no OSM. O site mostra ♿ apenas quando a marca é positiva; sem marca (ou "não", que pode estar desatualizado) aparece "sem informação confirmada". Por isso não há filtro de estações acessíveis.
+- **Avisos e situação das linhas** (`components/map/line-notes.ts`) descrevem a situação conhecida em 20/10/2026; não há dado oficial aberto em tempo real, então não há trens animados nem filtros de horário.

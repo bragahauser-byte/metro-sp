@@ -44,6 +44,22 @@ async function overpass(data, tries = 5) {
 
 const json = await overpass(query);
 
+// Entradas das estações (zoom máximo) e acessibilidade marcada nos nós de estação.
+const BBOX = "-23.80,-47.05,-23.15,-46.15";
+const extra = await overpass(`[out:json][timeout:120];
+(
+  node["railway"="subway_entrance"](${BBOX});
+  node["railway"="train_station_entrance"](${BBOX});
+);
+out body;
+(
+  nwr["railway"="station"](${BBOX});
+  nwr["public_transport"="station"](${BBOX});
+);
+out center tags;`);
+
 await mkdir(new URL("../data/raw/", import.meta.url), { recursive: true });
 await writeFile(new URL("../data/raw/osm.json", import.meta.url), JSON.stringify(json));
+await writeFile(new URL("../data/raw/osm-extra.json", import.meta.url), JSON.stringify(extra));
 console.log(`osm.json: ${json.elements.length} elementos, base de ${json.osm3s.timestamp_osm_base}`);
+console.log(`osm-extra.json: ${extra.elements.length} elementos (entradas e estações)`);

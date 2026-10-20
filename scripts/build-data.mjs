@@ -466,6 +466,47 @@ for (const [a, b] of PASSAGES) {
   transfers.push({ de: a, para: b, tipo: "passagem" });
 }
 
+// ---------------------------------------------------------------- entradas e acessibilidade
+
+// osm-extra.json: entradas (railway=subway_entrance/train_station_entrance) e nós de estação com
+// a marca wheelchair. Sem marca = sem informação (não quer dizer inacessível).
+const extra = JSON.parse(await readFile(new URL("raw/osm-extra.json", root), "utf8"));
+const centerOf = (st) => {
+  const pts = Object.values(st.paradas);
+  return [pts.reduce((t, p) => t + p[0], 0) / pts.length, pts.reduce((t, p) => t + p[1], 0) / pts.length];
+};
+const WHEELCHAIR = { yes: "sim", designated: "sim", limited: "limitado", no: "nao" };
+for (const node of extra.elements) {
+  const wc = WHEELCHAIR[node.tags?.wheelchair];
+  if (!wc || !node.tags?.name) continue;
+  const coord = node.center ? [node.center.lon, node.center.lat] : [node.lon, node.lat];
+  const slug = slugify(normalizeName(node.tags.name).nome);
+  const st = stations.get(slug);
+  if (!st || haversine(centerOf(st), coord) > 800) continue;
+  // Qualquer nó "sim" vence; "limitado" vence "não".
+  const rank = { sim: 3, limitado: 2, nao: 1 };
+  if (!st.acessivel || rank[wc] > rank[st.acessivel]) st.acessivel = wc;
+}
+const entrances = [];
+for (const node of extra.elements) {
+  if (node.type !== "node" || !/entrance$/.test(node.tags?.railway ?? "")) continue;
+  const coord = [node.lon, node.lat];
+  let best = null, bestD = 400;
+  for (const st of stations.values()) {
+    const d = haversine(centerOf(st), coord);
+    if (d < bestD) {
+      bestD = d;
+      best = st.slug;
+    }
+  }
+  if (!best) continue;
+  entrances.push({
+    type: "Feature",
+    geometry: { type: "Point", coordinates: round(coord) },
+    properties: { estacao: best, ref: node.tags.ref ?? null, acessivel: WHEELCHAIR[node.tags.wheelchair] ?? null },
+  });
+}
+
 // ---------------------------------------------------------------- saída
 
 const STATUS_ORDER = ["operando", "operacao-assistida", "em-obras", "planejada"];
@@ -490,6 +531,7 @@ const features = [...stations.values()]
         statusPorLinha: st.statusPorLinha,
         paradas: st.paradas,
         integracoes,
+        acessivel: st.acessivel ?? null,
       },
     };
   });
@@ -499,6 +541,10 @@ await writeFile(new URL("lines.json", root), JSON.stringify(lines, null, 2) + "\
 await writeFile(
   new URL("stations.geojson", root),
   JSON.stringify({ type: "FeatureCollection", attribution, features }) + "\n",
+);
+await writeFile(
+  new URL("entrances.geojson", root),
+  JSON.stringify({ type: "FeatureCollection", attribution, features: entrances }) + "\n",
 );
 await writeFile(
   new URL("edges.json", root),
@@ -525,6 +571,7 @@ await writeFile(
   }) + "\n",
 );
 
-console.log(`${lines.length} linhas, ${features.length} estações, ${segments.length} trechos, ${transfers.length} transferências`);
+console.log(`${lines.length} linhas, ${features.length} estações, ${segments.length} trechos, ${transfers.length} transferências, ${entrances.length} entradas`);
+console.log(`  acessibilidade marcada no OSM: ${features.filter((f) => f.properties.acessivel).length} estações`);
 for (const l of lines) console.log(`  Linha ${l.id}: ${l.sequencias.flat().length} paradas, ${l.extensaoOperacionalKm} km operacionais`);
 if (warnings.length) console.log("Avisos:\n  " + warnings.join("\n  "));
