@@ -40,6 +40,7 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 - Cores de linha são tokens semânticos (`--line-1` … `--line-17`); os hex vêm do Guia Rápido em `_referencias/` (ver `docs/inventario.md`). Nunca inventar cor de linha.
 - Direção visual fechada (20/10/2026): **"Mapa vivo"** — cartões flutuantes com sombra mínima, cantos arredondados, curvas suaves, badges circulares. Tokens em `styles/tokens.css`, vitrine em `/estilo`.
 - **Fidelidade às referências (exigência da dona do projeto, 20/10/2026):** a aparência deve ser igual às imagens de `_referencias/imagens do projeto` (Live Subway Map da MTA): formato e largura das linhas, faixas paralelas com fio branco entre elas quando várias linhas correm juntas, cortes a 90° e 45° com curvas de raio constante, estações como pontos pretos com rótulo da linha, transferências como fio preto fino, e zoom semântico (de longe: linhas finas; de perto: faixas largas, nomes de rua em serifa cinza). Paleta de linhas idêntica ao Guia Rápido (`data/line-colors.json`). O mapa real tem de estar geograficamente correto (`data/tracks.geojson`).
+- Ícones de linha: círculo na cor da linha com o número **sempre branco** e centralizado (decisão de 20/10/2026). Como algumas cores claras não chegam a 4,5:1, o ícone nunca pode ser a única informação: sempre com `aria-label` e com o nome da linha escrito por perto.
 - Tipografia: **Inter** (OFL) via `next/font`. Helvetica Now (em `_referencias/tipografia projeto`) é comercial — NÃO commitar.
 - Mobile-first. Testar em 360px, 768px, 1280px e 1920px.
 - Acessibilidade WCAG AA: contraste, foco visível, navegação por teclado, e toda informação do mapa também disponível em lista (o mapa nunca é o único caminho).
@@ -48,6 +49,8 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 ## Arquitetura do mapa
 
 - `/mapa`: MapLibre só para o fundo e a câmera; linhas, estações e rótulos são desenhados em canvas por `components/map/network-renderer.ts` (faixas paralelas, largura por zoom, curvas de raio constante, rótulos com colisão). A transição esquemático ↔ real interpola cada estação (`t` de 0 a 1).
+- Nível de detalhe por zoom (como no Live Subway Map): longe = linhas finas em troncos; médio = pontos e nomes de baldeações/terminais; perto = todos os nomes com ícones das linhas e ♿, e cada linha vira um par de faixas (ida e volta) com fio branco; máximo = número da linha ao lado do ponto e entradas. Linha selecionada: as outras ficam cinza. Trecho em obras: acinzentado, estação vazada.
+- Endereço guarda modo, linha, estação e a vista (`?v=lng,lat,zoom`), mas nunca quando o GPS está ativo.
 - O worker do MapLibre 6 é copiado para `public/vendor` em `predev`/`prebuild` (fora do git).
 - Fontes do mapa de fundo via `font-faces` do estilo (Google Fonts, OFL); tiles do OpenFreeMap.
 

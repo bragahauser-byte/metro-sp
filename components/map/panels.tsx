@@ -5,6 +5,8 @@ import { LineBadge } from "@/components/ui/line-badge";
 import { StatusChip } from "@/components/ui/status-chip";
 import { type Nearby, formatDistance } from "@/components/geo/nearest";
 import { GEO_MESSAGES, type GeoState } from "@/components/geo/use-geolocation";
+import Link from "next/link";
+import { lineNote, notices } from "./line-notes";
 import { RAIL_LINES, lineById, lines, neighborsOf, stationBySlug, stations, stationsOfLine } from "./network";
 
 const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -137,21 +139,34 @@ export function LineView({
   const line = lineById.get(id)!;
   const seq = stationsOfLine(id);
   const branches = line.sequencias.length > 1;
+  const note = lineNote(id);
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-1">
-        <BackButton onClick={onBack} label="Voltar para as linhas" />
-        <LineBadge line={id} size="lg" />
-        <div className="min-w-0">
-          <h2 className="text-lead font-bold leading-tight tracking-tight">{line.nome}</h2>
-          <p className="text-caption text-ink-muted">
-            {TIPO[line.tipo]} · operação {line.operador} · {line.extensaoOperacionalKm.toLocaleString("pt-BR")} km
-          </p>
-        </div>
+      {/* Como no Live Subway Map: voltar à esquerda, ícone grande da linha no centro. */}
+      <div className="relative flex justify-center pt-0.5">
+        <span className="absolute left-0 top-0">
+          <BackButton onClick={onBack} label="Voltar para as linhas" />
+        </span>
+        <LineBadge line={id} size="xl" />
       </div>
-      <div>
-        <StatusChip status={line.status} />
+      <div className="text-center">
+        <h2 className="text-lead font-bold leading-tight tracking-tight">{line.nome}</h2>
+        <p className="text-caption text-ink-muted">
+          {TIPO[line.tipo]} · operação {line.operador} · {line.extensaoOperacionalKm.toLocaleString("pt-BR")} km
+        </p>
       </div>
+      <div className="border-t border-rule pt-2">
+        <p className="text-body font-bold">{note.titulo}</p>
+        <p className="text-body text-ink-muted">{note.texto}</p>
+        {note.fonte && (
+          <a className="text-caption text-ink-muted underline" href={note.fonte.url}>
+            Fonte: {note.fonte.nome}
+          </a>
+        )}
+      </div>
+      <Link href={`/linhas/${id}`} className="text-caption font-semibold underline underline-offset-4">
+        Página da {line.nome} →
+      </Link>
       {branches && (
         <p className="text-caption text-ink-muted">
           Linha em “Y”: ramal a partir de {stationBySlug.get(line.sequencias[1][0])?.nome}.
@@ -233,6 +248,16 @@ export function StationView({
           <StatusChip key={s} status={s} />
         ))}
       </div>
+      <p className="text-caption text-ink-muted">
+        {st.acessivel === "sim"
+          ? "♿ Acessível, segundo o OpenStreetMap."
+          : st.acessivel === "limitado"
+            ? "♿ Acessibilidade parcial, segundo o OpenStreetMap."
+            : "Acessibilidade: sem informação confirmada."}
+      </p>
+      <Link href={`/estacoes/${slug}`} className="text-caption font-semibold underline underline-offset-4">
+        Página da estação {st.nome} →
+      </Link>
       {walk && (
         <p className="text-body">
           <strong>{formatDistance(walk.distanciaM)}</strong> de você · cerca de {walk.minutos} min a pé
@@ -341,6 +366,43 @@ export function NearView({
           </p>
         </>
       )}
+    </div>
+  );
+}
+
+/** Situação das linhas fora do normal (botão "!"). */
+export function AlertsView({ onBack, onPickLine }: { onBack: () => void; onPickLine: (id: string) => void }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center gap-1">
+        <BackButton onClick={onBack} />
+        <h2 className="text-lead font-bold tracking-tight">Avisos</h2>
+      </div>
+      <ul className="flex flex-col">
+        {notices().map((n) => (
+          <li key={n.id} className="flex gap-2 border-b border-rule py-2 last:border-0">
+            <button type="button" onClick={() => onPickLine(n.id)} aria-label={`Ver ${lineById.get(n.id)?.nome}`}>
+              <LineBadge line={n.id} />
+            </button>
+            <div>
+              <p className="text-body font-bold">{n.titulo}</p>
+              <p className="text-body text-ink-muted">{n.texto}</p>
+              {n.fonte && (
+                <a className="text-caption text-ink-muted underline" href={n.fonte.url}>
+                  Fonte: {n.fonte.nome}
+                </a>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p className="text-caption text-ink-muted">
+        Projeto conceitual: sem dados em tempo real. Situação conhecida em 20/10/2026 — confirme em{" "}
+        <a className="underline" href="https://www.metro.sp.gov.br">
+          metro.sp.gov.br
+        </a>
+        .
+      </p>
     </div>
   );
 }

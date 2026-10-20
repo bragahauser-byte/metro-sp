@@ -30,11 +30,14 @@ export function SiteHeader() {
         <Link href="/mapa" className="underline-offset-4 hover:underline">
           Mapa
         </Link>
+        <Link href="/linhas" className="underline-offset-4 hover:underline">
+          Linhas
+        </Link>
         <Link href="/perto-de-mim" className="hidden underline-offset-4 hover:underline sm:inline">
           Perto de mim
         </Link>
-        <Link href="/estilo" className="hidden underline-offset-4 hover:underline sm:inline">
-          Estilo
+        <Link href="/sobre" className="hidden underline-offset-4 hover:underline sm:inline">
+          Sobre
         </Link>
         <ThemeToggle />
       </nav>
@@ -49,6 +52,11 @@ export function SiteFooter() {
       Paulo. Informações oficiais em{" "}
       <a className="underline underline-offset-2" href="https://www.metro.sp.gov.br">
         metro.sp.gov.br
+      </a>
+      . <Link className="underline underline-offset-2" href="/sobre">Sobre e fontes</Link> ·{" "}
+      <Link className="underline underline-offset-2" href="/estilo">Estilo</Link> · Dados ©{" "}
+      <a className="underline underline-offset-2" href="https://www.openstreetmap.org/copyright">
+        OpenStreetMap contributors
       </a>
       .
     </footer>

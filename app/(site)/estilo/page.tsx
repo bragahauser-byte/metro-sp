@@ -64,7 +64,7 @@ function LineRow({ id }: { id: string }) {
       <span className="flex-1 text-body font-medium">{nome}</span>
       <code className="text-caption text-ink-muted">{cor}</code>
       <span className="w-10 text-right text-caption tabular-nums text-ink-muted">
-        {tinta === "#FFFFFF" ? "branco" : "preto"} {ratio.toFixed(1)}:1
+        branco {ratio.toFixed(1)}:1{ratio < 4.5 ? "*" : ""}
       </span>
     </li>
   );
@@ -88,8 +88,9 @@ export default function EstiloPage() {
 
       <Section id="linhas" title="Cores de linha">
         <p className="mb-2 max-w-[60ch] text-body text-ink-muted">
-          Fonte: Guia Rápido da Identidade Visual do Metrô (REV.2, 2022), p. 26. O número usa a tinta
-          (branca ou preta) com maior contraste; todas passam de 4,5:1.
+          Fonte: Guia Rápido da Identidade Visual do Metrô (REV.2, 2022), p. 26. Número sempre branco e centralizado, como nos ícones das referências. Nas cores claras o
+          contraste fica abaixo de 4,5:1 (marcado com *), então o ícone nunca é a única informação: ele leva
+          o nome da linha como texto alternativo e aparece ao lado do nome por extenso.
         </p>
         <h3 className="mt-3 text-caption font-semibold uppercase tracking-widest text-ink-muted">Metrô e monotrilho</h3>
         <ul>{METRO_LINE_IDS.map((id) => <LineRow key={id} id={id} />)}</ul>

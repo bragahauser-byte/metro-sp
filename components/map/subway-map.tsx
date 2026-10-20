@@ -24,6 +24,10 @@ type Props = {
   user: RenderState["user"];
   target: string | null;
   onStationClick: (slug: string | null) => void;
+  /** Vista inicial vinda do endereço (?v=lng,lat,zoom). */
+  initialView?: { center: LngLat; zoom: number } | null;
+  /** Avisada ao fim de cada movimento da câmera (para guardar a vista no endereço). */
+  onViewChange?: (view: { center: LngLat; zoom: number }) => void;
   ref?: Ref<SubwayMapHandle>;
 };
 
@@ -69,7 +73,18 @@ function framePoints(mode: MapMode, showRail: boolean): LngLat[] {
     .map((s) => (mode === "real" ? s.geo : s.schem));
 }
 
-export function SubwayMap({ mode, showRail, selectedLine, selectedStation, user, target, onStationClick, ref }: Props) {
+export function SubwayMap({
+  mode,
+  showRail,
+  selectedLine,
+  selectedStation,
+  user,
+  target,
+  onStationClick,
+  initialView,
+  onViewChange,
+  ref,
+}: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
@@ -85,12 +100,15 @@ export function SubwayMap({ mode, showRail, selectedLine, selectedStation, user,
     target,
   });
   const clickRef = useRef(onStationClick);
+  const viewRef = useRef(onViewChange);
+  const initialViewRef = useRef(initialView);
   const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => "light" as Theme);
   const themeRef = useRef(theme);
 
   useEffect(() => {
     clickRef.current = onStationClick;
-  }, [onStationClick]);
+    viewRef.current = onViewChange;
+  }, [onStationClick, onViewChange]);
 
   useEffect(() => {
     if (paperRef.current) paperRef.current.style.opacity = String(stateRef.current.t);
@@ -109,8 +127,9 @@ export function SubwayMap({ mode, showRail, selectedLine, selectedStation, user,
       const map = new maplibre.Map({
         container: containerRef.current,
         style: basemapStyle(themeRef.current),
-        bounds: boundsOf(framePoints(initial, stateRef.current.showRail)),
-        fitBoundsOptions: { padding: framePadding() },
+        ...(initialViewRef.current
+          ? { center: initialViewRef.current.center, zoom: initialViewRef.current.zoom }
+          : { bounds: boundsOf(framePoints(initial, stateRef.current.showRail)), fitBoundsOptions: { padding: framePadding() } }),
         maxBounds: [
           [-47.6, -24.3],
           [-45.6, -22.8],
@@ -150,6 +169,10 @@ export function SubwayMap({ mode, showRail, selectedLine, selectedStation, user,
         }
       });
       map.on("click", (e) => clickRef.current(renderer.hitTest(e.point.x, e.point.y)));
+      map.on("moveend", () => {
+        const c = map.getCenter();
+        viewRef.current?.({ center: [c.lng, c.lat], zoom: map.getZoom() });
+      });
     })();
     return () => {
       disposed = true;

@@ -4,6 +4,7 @@ const SIZES = {
   sm: "size-2.5 text-caption",
   md: "size-4 text-body",
   lg: "size-7 text-title-s",
+  xl: "size-9 text-title-l",
 } as const;
 
 type Props = {
@@ -11,7 +12,7 @@ type Props = {
   size?: keyof typeof SIZES;
 };
 
-/** Número da linha sobre a cor da linha. Círculo na direção A, quadrado na B. */
+/** Ícone da linha: círculo na cor da linha com o número sempre branco e centralizado. */
 export function LineBadge({ line, size = "md" }: Props) {
   const { nome, cor, tinta, id } = getLine(line);
   return (

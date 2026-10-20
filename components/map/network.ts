@@ -5,6 +5,7 @@ import stationsJson from "@/data/stations.geojson";
 import tracksJson from "@/data/tracks.geojson";
 import schematicJson from "@/data/schematic.json";
 import edgesJson from "@/data/edges.json";
+import entrancesJson from "@/data/entrances.geojson";
 import type { Status } from "@/components/ui/status-chip";
 
 export type LngLat = [number, number];
@@ -36,6 +37,8 @@ export type Station = {
   /** Posição no diagrama esquemático. */
   schem: LngLat;
   integracoes: string[];
+  /** Acessibilidade marcada no OpenStreetMap; null = sem informação. */
+  acessivel: "sim" | "limitado" | "nao" | null;
 };
 
 export type Segment = {
@@ -149,3 +152,8 @@ export function boundsOf(points: LngLat[]): [LngLat, LngLat] {
     [maxX, maxY],
   ];
 }
+
+/** Entradas das estações (OpenStreetMap), mostradas só no zoom máximo. */
+export const entrances = (
+  entrancesJson as unknown as { features: Feature<{ estacao: string; ref: string | null }, { coordinates: LngLat }>[] }
+).features.map((f) => ({ estacao: f.properties.estacao, ref: f.properties.ref, lngLat: f.geometry.coordinates }));

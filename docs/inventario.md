@@ -28,7 +28,7 @@ Atenção: na tabela do guia, os cabeçalhos "Sistema RGB" e "Sistema CMYK" est�
 
 Também constam no guia (planejadas/serviços, para uso futuro): 18-Bronze `#7F614D`, Airport Express `#008349`, Airport Connect `#A8CF45`, 19-Celeste `#05A4E1`, 20-Rosa `#EA2775`, 21-Grafite `#636266`, 22-Bordô `#783245`, 23-Limão `#61BF1A`.
 
-Contraste (WCAG, número do badge sobre a cor): passam AA com branco (≥ 4,5) as linhas 1, 2, 5, 7, 10 e 12. A 3-Vermelha dá 4,22 com branco (passa só como texto grande/bold ≥ 3) e 4,98 com preto. As linhas 4, 6, 8, 9, 11, 13, 15 e 17 precisam de número em preto (6,4 a 13,5), como o MTA faz com N/Q/R/W. A decidir na Fase 1.
+Contraste (WCAG, número do badge sobre a cor): passam AA com branco (≥ 4,5) as linhas 1, 2, 5, 7, 10 e 12. **Decisão de design (20/10/2026): o número é sempre branco**, como nos ícones do Live Subway Map; nas linhas 3, 4, 6, 8, 9, 11, 13, 15 e 17 o contraste fica abaixo de 4,5:1, por isso o ícone nunca é a única informação (texto alternativo + nome por extenso ao lado).
 
 ### Neutros
 

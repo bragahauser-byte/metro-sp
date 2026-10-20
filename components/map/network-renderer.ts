@@ -1,19 +1,26 @@
 // Desenha a rede numa camada de canvas sincronizada com a câmera do MapLibre, no visual do Live
 // Subway Map: faixas paralelas com fio na cor do fundo, larguras que crescem com o zoom, curvas de
 // raio constante, pontos pretos por linha, baldeação como fio fino e rótulos com colisão.
+// O zoom também decide o que aparece (nível de detalhe):
+//   longe  → só as linhas, finas; os feixes quase se fundem num tronco;
+//   médio  → pontos das estações e nomes das baldeações/terminais;
+//   perto  → todos os nomes, ícones das linhas e acessibilidade sob o nome; cada linha vira um
+//            par de faixas (ida e volta) com fio branco no meio;
+//   máximo → número da linha ao lado de cada ponto e entradas das estações.
 // O parâmetro `t` interpola real (0) ↔ esquemático (1), estação por estação.
 import type { Map as MapLibreMap } from "maplibre-gl";
+import { type Box, type Pt, intersects, lerp, normal, offsetPolyline, resample, tracePath } from "./geometry";
 import {
-  type Box,
-  type Pt,
-  intersects,
-  lerp,
-  normal,
-  offsetPolyline,
-  resample,
-  tracePath,
-} from "./geometry";
-import { type LngLat, RAIL_LINES, type Segment, type Station, lineById, segments, stationBySlug, stations } from "./network";
+  type LngLat,
+  RAIL_LINES,
+  type Segment,
+  type Station,
+  entrances,
+  lineById,
+  segments,
+  stationBySlug,
+  stations,
+} from "./network";
 
 const MORPH_SAMPLES = 40;
 
@@ -70,6 +77,8 @@ export function lineWidth(z: number) {
   return stops[stops.length - 1][1];
 }
 
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
 export type RenderState = {
   t: number; // 0 = real, 1 = esquemático
   showRail: boolean;
@@ -80,9 +89,9 @@ export type RenderState = {
   target: string | null; // estação de destino a pé (GPS)
 };
 
-type Colors = { bg: string; ink: string; muted: string; focus: string; font: string };
+type Colors = { bg: string; ink: string; muted: string; focus: string; gray: string; font: string };
 
-type DotInfo = { x: number; y: number; linha: string; tx: number; ty: number };
+type DotInfo = { x: number; y: number; linha: string; tx: number; ty: number; building: boolean };
 type Placed = { slug: string; dots: DotInfo[]; label?: Box };
 
 export class NetworkRenderer {
@@ -109,11 +118,15 @@ export class NetworkRenderer {
   readColors(): Colors {
     const css = getComputedStyle(document.documentElement);
     const v = (n: string, f: string) => css.getPropertyValue(n).trim() || f;
+    const bg = v("--bg", "#f5f5f5");
+    // Linhas fora do filtro ficam cinza, como no Live Subway Map (claro no tema claro, escuro no escuro).
+    const dark = bg.toLowerCase() === "#000000" || bg.toLowerCase() === "#000";
     return {
-      bg: v("--bg", "#f5f5f5"),
+      bg,
       ink: v("--ink", "#111111"),
       muted: v("--ink-muted", "#5c5c5c"),
       focus: v("--focus", "#0063ba"),
+      gray: dark ? "#3a3a3a" : "#cdd0d2",
       font: getComputedStyle(document.body).fontFamily || "Inter, Helvetica, Arial, sans-serif",
     };
   }
@@ -157,14 +170,24 @@ export class NetworkRenderer {
     return w;
   }
 
+  /** Cor de desenho da linha: cinza quando outra linha está selecionada. */
+  private lineColor(linha: string) {
+    const { selectedLine } = this.state;
+    return selectedLine && selectedLine !== linha ? this.colors.gray : lineById.get(linha)!.cor;
+  }
+
   draw() {
     const { ctx, state, colors } = this;
     const z = this.map.getZoom();
     const t = state.t;
     const W = lineWidth(z);
     const gap = Math.max(1, W * 0.22);
-    const spacing = W + gap;
-    const radius = lerp(W * 1.5, Math.max(W * 2.2, 10), t);
+    // De perto, cada linha vira um par de faixas (um sentido em cada), com fio branco no meio.
+    const pair = clamp01(z - 13.2) * (1 - t * 0.5);
+    const lineW = W * (1 + pair * 0.7);
+    const pairGap = gap * 0.8 * pair;
+    const spacing = lineW + gap;
+    const radius = lerp(lineW * 1.5, Math.max(lineW * 2.2, 10), t);
 
     ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
     ctx.clearRect(0, 0, this.width, this.height);
@@ -182,37 +205,49 @@ export class NetworkRenderer {
       screen.set(s, offsetPolyline(pts, [off0, off1]));
     }
 
-    const dim = (linha: string) => (state.selectedLine && state.selectedLine !== linha ? 0.16 : 1);
+    // Linha selecionada por último, por cima das cinzas.
+    const order = state.selectedLine
+      ? [...LINE_ORDER.filter((l) => l !== state.selectedLine), state.selectedLine]
+      : LINE_ORDER;
 
-    for (const linha of LINE_ORDER) {
+    for (const linha of order) {
       if (!this.visibleLine(linha)) continue;
-      const line = lineById.get(linha)!;
       const segs = prepared.filter((s) => s.linha === linha && screen.has(s));
-      ctx.globalAlpha = dim(linha);
-      // Contorno na cor do fundo: separa faixas vizinhas e corta a linha de baixo nos cruzamentos.
-      ctx.lineJoin = "round";
-      ctx.lineCap = "butt";
+      const color = this.lineColor(linha);
       ctx.setLineDash([]);
+      ctx.lineJoin = "round";
+      // Contorno na cor do fundo: separa faixas vizinhas e corta a linha de baixo nos cruzamentos.
+      ctx.globalAlpha = 1;
+      ctx.lineCap = "butt";
       ctx.strokeStyle = colors.bg;
-      ctx.lineWidth = W + gap * 2;
+      ctx.lineWidth = lineW + gap * 2;
       ctx.beginPath();
       for (const s of segs) tracePath(ctx, screen.get(s)!, radius);
       ctx.stroke();
-      // A cor da linha; trechos em obras tracejados.
-      ctx.strokeStyle = line.cor;
-      ctx.lineWidth = W;
+
+      // Em operação: cor cheia. Em obras: acinzentado (indisponível), como no Live Subway Map.
       ctx.lineCap = "round";
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineW;
       ctx.beginPath();
       for (const s of segs) if (s.status !== "em-obras") tracePath(ctx, screen.get(s)!, radius);
       ctx.stroke();
       const building = segs.filter((s) => s.status === "em-obras");
       if (building.length) {
-        ctx.lineCap = "butt";
-        ctx.setLineDash([W * 1.6, W * 1.1]);
+        ctx.globalAlpha = 0.35;
         ctx.beginPath();
         for (const s of building) tracePath(ctx, screen.get(s)!, radius);
         ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+      }
+      // Fio no meio da faixa: os dois sentidos da linha.
+      if (pairGap > 0.3) {
+        ctx.strokeStyle = colors.bg;
+        ctx.lineWidth = pairGap;
+        ctx.lineCap = "butt";
+        ctx.beginPath();
+        for (const s of segs) tracePath(ctx, screen.get(s)!, radius);
+        ctx.stroke();
       }
     }
     ctx.globalAlpha = 1;
@@ -249,36 +284,34 @@ export class NetworkRenderer {
         }
         if (n === 0) continue;
         const tl = Math.hypot(tx, ty) || 1;
-        dots.push({ x: x / n, y: y / n, linha, tx: tx / tl, ty: ty / tl });
+        dots.push({ x: x / n, y: y / n, linha, tx: tx / tl, ty: ty / tl, building: st.statusPorLinha[linha] === "em-obras" });
       }
       if (dots.length) placed.push({ slug: st.slug, dots });
     }
     this.placed = placed;
 
     const showDots = z >= 10.8 || t > 0.5;
-    const dotR = Math.min(9, Math.max(2.4, W * 0.42));
+    const dotR = Math.min(9, Math.max(2.4, lineW * 0.36));
 
     if (showDots) {
-      // Baldeação: fio preto fino ligando os pontos da mesma estação (e passagens entre estações).
+      // Baldeação: fio preto fino ligando os pontos da mesma estação.
       ctx.strokeStyle = colors.ink;
       ctx.lineWidth = Math.max(1.2, W * 0.12);
       ctx.lineCap = "round";
       for (const p of placed) {
         if (p.dots.length < 2) continue;
-        ctx.globalAlpha = state.selectedLine && !p.dots.some((d) => d.linha === state.selectedLine) ? 0.16 : 1;
         ctx.beginPath();
         const sorted = [...p.dots].sort((a, b) => a.x - b.x || a.y - b.y);
         ctx.moveTo(sorted[0].x, sorted[0].y);
         for (const d of sorted.slice(1)) ctx.lineTo(d.x, d.y);
         ctx.stroke();
       }
+      // Passagem entre estações de nomes diferentes (ex.: Paulista–Consolação), só no real e de perto.
       for (const st of stations) {
         for (const other of st.integracoes) {
           const a = placed.find((p) => p.slug === st.slug), b = placed.find((p) => p.slug === other);
           if (!a || !b || st.slug > other) continue;
-          // Passagem só aparece quando as estações estão de fato próximas na tela (no real, de perto).
           if (t > 0.5 || Math.hypot(a.dots[0].x - b.dots[0].x, a.dots[0].y - b.dots[0].y) > 12 * spacing + 40) continue;
-          ctx.globalAlpha = state.selectedLine ? 0.16 : 1;
           ctx.setLineDash([3, 3]);
           ctx.beginPath();
           ctx.moveTo(a.dots[0].x, a.dots[0].y);
@@ -287,32 +320,49 @@ export class NetworkRenderer {
           ctx.setLineDash([]);
         }
       }
-      // Pontos pretos, um por linha.
+      // Pontos pretos, um por linha; estação em obras = ponto vazado.
       for (const p of placed) {
         for (const d of p.dots) {
-          ctx.globalAlpha = dim(d.linha);
-          ctx.fillStyle = colors.ink;
           ctx.beginPath();
           ctx.arc(d.x, d.y, dotR, 0, Math.PI * 2);
-          ctx.fill();
+          if (d.building) {
+            ctx.fillStyle = colors.bg;
+            ctx.fill();
+            ctx.strokeStyle = colors.ink;
+            ctx.lineWidth = Math.max(1.2, dotR * 0.35);
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = colors.ink;
+            ctx.fill();
+          }
         }
       }
-      // De perto, o número da linha sob cada ponto (como as letras do Live Subway Map).
-      if (z >= 15) {
-        const size = Math.round(Math.min(16, W * 0.75));
+      // De perto, o número da linha ao lado de cada ponto (como as letras do Live Subway Map).
+      if (z >= 15 && t < 0.5) {
+        const size = Math.round(Math.min(18, lineW * 0.8));
         ctx.font = `700 ${size}px ${colors.font}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
+        ctx.fillStyle = colors.ink;
         for (const p of placed) {
           for (const d of p.dots) {
-            ctx.globalAlpha = dim(d.linha);
-            const off = dotR + size * 0.8;
-            ctx.fillStyle = colors.ink;
+            const off = dotR + size * 0.75;
             ctx.fillText(d.linha, d.x + d.tx * off, d.y + d.ty * off);
           }
         }
       }
-      ctx.globalAlpha = 1;
+    }
+
+    // ---------------------------------------------------------------- entradas (zoom máximo)
+    if (z >= 16 && t < 0.3) {
+      const size = Math.min(18, 10 + (z - 16) * 6);
+      for (const e of entrances) {
+        const st = stationBySlug.get(e.estacao);
+        if (!st || !this.stationVisible(st)) continue;
+        const p = this.project(e.lngLat);
+        if (p.x < -20 || p.y < -20 || p.x > this.width + 20 || p.y > this.height + 20) continue;
+        drawEntrance(ctx, p.x, p.y, size, colors.ink, colors.bg);
+      }
     }
 
     // ---------------------------------------------------------------- destaques
@@ -381,6 +431,9 @@ export class NetworkRenderer {
     const small = `400 ${Math.round(size * 0.72)}px ${colors.font}`;
     const showAll = effectiveZ >= 12;
     const showComplement = effectiveZ >= 14;
+    // De perto, os ícones das linhas (e ♿) aparecem sob o nome, como no Live Subway Map.
+    const showBadges = effectiveZ >= 12.6;
+    const badge = Math.round(size * 1.05);
     const lh = size * 1.15;
 
     const priority = (slug: string) => {
@@ -391,11 +444,11 @@ export class NetworkRenderer {
       return 3;
     };
     const order = [...placed]
-      .filter((p) => {
-        if (state.selectedLine) return p.dots.some((d) => d.linha === state.selectedLine) || p.slug === state.selectedStation;
-        return showAll || priority(p.slug) <= 2;
-      })
-      .sort((a, b) => priority(a.slug) - priority(b.slug));
+      .filter((p) => showAll || priority(p.slug) <= 2 || (state.selectedLine && p.dots.some((d) => d.linha === state.selectedLine)))
+      .sort((a, b) => {
+        const sel = (p: Placed) => (state.selectedLine && p.dots.some((d) => d.linha === state.selectedLine) ? 0 : 1);
+        return sel(a) - sel(b) || priority(a.slug) - priority(b.slug);
+      });
 
     // Obstáculos: os próprios pontos de todas as estações.
     const boxes: Box[] = [];
@@ -406,8 +459,12 @@ export class NetworkRenderer {
       const st = stationBySlug.get(p.slug)!;
       const lines = wrapName(st.nome);
       const textW = Math.max(...lines.map((l) => this.measure(l, font)));
-      const extra = showComplement && st.complemento ? [st.complemento] : [];
-      const blockH = lines.length * lh + extra.length * size * 0.9;
+      const extra = showComplement && st.complemento ? st.complemento : null;
+      const icons = showBadges ? st.linhas.filter((l) => this.visibleLine(l)) : [];
+      const accessible = showBadges && st.acessivel === "sim";
+      const iconsW = icons.length * (badge + 3) + (accessible ? badge + 3 : 0);
+      const blockW = Math.max(textW, extra ? this.measure(extra, small) : 0, iconsW);
+      const blockH = lines.length * lh + (extra ? size * 0.9 : 0) + (icons.length ? badge + 4 : 0);
 
       const xs = p.dots.map((d) => d.x), ys = p.dots.map((d) => d.y);
       const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2;
@@ -427,9 +484,9 @@ export class NetworkRenderer {
       type Cand = { x: number; y: number; align: CanvasTextAlign; rotate: boolean };
       const cands: Cand[] = horizontal
         ? [
-            { x: cx, y: cy - halfY - 2, align: "left", rotate: true },
             { x: cx, y: cy - halfY - 4 - blockH + size, align: "center", rotate: false },
             { x: cx, y: cy + halfY + size, align: "center", rotate: false },
+            { x: cx, y: cy - halfY - 2, align: "left", rotate: true },
           ]
         : [
             { x: cx + halfX, y: cy - blockH / 2 + size * 0.8, align: "left", rotate: false },
@@ -440,7 +497,7 @@ export class NetworkRenderer {
 
       let chosen: { c: Cand; box: Box } | null = null;
       for (const c of cands) {
-        const box = labelBox(c, textW, blockH, size);
+        const box = labelBox(c, blockW, blockH, size);
         if (box.x + box.w < 0 || box.x > this.width || box.y + box.h < 0 || box.y > this.height) continue;
         if (boxes.some((b) => intersects(b, box))) continue;
         chosen = { c, box };
@@ -452,7 +509,6 @@ export class NetworkRenderer {
 
       const { c } = chosen;
       ctx.save();
-      ctx.globalAlpha = state.selectedLine && !p.dots.some((d) => d.linha === state.selectedLine) ? 0.3 : 1;
       ctx.translate(c.x, c.y);
       if (c.rotate) ctx.rotate(-Math.PI / 4);
       ctx.textAlign = c.align;
@@ -465,12 +521,26 @@ export class NetworkRenderer {
         ctx.strokeText(l, 0, i * lh);
         ctx.fillText(l, 0, i * lh);
       });
-      if (extra.length) {
+      let y = (lines.length - 1) * lh;
+      if (extra) {
         ctx.font = small;
         ctx.fillStyle = colors.muted;
-        const y = (lines.length - 1) * lh + size * 0.95;
-        ctx.strokeText(extra[0], 0, y);
-        ctx.fillText(extra[0], 0, y);
+        y += size * 0.95;
+        ctx.strokeText(extra, 0, y);
+        ctx.fillText(extra, 0, y);
+      }
+      if (icons.length || accessible) {
+        // Fileira de ícones alinhada ao texto.
+        let x = c.align === "left" ? 0 : c.align === "right" ? -iconsW : -iconsW / 2;
+        const yy = y + size * 0.45 + badge / 2;
+        if (accessible) {
+          drawWheelchair(ctx, x + badge / 2, yy, badge, colors.ink);
+          x += badge + 3;
+        }
+        for (const l of icons) {
+          drawBadge(ctx, x + badge / 2, yy, badge, l, this.lineColor(l), colors.font);
+          x += badge + 3;
+        }
       }
       ctx.restore();
     }
@@ -493,6 +563,62 @@ export class NetworkRenderer {
     }
     return best;
   }
+}
+
+/** Ícone da linha: círculo na cor da linha com o número branco centralizado. */
+function drawBadge(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, label: string, color: string, font: string) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, d / 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff";
+  ctx.font = `700 ${Math.round(d * (label.length > 1 ? 0.5 : 0.62))}px ${font}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(label, x, y + d * 0.03);
+  ctx.textBaseline = "alphabetic";
+}
+
+/** Símbolo internacional de acessibilidade, simplificado. */
+function drawWheelchair(ctx: CanvasRenderingContext2D, x: number, y: number, d: number, color: string) {
+  const s = d / 24;
+  ctx.save();
+  ctx.translate(x - 12 * s, y - 12 * s);
+  ctx.scale(s, s);
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 2.2;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.arc(12, 4, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(11, 8);
+  ctx.lineTo(11, 14);
+  ctx.lineTo(17, 14);
+  ctx.lineTo(19, 20);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(11, 16, 5.5, Math.PI * 0.75, Math.PI * 2.1);
+  ctx.stroke();
+  ctx.restore();
+}
+
+/** Entrada da estação: quadrado preto com seta para baixo. */
+function drawEntrance(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, ink: string, bg: string) {
+  ctx.fillStyle = ink;
+  ctx.fillRect(x - size / 2, y - size / 2, size, size);
+  ctx.strokeStyle = bg;
+  ctx.lineWidth = Math.max(1.5, size * 0.13);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.beginPath();
+  ctx.moveTo(x, y - size * 0.28);
+  ctx.lineTo(x, y + size * 0.26);
+  ctx.moveTo(x - size * 0.22, y + size * 0.05);
+  ctx.lineTo(x, y + size * 0.27);
+  ctx.lineTo(x + size * 0.22, y + size * 0.05);
+  ctx.stroke();
 }
 
 /** Quebra nomes longos em duas linhas no hífen ou espaço mais perto do meio. */
