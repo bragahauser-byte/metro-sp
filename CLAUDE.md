@@ -7,7 +7,7 @@ Este arquivo fica na raiz do repositório. Leia-o no início de toda sessão e s
 Um site conceitual e não oficial sobre a rede de metrô de São Paulo, feito como projeto de design/portfólio por Malu (github.com/bragahauser-byte). Foco: interface excepcional, responsiva, com mapa interativo, geolocalização (GPS), linguagem visual do modernismo paulista e minimalismo.
 
 - Não é o site oficial e não deve se passar por ele. Rodapé fixo em todas as páginas: "Projeto conceitual independente, sem vínculo com a Companhia do Metropolitano de São Paulo. Informações oficiais em metro.sp.gov.br."
-- Nome do site: **"Metrô" + selo BETA** (decisão da Malu em 20/10/2026), sempre acompanhado do aviso de projeto não oficial. Não usar o domínio oficial nem o logotipo/símbolo oficial; o nome aparece só em texto. Referências à identidade histórica (cores de linha, grid, tipografia de inspiração suíça) são homenagem/estudo, não cópia da marca.
+- Nome do site: **"Metrô" + selo BETA** (decisão de 20/10/2026), sempre acompanhado do aviso de projeto não oficial. Não usar o domínio oficial nem o logotipo/símbolo oficial; o nome aparece só em texto. Referências à identidade histórica (cores de linha, grid, tipografia de inspiração suíça) são homenagem/estudo, não cópia da marca.
 
 ## Referência visual principal
 
@@ -38,7 +38,8 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 
 - Grid modular rígido (inspiração Cauduro/Martino e escola suíça), muito espaço em branco, hierarquia tipográfica forte, poucos elementos.
 - Cores de linha são tokens semânticos (`--line-1` … `--line-17`); os hex vêm do Guia Rápido em `_referencias/` (ver `docs/inventario.md`). Nunca inventar cor de linha.
-- Tipografia: Helvetica Now (em `_referencias/tipografia projeto`) é comercial — NÃO commitar; usar alternativa livre próxima via `next/font`. Só embutir fontes com licença que permita web.
+- Direção visual fechada (20/10/2026): **"Mapa vivo"** — cartões flutuantes com sombra mínima, cantos arredondados, curvas suaves, badges circulares. Tokens em `styles/tokens.css`, vitrine em `/estilo`.
+- Tipografia: **Inter** (OFL) via `next/font`. Helvetica Now (em `_referencias/tipografia projeto`) é comercial — NÃO commitar.
 - Mobile-first. Testar em 360px, 768px, 1280px e 1920px.
 - Acessibilidade WCAG AA: contraste, foco visível, navegação por teclado, e toda informação do mapa também disponível em lista (o mapa nunca é o único caminho).
 - Dark mode e light mode.

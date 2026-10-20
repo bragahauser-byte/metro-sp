@@ -65,7 +65,7 @@
   --duration-base: 200ms;
   --duration-slow: 400ms;
 
-  /* Direção A (padrão) — "Mapa vivo" */
+  /* Direção visual: "Mapa vivo" (decidida em 20/10/2026) */
   --radius-card: 12px;
   --radius-control: 999px;
   --radius-badge: 999px;
@@ -104,14 +104,6 @@
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 4px 16px rgb(0 0 0 / 0.5);
 }
 
-/* Direção B — "Cauduro": módulos quadrados, fio divisor, sem sombra */
-[data-direction="b"] {
-  --radius-card: 0px;
-  --radius-control: 0px;
-  --radius-badge: 0px;
-  --shadow-card: none;
-  --card-border: var(--rule-strong);
-}
 
 @media (prefers-reduced-motion: reduce) {
   :root {

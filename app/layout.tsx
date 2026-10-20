@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import { SiteFooter, SiteHeader } from "@/components/ui/site-chrome";
 import "./globals.css";
 
-// Provisório: a família definitiva sai da Fase 1 (Helvetica Now é comercial e não entra no repo).
+// Inter: alternativa livre (OFL) à Helvetica Now das referências, que é comercial.
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],

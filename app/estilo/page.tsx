@@ -1,17 +1,12 @@
 import type { Metadata } from "next";
-import { Hanken_Grotesk, Inter, Schibsted_Grotesk } from "next/font/google";
 import { Button } from "@/components/ui/button";
-import { DirectionPreview } from "@/components/ui/direction-preview";
+import { CompositionPreview } from "@/components/ui/composition-preview";
 import { LineBadge } from "@/components/ui/line-badge";
 import { METRO_LINE_IDS, RAIL_LINE_IDS, getLine } from "@/components/ui/lines";
 import { StationCard } from "@/components/ui/station-card";
 import { StatusChip } from "@/components/ui/status-chip";
 
 export const metadata: Metadata = { title: "Estilo" };
-
-const inter = Inter({ subsets: ["latin"], display: "swap" });
-const hanken = Hanken_Grotesk({ subsets: ["latin"], display: "swap" });
-const schibsted = Schibsted_Grotesk({ subsets: ["latin"], display: "swap" });
 
 function luminance(hex: string) {
   const [r, g, b] = [1, 3, 5].map((i) => {
@@ -82,16 +77,13 @@ export default function EstiloPage() {
         <p className="text-caption font-medium uppercase tracking-widest text-ink-muted">Design system · Fase 1</p>
         <h1 className="text-title-l font-bold tracking-tight sm:text-display">Estilo</h1>
         <p className="max-w-[60ch] text-lead text-ink-muted">
-          Os mesmos tokens e componentes em duas direções visuais. Use o botão de tema no topo para ver
-          claro e escuro.
+          Direção “Mapa vivo”: o mapa ocupa a tela, tudo o mais flutua sobre ele, e a cor só aparece nas
+          linhas. Use o botão de tema no topo para ver claro e escuro.
         </p>
       </header>
 
-      <Section id="direcoes" title="Duas direções">
-        <div className="grid gap-6 lg:grid-cols-2">
-          <DirectionPreview direction="a" />
-          <DirectionPreview direction="b" />
-        </div>
+      <Section id="composicao" title="Composição">
+        <CompositionPreview />
       </Section>
 
       <Section id="linhas" title="Cores de linha">
@@ -126,8 +118,8 @@ export default function EstiloPage() {
 
       <Section id="tipografia" title="Tipografia">
         <p className="mb-3 max-w-[60ch] text-body text-ink-muted">
-          Escala modular 1,25 sobre 16px. Helvetica Now é comercial e fica fora do site; as três candidatas
-          livres abaixo têm licença OFL.
+          Inter (licença OFL), escala modular 1,25 sobre 16px. A Helvetica Now das referências é comercial
+          e fica fora do site; a Inter é a alternativa livre de desenho mais próximo.
         </p>
         <ul className="flex flex-col">
           {TYPE_SCALE.map(([cls, label, px]) => (
@@ -139,22 +131,6 @@ export default function EstiloPage() {
             </li>
           ))}
         </ul>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {[
-            ["Inter", inter.className, "Recomendada: desenho próximo da Helvetica Now, ótima em tela pequena."],
-            ["Hanken Grotesk", hanken.className, "Mais geométrica, um pouco mais calorosa."],
-            ["Schibsted Grotesk", schibsted.className, "Grotesca de jornal, mais contraste e personalidade."],
-          ].map(([name, cls, note]) => (
-            <figure key={name} className={`${cls} flex flex-col gap-1 border-t border-rule pt-2`}>
-              <p className="text-title-m font-bold leading-none tracking-tight">Brigadeiro</p>
-              <p className="text-body">Ana Rosa · Vila Madalena · Tamanduateí</p>
-              <p className="text-caption tabular-nums">1 2 3 4 5 6 15 17</p>
-              <figcaption className="font-sans text-caption text-ink-muted">
-                <strong className="text-ink">{name}.</strong> {note}
-              </figcaption>
-            </figure>
-          ))}
-        </div>
       </Section>
 
       <Section id="espaco" title="Grid de 8px">
