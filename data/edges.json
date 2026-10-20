@@ -1,0 +1,1961 @@
+{
+ "trechos": [
+  {
+   "linha": "1",
+   "de": "jabaquara",
+   "para": "conceicao",
+   "status": "operando",
+   "distanciaM": 1265,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "conceicao",
+   "para": "sao-judas",
+   "status": "operando",
+   "distanciaM": 1029,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "sao-judas",
+   "para": "saude",
+   "status": "operando",
+   "distanciaM": 860,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "saude",
+   "para": "praca-da-arvore",
+   "status": "operando",
+   "distanciaM": 879,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "praca-da-arvore",
+   "para": "santa-cruz",
+   "status": "operando",
+   "distanciaM": 1281,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "santa-cruz",
+   "para": "vila-mariana",
+   "status": "operando",
+   "distanciaM": 1148,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "vila-mariana",
+   "para": "ana-rosa",
+   "status": "operando",
+   "distanciaM": 981,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "ana-rosa",
+   "para": "paraiso",
+   "status": "operando",
+   "distanciaM": 722,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "paraiso",
+   "para": "vergueiro",
+   "status": "operando",
+   "distanciaM": 759,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "vergueiro",
+   "para": "sao-joaquim",
+   "status": "operando",
+   "distanciaM": 808,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "sao-joaquim",
+   "para": "japao-liberdade",
+   "status": "operando",
+   "distanciaM": 794,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "japao-liberdade",
+   "para": "se",
+   "status": "operando",
+   "distanciaM": 569,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "se",
+   "para": "luz",
+   "status": "operando",
+   "distanciaM": 1542,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "luz",
+   "para": "tiradentes",
+   "status": "operando",
+   "distanciaM": 698,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "tiradentes",
+   "para": "armenia",
+   "status": "operando",
+   "distanciaM": 682,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "armenia",
+   "para": "portuguesa-tiete",
+   "status": "operando",
+   "distanciaM": 1309,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "portuguesa-tiete",
+   "para": "carandiru",
+   "status": "operando",
+   "distanciaM": 721,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "carandiru",
+   "para": "santana",
+   "status": "operando",
+   "distanciaM": 789,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "santana",
+   "para": "jardim-sao-paulo-ayrton-senna",
+   "status": "operando",
+   "distanciaM": 1401,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "jardim-sao-paulo-ayrton-senna",
+   "para": "parada-inglesa",
+   "status": "operando",
+   "distanciaM": 1138,
+   "aproximado": false
+  },
+  {
+   "linha": "1",
+   "de": "parada-inglesa",
+   "para": "tucuruvi",
+   "status": "operando",
+   "distanciaM": 906,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "vila-prudente",
+   "para": "tamanduatei",
+   "status": "operando",
+   "distanciaM": 1233,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "tamanduatei",
+   "para": "sacoma",
+   "status": "operando",
+   "distanciaM": 1682,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "sacoma",
+   "para": "alto-do-ipiranga",
+   "status": "operando",
+   "distanciaM": 1022,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "alto-do-ipiranga",
+   "para": "santos-imigrantes",
+   "status": "operando",
+   "distanciaM": 1142,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "santos-imigrantes",
+   "para": "chacara-klabin",
+   "status": "operando",
+   "distanciaM": 1113,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "chacara-klabin",
+   "para": "ana-rosa",
+   "status": "operando",
+   "distanciaM": 1472,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "ana-rosa",
+   "para": "paraiso",
+   "status": "operando",
+   "distanciaM": 738,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "paraiso",
+   "para": "brigadeiro",
+   "status": "operando",
+   "distanciaM": 1057,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "brigadeiro",
+   "para": "trianon-masp",
+   "status": "operando",
+   "distanciaM": 887,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "trianon-masp",
+   "para": "consolacao",
+   "status": "operando",
+   "distanciaM": 888,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "consolacao",
+   "para": "clinicas",
+   "status": "operando",
+   "distanciaM": 1206,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "clinicas",
+   "para": "sumare",
+   "status": "operando",
+   "distanciaM": 766,
+   "aproximado": false
+  },
+  {
+   "linha": "2",
+   "de": "sumare",
+   "para": "vila-madalena",
+   "status": "operando",
+   "distanciaM": 1458,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "palmeiras-barra-funda",
+   "para": "marechal-deodoro",
+   "status": "operando",
+   "distanciaM": 1538,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "marechal-deodoro",
+   "para": "santa-cecilia",
+   "status": "operando",
+   "distanciaM": 921,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "santa-cecilia",
+   "para": "republica",
+   "status": "operando",
+   "distanciaM": 815,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "republica",
+   "para": "anhangabau",
+   "status": "operando",
+   "distanciaM": 599,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "anhangabau",
+   "para": "se",
+   "status": "operando",
+   "distanciaM": 699,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "se",
+   "para": "pedro-ii",
+   "status": "operando",
+   "distanciaM": 737,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "pedro-ii",
+   "para": "bras",
+   "status": "operando",
+   "distanciaM": 1054,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "bras",
+   "para": "bresser-mooca",
+   "status": "operando",
+   "distanciaM": 910,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "bresser-mooca",
+   "para": "belem",
+   "status": "operando",
+   "distanciaM": 1825,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "belem",
+   "para": "tatuape",
+   "status": "operando",
+   "distanciaM": 1361,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "tatuape",
+   "para": "carrao",
+   "status": "operando",
+   "distanciaM": 1279,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "carrao",
+   "para": "penha",
+   "status": "operando",
+   "distanciaM": 2272,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "penha",
+   "para": "vila-matilde",
+   "status": "operando",
+   "distanciaM": 1207,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "vila-matilde",
+   "para": "guilhermina-esperanca",
+   "status": "operando",
+   "distanciaM": 1510,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "guilhermina-esperanca",
+   "para": "patriarca-vila-re",
+   "status": "operando",
+   "distanciaM": 1694,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "patriarca-vila-re",
+   "para": "artur-alvim",
+   "status": "operando",
+   "distanciaM": 2135,
+   "aproximado": false
+  },
+  {
+   "linha": "3",
+   "de": "artur-alvim",
+   "para": "corinthians-itaquera",
+   "status": "operando",
+   "distanciaM": 1473,
+   "aproximado": false
+  },
+  {
+   "linha": "4",
+   "de": "vila-sonia",
+   "para": "sao-paulo-morumbi",
+   "status": "operando",
+   "distanciaM": 1400,
+   "aproximado": false
+  },
+  {
+   "linha": "4",
+   "de": "sao-paulo-morumbi",
+   "para": "butanta",
+   "status": "operando",
+   "distanciaM": 2483,
+   "aproximado": false
+  },
+  {
+   "linha": "4",
+   "de": "butanta",
+   "para": "pinheiros",
+   "status": "operando",
+   "distanciaM": 847,
+   "aproximado": false
+  },
+  {
+   "linha": "4",
+   "de": "pinheiros",
+   "para": "faria-lima",
+   "status": "operando",
+   "distanciaM": 808,
+   "aproximado": false
+  },
+  {
+   "linha": "4",
+   "de": "faria-lima",
+   "para": "fradique-coutinho",
+   "status": "operando",
+   "distanciaM": 1050,
+   "aproximado": false
+  },
+  {
+   "linha": "4",
+   "de": "fradique-coutinho",
+   "para": "oscar-freire",
+   "status": "operando",
+   "distanciaM": 1403,
+   "aproximado": false
+  },
+  {
+   "linha": "4",
+   "de": "oscar-freire",
+   "para": "paulista",
+   "status": "operando",
+   "distanciaM": 1165,
+   "aproximado": false
+  },
+  {
+   "linha": "4",
+   "de": "paulista",
+   "para": "higienopolis-mackenzie",
+   "status": "operando",
+   "distanciaM": 1241,
+   "aproximado": false
+  },
+  {
+   "linha": "4",
+   "de": "higienopolis-mackenzie",
+   "para": "republica",
+   "status": "operando",
+   "distanciaM": 1144,
+   "aproximado": false
+  },
+  {
+   "linha": "4",
+   "de": "republica",
+   "para": "luz",
+   "status": "operando",
+   "distanciaM": 1225,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "chacara-klabin",
+   "para": "santa-cruz",
+   "status": "operando",
+   "distanciaM": 955,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "santa-cruz",
+   "para": "hospital-sao-paulo",
+   "status": "operando",
+   "distanciaM": 850,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "hospital-sao-paulo",
+   "para": "aacd-servidor",
+   "status": "operando",
+   "distanciaM": 689,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "aacd-servidor",
+   "para": "moema",
+   "status": "operando",
+   "distanciaM": 1294,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "moema",
+   "para": "eucaliptos",
+   "status": "operando",
+   "distanciaM": 921,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "eucaliptos",
+   "para": "campo-belo",
+   "status": "operando",
+   "distanciaM": 1785,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "campo-belo",
+   "para": "brooklin",
+   "status": "operando",
+   "distanciaM": 1173,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "brooklin",
+   "para": "borba-gato",
+   "status": "operando",
+   "distanciaM": 795,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "borba-gato",
+   "para": "alto-da-boa-vista",
+   "status": "operando",
+   "distanciaM": 1221,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "alto-da-boa-vista",
+   "para": "adolfo-pinheiro",
+   "status": "operando",
+   "distanciaM": 967,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "adolfo-pinheiro",
+   "para": "largo-treze",
+   "status": "operando",
+   "distanciaM": 835,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "largo-treze",
+   "para": "santo-amaro",
+   "status": "operando",
+   "distanciaM": 1112,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "santo-amaro",
+   "para": "giovanni-gronchi",
+   "status": "operando",
+   "distanciaM": 2321,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "giovanni-gronchi",
+   "para": "vila-das-belezas",
+   "status": "operando",
+   "distanciaM": 1610,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "vila-das-belezas",
+   "para": "campo-limpo",
+   "status": "operando",
+   "distanciaM": 1869,
+   "aproximado": false
+  },
+  {
+   "linha": "5",
+   "de": "campo-limpo",
+   "para": "capao-redondo",
+   "status": "operando",
+   "distanciaM": 1460,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "brasilandia",
+   "para": "maristela",
+   "status": "em-obras",
+   "distanciaM": 760,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "maristela",
+   "para": "itaberaba-hospital-vila-penteado",
+   "status": "em-obras",
+   "distanciaM": 1106,
+   "aproximado": true
+  },
+  {
+   "linha": "6",
+   "de": "itaberaba-hospital-vila-penteado",
+   "para": "joao-paulo-i",
+   "status": "em-obras",
+   "distanciaM": 1004,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "joao-paulo-i",
+   "para": "freguesia-do-o",
+   "status": "operacao-assistida",
+   "distanciaM": 942,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "freguesia-do-o",
+   "para": "santa-marina",
+   "status": "operacao-assistida",
+   "distanciaM": 1417,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "santa-marina",
+   "para": "agua-branca",
+   "status": "operacao-assistida",
+   "distanciaM": 803,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "agua-branca",
+   "para": "sesc-pompeia",
+   "status": "operacao-assistida",
+   "distanciaM": 919,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "sesc-pompeia",
+   "para": "perdizes",
+   "status": "operacao-assistida",
+   "distanciaM": 866,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "perdizes",
+   "para": "puc-cardoso-de-almeida",
+   "status": "em-obras",
+   "distanciaM": 1108,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "puc-cardoso-de-almeida",
+   "para": "faap-pacaembu",
+   "status": "em-obras",
+   "distanciaM": 1214,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "faap-pacaembu",
+   "para": "higienopolis-mackenzie",
+   "status": "em-obras",
+   "distanciaM": 841,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "higienopolis-mackenzie",
+   "para": "14-bis-saracura",
+   "status": "em-obras",
+   "distanciaM": 941,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "14-bis-saracura",
+   "para": "bela-vista",
+   "status": "em-obras",
+   "distanciaM": 772,
+   "aproximado": false
+  },
+  {
+   "linha": "6",
+   "de": "bela-vista",
+   "para": "sao-joaquim",
+   "status": "em-obras",
+   "distanciaM": 584,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "palmeiras-barra-funda",
+   "para": "agua-branca",
+   "status": "operando",
+   "distanciaM": 2293,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "agua-branca",
+   "para": "lapa-linha-7",
+   "status": "operando",
+   "distanciaM": 1655,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "lapa-linha-7",
+   "para": "piqueri",
+   "status": "operando",
+   "distanciaM": 2009,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "piqueri",
+   "para": "pirituba",
+   "status": "operando",
+   "distanciaM": 2159,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "pirituba",
+   "para": "vila-clarice",
+   "status": "operando",
+   "distanciaM": 2915,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "vila-clarice",
+   "para": "jaragua",
+   "status": "operando",
+   "distanciaM": 2009,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "jaragua",
+   "para": "vila-aurora",
+   "status": "operando",
+   "distanciaM": 2307,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "vila-aurora",
+   "para": "perus",
+   "status": "operando",
+   "distanciaM": 4063,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "perus",
+   "para": "caieiras",
+   "status": "operando",
+   "distanciaM": 4710,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "caieiras",
+   "para": "franco-da-rocha",
+   "status": "operando",
+   "distanciaM": 4972,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "franco-da-rocha",
+   "para": "baltazar-fidelis",
+   "status": "operando",
+   "distanciaM": 2517,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "baltazar-fidelis",
+   "para": "francisco-morato",
+   "status": "operando",
+   "distanciaM": 3739,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "francisco-morato",
+   "para": "botujuru",
+   "status": "operando",
+   "distanciaM": 6656,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "botujuru",
+   "para": "campo-limpo-paulista",
+   "status": "operando",
+   "distanciaM": 3918,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "campo-limpo-paulista",
+   "para": "varzea-paulista",
+   "status": "operando",
+   "distanciaM": 5914,
+   "aproximado": false
+  },
+  {
+   "linha": "7",
+   "de": "varzea-paulista",
+   "para": "jundiai",
+   "status": "operando",
+   "distanciaM": 5196,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "julio-prestes",
+   "para": "palmeiras-barra-funda",
+   "status": "operando",
+   "distanciaM": 3035,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "palmeiras-barra-funda",
+   "para": "lapa-linha-8",
+   "status": "operando",
+   "distanciaM": 3443,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "lapa-linha-8",
+   "para": "domingos-de-moraes",
+   "status": "operando",
+   "distanciaM": 2389,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "domingos-de-moraes",
+   "para": "imperatriz-leopoldina",
+   "status": "operando",
+   "distanciaM": 1919,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "imperatriz-leopoldina",
+   "para": "presidente-altino",
+   "status": "operando",
+   "distanciaM": 2801,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "presidente-altino",
+   "para": "osasco",
+   "status": "operando",
+   "distanciaM": 1695,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "osasco",
+   "para": "comandante-sampaio",
+   "status": "operando",
+   "distanciaM": 2431,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "comandante-sampaio",
+   "para": "quitauna",
+   "status": "operando",
+   "distanciaM": 1070,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "quitauna",
+   "para": "general-miguel-costa",
+   "status": "operando",
+   "distanciaM": 905,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "general-miguel-costa",
+   "para": "carapicuiba",
+   "status": "operando",
+   "distanciaM": 2199,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "carapicuiba",
+   "para": "santa-terezinha",
+   "status": "operando",
+   "distanciaM": 1272,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "santa-terezinha",
+   "para": "antonio-joao",
+   "status": "operando",
+   "distanciaM": 1259,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "antonio-joao",
+   "para": "barueri",
+   "status": "operando",
+   "distanciaM": 2074,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "barueri",
+   "para": "jardim-belval",
+   "status": "operando",
+   "distanciaM": 1808,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "jardim-belval",
+   "para": "jardim-silveira",
+   "status": "operando",
+   "distanciaM": 1075,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "jardim-silveira",
+   "para": "jandira",
+   "status": "operando",
+   "distanciaM": 1115,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "jandira",
+   "para": "sagrado-coracao",
+   "status": "operando",
+   "distanciaM": 1626,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "sagrado-coracao",
+   "para": "engenheiro-cardoso",
+   "status": "operando",
+   "distanciaM": 1557,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "engenheiro-cardoso",
+   "para": "itapevi",
+   "status": "operando",
+   "distanciaM": 1671,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "itapevi",
+   "para": "santa-rita",
+   "status": "operando",
+   "distanciaM": 1507,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "santa-rita",
+   "para": "ambuita",
+   "status": "operando",
+   "distanciaM": 3501,
+   "aproximado": false
+  },
+  {
+   "linha": "8",
+   "de": "ambuita",
+   "para": "amador-bueno",
+   "status": "operando",
+   "distanciaM": 1435,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "varginha",
+   "para": "mendes-vila-natal",
+   "status": "operando",
+   "distanciaM": 1826,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "mendes-vila-natal",
+   "para": "grajau",
+   "status": "operando",
+   "distanciaM": 2372,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "grajau",
+   "para": "primavera-interlagos",
+   "status": "operando",
+   "distanciaM": 1721,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "primavera-interlagos",
+   "para": "autodromo",
+   "status": "operando",
+   "distanciaM": 1868,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "autodromo",
+   "para": "jurubatuba",
+   "status": "operando",
+   "distanciaM": 3965,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "jurubatuba",
+   "para": "socorro",
+   "status": "operando",
+   "distanciaM": 1890,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "socorro",
+   "para": "santo-amaro",
+   "status": "operando",
+   "distanciaM": 1107,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "santo-amaro",
+   "para": "joao-dias",
+   "status": "operando",
+   "distanciaM": 2115,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "joao-dias",
+   "para": "granja-julieta",
+   "status": "operando",
+   "distanciaM": 1782,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "granja-julieta",
+   "para": "morumbi",
+   "status": "operando",
+   "distanciaM": 1320,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "morumbi",
+   "para": "berrini",
+   "status": "operando",
+   "distanciaM": 1925,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "berrini",
+   "para": "vila-olimpia",
+   "status": "operando",
+   "distanciaM": 1341,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "vila-olimpia",
+   "para": "cidade-jardim",
+   "status": "operando",
+   "distanciaM": 872,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "cidade-jardim",
+   "para": "hebraica-reboucas",
+   "status": "operando",
+   "distanciaM": 1553,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "hebraica-reboucas",
+   "para": "pinheiros",
+   "status": "operando",
+   "distanciaM": 955,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "pinheiros",
+   "para": "cidade-universitaria",
+   "status": "operando",
+   "distanciaM": 1358,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "cidade-universitaria",
+   "para": "villa-lobos-jaguare",
+   "status": "operando",
+   "distanciaM": 2589,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "villa-lobos-jaguare",
+   "para": "ceasa",
+   "status": "operando",
+   "distanciaM": 1341,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "ceasa",
+   "para": "presidente-altino",
+   "status": "operando",
+   "distanciaM": 2458,
+   "aproximado": false
+  },
+  {
+   "linha": "9",
+   "de": "presidente-altino",
+   "para": "osasco",
+   "status": "operando",
+   "distanciaM": 1706,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "palmeiras-barra-funda",
+   "para": "luz",
+   "status": "operando",
+   "distanciaM": 3694,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "luz",
+   "para": "bras",
+   "status": "operando",
+   "distanciaM": 2287,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "bras",
+   "para": "juventus-mooca",
+   "status": "operando",
+   "distanciaM": 1627,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "juventus-mooca",
+   "para": "ipiranga",
+   "status": "operando",
+   "distanciaM": 3005,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "ipiranga",
+   "para": "tamanduatei",
+   "status": "operando",
+   "distanciaM": 1321,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "tamanduatei",
+   "para": "sao-caetano-do-sul",
+   "status": "operando",
+   "distanciaM": 2836,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "sao-caetano-do-sul",
+   "para": "utinga",
+   "status": "operando",
+   "distanciaM": 3499,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "utinga",
+   "para": "prefeito-saladino",
+   "status": "operando",
+   "distanciaM": 1412,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "prefeito-saladino",
+   "para": "santo-andre",
+   "status": "operando",
+   "distanciaM": 1757,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "santo-andre",
+   "para": "capuava",
+   "status": "operando",
+   "distanciaM": 4215,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "capuava",
+   "para": "maua",
+   "status": "operando",
+   "distanciaM": 3184,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "maua",
+   "para": "guapituba",
+   "status": "operando",
+   "distanciaM": 3092,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "guapituba",
+   "para": "ribeirao-pires",
+   "status": "operando",
+   "distanciaM": 4572,
+   "aproximado": false
+  },
+  {
+   "linha": "10",
+   "de": "ribeirao-pires",
+   "para": "rio-grande-da-serra",
+   "status": "operando",
+   "distanciaM": 4332,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "palmeiras-barra-funda",
+   "para": "luz",
+   "status": "operando",
+   "distanciaM": 3691,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "luz",
+   "para": "bras",
+   "status": "operando",
+   "distanciaM": 2294,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "bras",
+   "para": "tatuape",
+   "status": "operando",
+   "distanciaM": 4223,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "tatuape",
+   "para": "corinthians-itaquera",
+   "status": "operando",
+   "distanciaM": 11582,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "corinthians-itaquera",
+   "para": "dom-bosco",
+   "status": "operando",
+   "distanciaM": 2449,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "dom-bosco",
+   "para": "jose-bonifacio",
+   "status": "operando",
+   "distanciaM": 1731,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "jose-bonifacio",
+   "para": "guaianases",
+   "status": "operando",
+   "distanciaM": 1664,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "guaianases",
+   "para": "antonio-gianetti-neto",
+   "status": "operando",
+   "distanciaM": 3795,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "antonio-gianetti-neto",
+   "para": "ferraz-de-vasconcelos",
+   "status": "operando",
+   "distanciaM": 2284,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "ferraz-de-vasconcelos",
+   "para": "poa",
+   "status": "operando",
+   "distanciaM": 3126,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "poa",
+   "para": "calmon-viana",
+   "status": "operando",
+   "distanciaM": 1088,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "calmon-viana",
+   "para": "suzano",
+   "status": "operando",
+   "distanciaM": 2777,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "suzano",
+   "para": "jundiapeba",
+   "status": "operando",
+   "distanciaM": 5395,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "jundiapeba",
+   "para": "braz-cubas",
+   "status": "operando",
+   "distanciaM": 3505,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "braz-cubas",
+   "para": "mogi-das-cruzes",
+   "status": "operando",
+   "distanciaM": 3217,
+   "aproximado": false
+  },
+  {
+   "linha": "11",
+   "de": "mogi-das-cruzes",
+   "para": "estudantes",
+   "status": "operando",
+   "distanciaM": 1388,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "bras",
+   "para": "tatuape",
+   "status": "operando",
+   "distanciaM": 4206,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "tatuape",
+   "para": "engenheiro-goulart",
+   "status": "operando",
+   "distanciaM": 8985,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "engenheiro-goulart",
+   "para": "usp-leste",
+   "status": "operando",
+   "distanciaM": 2653,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "usp-leste",
+   "para": "comendador-ermelino",
+   "status": "operando",
+   "distanciaM": 2023,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "comendador-ermelino",
+   "para": "sao-miguel-paulista",
+   "status": "operando",
+   "distanciaM": 4525,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "sao-miguel-paulista",
+   "para": "jardim-helena-vila-mara",
+   "status": "operando",
+   "distanciaM": 2187,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "jardim-helena-vila-mara",
+   "para": "itaim-paulista",
+   "status": "operando",
+   "distanciaM": 1996,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "itaim-paulista",
+   "para": "jardim-romano",
+   "status": "operando",
+   "distanciaM": 2095,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "jardim-romano",
+   "para": "engenheiro-manoel-feio",
+   "status": "operando",
+   "distanciaM": 2027,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "engenheiro-manoel-feio",
+   "para": "itaquaquecetuba",
+   "status": "operando",
+   "distanciaM": 2365,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "itaquaquecetuba",
+   "para": "aracare",
+   "status": "operando",
+   "distanciaM": 2624,
+   "aproximado": false
+  },
+  {
+   "linha": "12",
+   "de": "aracare",
+   "para": "calmon-viana",
+   "status": "operando",
+   "distanciaM": 3020,
+   "aproximado": false
+  },
+  {
+   "linha": "13",
+   "de": "engenheiro-goulart",
+   "para": "guarulhos-cecap",
+   "status": "operando",
+   "distanciaM": 7177,
+   "aproximado": false
+  },
+  {
+   "linha": "13",
+   "de": "guarulhos-cecap",
+   "para": "aeroporto-guarulhos",
+   "status": "operando",
+   "distanciaM": 1594,
+   "aproximado": false
+  },
+  {
+   "linha": "15",
+   "de": "vila-prudente",
+   "para": "oratorio",
+   "status": "operando",
+   "distanciaM": 2207,
+   "aproximado": false
+  },
+  {
+   "linha": "15",
+   "de": "oratorio",
+   "para": "sao-lucas",
+   "status": "operando",
+   "distanciaM": 2020,
+   "aproximado": false
+  },
+  {
+   "linha": "15",
+   "de": "sao-lucas",
+   "para": "camilo-haddad",
+   "status": "operando",
+   "distanciaM": 1037,
+   "aproximado": false
+  },
+  {
+   "linha": "15",
+   "de": "camilo-haddad",
+   "para": "vila-tolstoi",
+   "status": "operando",
+   "distanciaM": 1222,
+   "aproximado": false
+  },
+  {
+   "linha": "15",
+   "de": "vila-tolstoi",
+   "para": "vila-uniao",
+   "status": "operando",
+   "distanciaM": 1284,
+   "aproximado": false
+  },
+  {
+   "linha": "15",
+   "de": "vila-uniao",
+   "para": "jardim-planalto",
+   "status": "operando",
+   "distanciaM": 959,
+   "aproximado": false
+  },
+  {
+   "linha": "15",
+   "de": "jardim-planalto",
+   "para": "sapopemba",
+   "status": "operando",
+   "distanciaM": 1300,
+   "aproximado": false
+  },
+  {
+   "linha": "15",
+   "de": "sapopemba",
+   "para": "fazenda-da-juta",
+   "status": "operando",
+   "distanciaM": 1488,
+   "aproximado": false
+  },
+  {
+   "linha": "15",
+   "de": "fazenda-da-juta",
+   "para": "sao-mateus",
+   "status": "operando",
+   "distanciaM": 1183,
+   "aproximado": false
+  },
+  {
+   "linha": "15",
+   "de": "sao-mateus",
+   "para": "jardim-colonial",
+   "status": "operando",
+   "distanciaM": 1772,
+   "aproximado": false
+  },
+  {
+   "linha": "17",
+   "de": "morumbi",
+   "para": "chucri-zaidan",
+   "status": "operacao-assistida",
+   "distanciaM": 1435,
+   "aproximado": false
+  },
+  {
+   "linha": "17",
+   "de": "chucri-zaidan",
+   "para": "vila-cordeiro",
+   "status": "operacao-assistida",
+   "distanciaM": 731,
+   "aproximado": false
+  },
+  {
+   "linha": "17",
+   "de": "vila-cordeiro",
+   "para": "campo-belo",
+   "status": "operacao-assistida",
+   "distanciaM": 624,
+   "aproximado": false
+  },
+  {
+   "linha": "17",
+   "de": "campo-belo",
+   "para": "vereador-jose-diniz",
+   "status": "operacao-assistida",
+   "distanciaM": 598,
+   "aproximado": false
+  },
+  {
+   "linha": "17",
+   "de": "vereador-jose-diniz",
+   "para": "brooklin-paulista",
+   "status": "operacao-assistida",
+   "distanciaM": 1000,
+   "aproximado": false
+  },
+  {
+   "linha": "17",
+   "de": "brooklin-paulista",
+   "para": "aeroporto-de-congonhas",
+   "status": "operacao-assistida",
+   "distanciaM": 1594,
+   "aproximado": false
+  },
+  {
+   "linha": "17",
+   "de": "brooklin-paulista",
+   "para": "washington-luis",
+   "status": "operacao-assistida",
+   "distanciaM": 771,
+   "aproximado": false
+  }
+ ],
+ "transferencias": [
+  {
+   "estacao": "santa-cruz",
+   "de": "1",
+   "para": "5",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "ana-rosa",
+   "de": "1",
+   "para": "2",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "paraiso",
+   "de": "1",
+   "para": "2",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "sao-joaquim",
+   "de": "1",
+   "para": "6",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "se",
+   "de": "1",
+   "para": "3",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "luz",
+   "de": "1",
+   "para": "4",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "luz",
+   "de": "1",
+   "para": "10",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "luz",
+   "de": "1",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "luz",
+   "de": "4",
+   "para": "10",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "luz",
+   "de": "4",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "luz",
+   "de": "10",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "vila-prudente",
+   "de": "2",
+   "para": "15",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "tamanduatei",
+   "de": "2",
+   "para": "10",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "chacara-klabin",
+   "de": "2",
+   "para": "5",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "palmeiras-barra-funda",
+   "de": "3",
+   "para": "7",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "palmeiras-barra-funda",
+   "de": "3",
+   "para": "8",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "palmeiras-barra-funda",
+   "de": "3",
+   "para": "10",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "palmeiras-barra-funda",
+   "de": "3",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "palmeiras-barra-funda",
+   "de": "7",
+   "para": "8",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "palmeiras-barra-funda",
+   "de": "7",
+   "para": "10",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "palmeiras-barra-funda",
+   "de": "7",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "palmeiras-barra-funda",
+   "de": "8",
+   "para": "10",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "palmeiras-barra-funda",
+   "de": "8",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "palmeiras-barra-funda",
+   "de": "10",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "republica",
+   "de": "3",
+   "para": "4",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "bras",
+   "de": "3",
+   "para": "10",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "bras",
+   "de": "3",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "bras",
+   "de": "3",
+   "para": "12",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "bras",
+   "de": "10",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "bras",
+   "de": "10",
+   "para": "12",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "bras",
+   "de": "11",
+   "para": "12",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "tatuape",
+   "de": "3",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "tatuape",
+   "de": "3",
+   "para": "12",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "tatuape",
+   "de": "11",
+   "para": "12",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "corinthians-itaquera",
+   "de": "3",
+   "para": "11",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "pinheiros",
+   "de": "4",
+   "para": "9",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "higienopolis-mackenzie",
+   "de": "4",
+   "para": "6",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "campo-belo",
+   "de": "5",
+   "para": "17",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "santo-amaro",
+   "de": "5",
+   "para": "9",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "agua-branca",
+   "de": "6",
+   "para": "7",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "presidente-altino",
+   "de": "8",
+   "para": "9",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "osasco",
+   "de": "8",
+   "para": "9",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "morumbi",
+   "de": "9",
+   "para": "17",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "calmon-viana",
+   "de": "11",
+   "para": "12",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "estacao": "engenheiro-goulart",
+   "de": "12",
+   "para": "13",
+   "tipo": "mesma-estacao"
+  },
+  {
+   "de": "paulista",
+   "para": "consolacao",
+   "tipo": "passagem"
+  }
+ ]
+}

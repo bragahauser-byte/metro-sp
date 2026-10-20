@@ -1,0 +1,455 @@
+[
+  {
+    "id": "1",
+    "numero": 1,
+    "nome": "Linha 1-Azul",
+    "cor": "#0063BA",
+    "tinta": "#FFFFFF",
+    "operador": "Metrô",
+    "tipo": "metro",
+    "status": "operando",
+    "extensaoOperacionalKm": 20.3,
+    "sequencias": [
+      [
+        "jabaquara",
+        "conceicao",
+        "sao-judas",
+        "saude",
+        "praca-da-arvore",
+        "santa-cruz",
+        "vila-mariana",
+        "ana-rosa",
+        "paraiso",
+        "vergueiro",
+        "sao-joaquim",
+        "japao-liberdade",
+        "se",
+        "luz",
+        "tiradentes",
+        "armenia",
+        "portuguesa-tiete",
+        "carandiru",
+        "santana",
+        "jardim-sao-paulo-ayrton-senna",
+        "parada-inglesa",
+        "tucuruvi"
+      ]
+    ]
+  },
+  {
+    "id": "2",
+    "numero": 2,
+    "nome": "Linha 2-Verde",
+    "cor": "#097A5E",
+    "tinta": "#FFFFFF",
+    "operador": "Metrô",
+    "tipo": "metro",
+    "status": "operando",
+    "extensaoOperacionalKm": 14.7,
+    "sequencias": [
+      [
+        "vila-prudente",
+        "tamanduatei",
+        "sacoma",
+        "alto-do-ipiranga",
+        "santos-imigrantes",
+        "chacara-klabin",
+        "ana-rosa",
+        "paraiso",
+        "brigadeiro",
+        "trianon-masp",
+        "consolacao",
+        "clinicas",
+        "sumare",
+        "vila-madalena"
+      ]
+    ]
+  },
+  {
+    "id": "3",
+    "numero": 3,
+    "nome": "Linha 3-Vermelha",
+    "cor": "#F02137",
+    "tinta": "#000000",
+    "operador": "Metrô",
+    "tipo": "metro",
+    "status": "operando",
+    "extensaoOperacionalKm": 22,
+    "sequencias": [
+      [
+        "palmeiras-barra-funda",
+        "marechal-deodoro",
+        "santa-cecilia",
+        "republica",
+        "anhangabau",
+        "se",
+        "pedro-ii",
+        "bras",
+        "bresser-mooca",
+        "belem",
+        "tatuape",
+        "carrao",
+        "penha",
+        "vila-matilde",
+        "guilhermina-esperanca",
+        "patriarca-vila-re",
+        "artur-alvim",
+        "corinthians-itaquera"
+      ]
+    ]
+  },
+  {
+    "id": "4",
+    "numero": 4,
+    "nome": "Linha 4-Amarela",
+    "cor": "#FCC917",
+    "tinta": "#000000",
+    "operador": "Motiva",
+    "tipo": "metro",
+    "status": "operando",
+    "extensaoOperacionalKm": 12.8,
+    "sequencias": [
+      [
+        "vila-sonia",
+        "sao-paulo-morumbi",
+        "butanta",
+        "pinheiros",
+        "faria-lima",
+        "fradique-coutinho",
+        "oscar-freire",
+        "paulista",
+        "higienopolis-mackenzie",
+        "republica",
+        "luz"
+      ]
+    ]
+  },
+  {
+    "id": "5",
+    "numero": 5,
+    "nome": "Linha 5-Lilás",
+    "cor": "#874DBF",
+    "tinta": "#FFFFFF",
+    "operador": "Motiva",
+    "tipo": "metro",
+    "status": "operando",
+    "extensaoOperacionalKm": 19.9,
+    "sequencias": [
+      [
+        "chacara-klabin",
+        "santa-cruz",
+        "hospital-sao-paulo",
+        "aacd-servidor",
+        "moema",
+        "eucaliptos",
+        "campo-belo",
+        "brooklin",
+        "borba-gato",
+        "alto-da-boa-vista",
+        "adolfo-pinheiro",
+        "largo-treze",
+        "santo-amaro",
+        "giovanni-gronchi",
+        "vila-das-belezas",
+        "campo-limpo",
+        "capao-redondo"
+      ]
+    ]
+  },
+  {
+    "id": "6",
+    "numero": 6,
+    "nome": "Linha 6-Laranja",
+    "cor": "#FF8300",
+    "tinta": "#000000",
+    "operador": "Linha Uni",
+    "tipo": "metro",
+    "status": "operacao-assistida",
+    "extensaoOperacionalKm": 4.9,
+    "sequencias": [
+      [
+        "brasilandia",
+        "maristela",
+        "itaberaba-hospital-vila-penteado",
+        "joao-paulo-i",
+        "freguesia-do-o",
+        "santa-marina",
+        "agua-branca",
+        "sesc-pompeia",
+        "perdizes",
+        "puc-cardoso-de-almeida",
+        "faap-pacaembu",
+        "higienopolis-mackenzie",
+        "14-bis-saracura",
+        "bela-vista",
+        "sao-joaquim"
+      ]
+    ]
+  },
+  {
+    "id": "7",
+    "numero": 7,
+    "nome": "Linha 7-Rubi",
+    "cor": "#AB0450",
+    "tinta": "#FFFFFF",
+    "operador": "TIC Trens",
+    "tipo": "trem",
+    "status": "operando",
+    "extensaoOperacionalKm": 57,
+    "sequencias": [
+      [
+        "palmeiras-barra-funda",
+        "agua-branca",
+        "lapa-linha-7",
+        "piqueri",
+        "pirituba",
+        "vila-clarice",
+        "jaragua",
+        "vila-aurora",
+        "perus",
+        "caieiras",
+        "franco-da-rocha",
+        "baltazar-fidelis",
+        "francisco-morato",
+        "botujuru",
+        "campo-limpo-paulista",
+        "varzea-paulista",
+        "jundiai"
+      ]
+    ]
+  },
+  {
+    "id": "8",
+    "numero": 8,
+    "nome": "Linha 8-Diamante",
+    "cor": "#A5A596",
+    "tinta": "#000000",
+    "operador": "Motiva",
+    "tipo": "trem",
+    "status": "operando",
+    "extensaoOperacionalKm": 41.8,
+    "sequencias": [
+      [
+        "julio-prestes",
+        "palmeiras-barra-funda",
+        "lapa-linha-8",
+        "domingos-de-moraes",
+        "imperatriz-leopoldina",
+        "presidente-altino",
+        "osasco",
+        "comandante-sampaio",
+        "quitauna",
+        "general-miguel-costa",
+        "carapicuiba",
+        "santa-terezinha",
+        "antonio-joao",
+        "barueri",
+        "jardim-belval",
+        "jardim-silveira",
+        "jandira",
+        "sagrado-coracao",
+        "engenheiro-cardoso",
+        "itapevi",
+        "santa-rita",
+        "ambuita",
+        "amador-bueno"
+      ]
+    ]
+  },
+  {
+    "id": "9",
+    "numero": 9,
+    "nome": "Linha 9-Esmeralda",
+    "cor": "#64B396",
+    "tinta": "#000000",
+    "operador": "Motiva",
+    "tipo": "trem",
+    "status": "operando",
+    "extensaoOperacionalKm": 36.1,
+    "sequencias": [
+      [
+        "varginha",
+        "mendes-vila-natal",
+        "grajau",
+        "primavera-interlagos",
+        "autodromo",
+        "jurubatuba",
+        "socorro",
+        "santo-amaro",
+        "joao-dias",
+        "granja-julieta",
+        "morumbi",
+        "berrini",
+        "vila-olimpia",
+        "cidade-jardim",
+        "hebraica-reboucas",
+        "pinheiros",
+        "cidade-universitaria",
+        "villa-lobos-jaguare",
+        "ceasa",
+        "presidente-altino",
+        "osasco"
+      ]
+    ]
+  },
+  {
+    "id": "10",
+    "numero": 10,
+    "nome": "Linha 10-Turquesa",
+    "cor": "#007687",
+    "tinta": "#FFFFFF",
+    "operador": "CPTM",
+    "tipo": "trem",
+    "status": "operando",
+    "extensaoOperacionalKm": 40.8,
+    "sequencias": [
+      [
+        "palmeiras-barra-funda",
+        "luz",
+        "bras",
+        "juventus-mooca",
+        "ipiranga",
+        "tamanduatei",
+        "sao-caetano-do-sul",
+        "utinga",
+        "prefeito-saladino",
+        "santo-andre",
+        "capuava",
+        "maua",
+        "guapituba",
+        "ribeirao-pires",
+        "rio-grande-da-serra"
+      ]
+    ]
+  },
+  {
+    "id": "11",
+    "numero": 11,
+    "nome": "Linha 11-Coral",
+    "cor": "#F55F1A",
+    "tinta": "#000000",
+    "operador": "Trivia",
+    "tipo": "trem",
+    "status": "operando",
+    "extensaoOperacionalKm": 54.2,
+    "sequencias": [
+      [
+        "palmeiras-barra-funda",
+        "luz",
+        "bras",
+        "tatuape",
+        "corinthians-itaquera",
+        "dom-bosco",
+        "jose-bonifacio",
+        "guaianases",
+        "antonio-gianetti-neto",
+        "ferraz-de-vasconcelos",
+        "poa",
+        "calmon-viana",
+        "suzano",
+        "jundiapeba",
+        "braz-cubas",
+        "mogi-das-cruzes",
+        "estudantes"
+      ]
+    ]
+  },
+  {
+    "id": "12",
+    "numero": 12,
+    "nome": "Linha 12-Safira",
+    "cor": "#262670",
+    "tinta": "#FFFFFF",
+    "operador": "Trivia",
+    "tipo": "trem",
+    "status": "operando",
+    "extensaoOperacionalKm": 38.7,
+    "sequencias": [
+      [
+        "bras",
+        "tatuape",
+        "engenheiro-goulart",
+        "usp-leste",
+        "comendador-ermelino",
+        "sao-miguel-paulista",
+        "jardim-helena-vila-mara",
+        "itaim-paulista",
+        "jardim-romano",
+        "engenheiro-manoel-feio",
+        "itaquaquecetuba",
+        "aracare",
+        "calmon-viana"
+      ]
+    ]
+  },
+  {
+    "id": "13",
+    "numero": 13,
+    "nome": "Linha 13-Jade",
+    "cor": "#00B052",
+    "tinta": "#000000",
+    "operador": "Trivia",
+    "tipo": "trem",
+    "status": "operando",
+    "extensaoOperacionalKm": 8.8,
+    "sequencias": [
+      [
+        "engenheiro-goulart",
+        "guarulhos-cecap",
+        "aeroporto-guarulhos"
+      ]
+    ]
+  },
+  {
+    "id": "15",
+    "numero": 15,
+    "nome": "Linha 15-Prata",
+    "cor": "#8D8F8C",
+    "tinta": "#000000",
+    "operador": "Metrô",
+    "tipo": "monotrilho",
+    "status": "operando",
+    "extensaoOperacionalKm": 14.5,
+    "sequencias": [
+      [
+        "vila-prudente",
+        "oratorio",
+        "sao-lucas",
+        "camilo-haddad",
+        "vila-tolstoi",
+        "vila-uniao",
+        "jardim-planalto",
+        "sapopemba",
+        "fazenda-da-juta",
+        "sao-mateus",
+        "jardim-colonial"
+      ]
+    ]
+  },
+  {
+    "id": "17",
+    "numero": 17,
+    "nome": "Linha 17-Ouro",
+    "cor": "#D58405",
+    "tinta": "#000000",
+    "operador": "Metrô",
+    "tipo": "monotrilho",
+    "status": "operacao-assistida",
+    "extensaoOperacionalKm": 6.8,
+    "sequencias": [
+      [
+        "morumbi",
+        "chucri-zaidan",
+        "vila-cordeiro",
+        "campo-belo",
+        "vereador-jose-diniz",
+        "brooklin-paulista",
+        "aeroporto-de-congonhas"
+      ],
+      [
+        "brooklin-paulista",
+        "washington-luis"
+      ]
+    ]
+  }
+]

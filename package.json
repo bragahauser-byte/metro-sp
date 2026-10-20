@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "data:fetch": "node scripts/fetch-osm.mjs",
+    "data:build": "node scripts/build-data.mjs",
+    "validate": "node scripts/validate-data.mjs"
   },
   "dependencies": {
     "next": "16.4.2",

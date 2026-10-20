@@ -46,3 +46,6 @@ next-env.d.ts
 # fontes comerciais, caso alguma escape da pasta de referências
 *.eot
 *Helvetica*
+
+# dados brutos baixados por scripts/
+/data/raw/
