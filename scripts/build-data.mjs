@@ -350,6 +350,106 @@ for (const [lineIdNum, relIds] of Object.entries(ROUTE_RELATIONS)) {
   });
 }
 
+// ---------------------------------------------------------------- faixas paralelas (modo real)
+
+// Trechos de linhas diferentes que correm juntos (ex.: 11 e 12 entre Brás e Tatuapé) são
+// desenhados lado a lado, como no Live Subway Map. `faixa` é o deslocamento em "larguras de
+// linha" para a direita do sentido de/para do próprio trecho.
+function distToPolyline(p, line) {
+  let best = Infinity;
+  const lat0 = rad(p[1]);
+  const toXY = ([lon, lat]) => [rad(lon) * Math.cos(lat0) * R, rad(lat) * R];
+  const [px, py] = toXY(p);
+  for (let i = 1; i < line.length; i++) {
+    const [ax, ay] = toXY(line[i - 1]), [bx, by] = toXY(line[i]);
+    const dx = bx - ax, dy = by - ay;
+    const t = Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1)));
+    best = Math.min(best, Math.hypot(px - ax - t * dx, py - ay - t * dy));
+  }
+  return best;
+}
+function samples(line, n = 12) {
+  const out = [];
+  for (let i = 0; i <= n; i++) out.push(line[Math.round((i / n) * (line.length - 1))]);
+  return out;
+}
+const direction = (s) => {
+  const a = s.geometria[0], b = s.geometria.at(-1);
+  return [b[0] - a[0], b[1] - a[1]];
+};
+// Sobreposição simétrica: um trecho curto ao lado de um longo conta para os dois.
+const overlaps = (a, b) => samples(a.geometria).filter((p) => distToPolyline(p, b.geometria) < 35).length >= 7;
+// Corredores: trechos sobrepostos se juntam por transitividade; dentro do corredor cada linha
+// tem uma posição fixa (ordem numérica), então as faixas não trocam de lado ao longo do caminho.
+const parent = segments.map((_, i) => i);
+const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
+for (let i = 0; i < segments.length; i++)
+  for (let j = i + 1; j < segments.length; j++) {
+    const [x, y] = [segments[i], segments[j]];
+    if (x.linha !== y.linha && (overlaps(x, y) || overlaps(y, x))) parent[find(i)] = find(j);
+  }
+// Feixes vizinhos com as mesmas linhas (ex.: Vila Mariana→Ana Rosa e Ana Rosa→Paraíso, ambos 1+2)
+// viram um só, para a ordem das faixas não trocar na estação do meio.
+for (let changed = true; changed; ) {
+  changed = false;
+  const groups = new Map();
+  segments.forEach((s, i) => {
+    const r = find(i);
+    if (!groups.has(r)) groups.set(r, { lines: new Set(), stations: new Set() });
+    groups.get(r).lines.add(s.linha);
+    groups.get(r).stations.add(s.de).add(s.para);
+  });
+  const roots = [...groups.keys()].filter((r) => groups.get(r).lines.size > 1);
+  for (let i = 0; i < roots.length && !changed; i++)
+    for (let j = i + 1; j < roots.length && !changed; j++) {
+      const [a, b] = [groups.get(roots[i]), groups.get(roots[j])];
+      const sameLines = a.lines.size === b.lines.size && [...a.lines].every((l) => b.lines.has(l));
+      const touch = [...a.stations].some((s) => b.stations.has(s));
+      if (sameLines && touch) {
+        parent[find(roots[i])] = find(roots[j]);
+        changed = true;
+      }
+    }
+}
+const corridors = new Map();
+segments.forEach((s, i) => {
+  const r = find(i);
+  if (!corridors.has(r)) corridors.set(r, []);
+  corridors.get(r).push(s);
+});
+for (const members of corridors.values()) {
+  const lineIds = [...new Set(members.map((m) => m.linha))].sort((x, y) => Number(x) - Number(y));
+  if (lineIds.length === 1) {
+    for (const m of members) m.faixa = 0;
+    continue;
+  }
+  // Sentido de referência: o da linha de menor número, somando os trechos dela no corredor.
+  const ref = members.filter((m) => m.linha === lineIds[0]).map(direction).reduce((t, d) => [t[0] + d[0], t[1] + d[1]], [0, 0]);
+  // Ordem das faixas pela geometria: a linha que sai do feixe pela esquerda fica na faixa da
+  // esquerda — assim as linhas não se cruzam nas pontas do feixe.
+  const corridorStations = new Set(members.flatMap((m) => [m.de, m.para]));
+  const leftScore = new Map(lineIds.map((l) => [l, 0]));
+  for (const l of lineIds) {
+    for (const o of segments) {
+      if (o.linha !== l || members.includes(o)) continue;
+      const from = corridorStations.has(o.de) ? o.de : corridorStations.has(o.para) ? o.para : null;
+      if (!from) continue;
+      const start = from === o.de ? o.geometria[0] : o.geometria.at(-1);
+      const end = from === o.de ? o.geometria.at(-1) : o.geometria[0];
+      const v = [end[0] - start[0], end[1] - start[1]];
+      const len = Math.hypot(...v) || 1;
+      // Produto vetorial > 0: a saída fica à esquerda do sentido de referência.
+      leftScore.set(l, leftScore.get(l) + (ref[0] * v[1] - ref[1] * v[0]) / len);
+    }
+  }
+  lineIds.sort((a, b) => leftScore.get(b) - leftScore.get(a) || Number(a) - Number(b));
+  for (const m of members) {
+    const rank = lineIds.indexOf(m.linha) - (lineIds.length - 1) / 2;
+    const [dx, dy] = direction(m);
+    m.faixa = dx * ref[0] + dy * ref[1] >= 0 ? rank : -rank;
+  }
+}
+
 // ---------------------------------------------------------------- transferências
 
 const transfers = [];
