@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# referências locais (material de marca e fontes comerciais — nunca publicar)
+/_referencias/
+
+# fontes comerciais, caso alguma escape da pasta de referências
+*.eot
+*Helvetica*
