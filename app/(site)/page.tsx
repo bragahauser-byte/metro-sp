@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <main className="flex flex-1 flex-col justify-center gap-4 px-2 py-12 sm:px-4">
       <p className="text-caption font-medium uppercase tracking-widest text-ink-muted">
-        Em construção
+        Beta
       </p>
       <h1 className="max-w-[12ch] text-display font-bold tracking-tight sm:text-hero">
         A rede de São Paulo como objeto de design.
@@ -18,9 +18,14 @@ export default function Home() {
           </li>
         ))}
       </ul>
-      <Link href="/estilo" className="text-body font-semibold underline underline-offset-4">
-        Ver o design system →
-      </Link>
+      <div className="flex flex-wrap gap-3">
+        <Link href="/mapa" className="text-lead font-semibold underline underline-offset-4">
+          Abrir o mapa →
+        </Link>
+        <Link href="/perto-de-mim" className="text-lead font-semibold underline underline-offset-4">
+          Estação mais perto de mim →
+        </Link>
+      </div>
     </main>
   );
 }

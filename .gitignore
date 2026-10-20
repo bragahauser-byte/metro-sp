@@ -49,3 +49,6 @@ next-env.d.ts
 
 # dados brutos baixados por scripts/
 /data/raw/
+
+# worker do MapLibre copiado por scripts/copy-maplibre-worker.mjs
+/public/vendor/

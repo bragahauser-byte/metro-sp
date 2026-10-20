@@ -45,6 +45,12 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 - Acessibilidade WCAG AA: contraste, foco visível, navegação por teclado, e toda informação do mapa também disponível em lista (o mapa nunca é o único caminho).
 - Dark mode e light mode.
 
+## Arquitetura do mapa
+
+- `/mapa`: MapLibre só para o fundo e a câmera; linhas, estações e rótulos são desenhados em canvas por `components/map/network-renderer.ts` (faixas paralelas, largura por zoom, curvas de raio constante, rótulos com colisão). A transição esquemático ↔ real interpola cada estação (`t` de 0 a 1).
+- O worker do MapLibre 6 é copiado para `public/vendor` em `predev`/`prebuild` (fora do git).
+- Fontes do mapa de fundo via `font-faces` do estilo (Google Fonts, OFL); tiles do OpenFreeMap.
+
 ## Regras de dados
 
 - Toda informação factual (estações, linhas, status de operação, integrações) precisa de fonte registrada em `/data/sources.md` com data de consulta.

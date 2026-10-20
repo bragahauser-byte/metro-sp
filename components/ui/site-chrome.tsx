@@ -26,8 +26,14 @@ export function SiteHeader() {
   return (
     <header className="flex h-8 items-center justify-between px-2 sm:px-4">
       <Wordmark />
-      <nav className="flex items-center gap-2 text-body font-medium">
-        <Link href="/estilo" className="underline-offset-4 hover:underline">
+      <nav className="flex items-center gap-2 text-body font-medium" aria-label="Principal">
+        <Link href="/mapa" className="underline-offset-4 hover:underline">
+          Mapa
+        </Link>
+        <Link href="/perto-de-mim" className="hidden underline-offset-4 hover:underline sm:inline">
+          Perto de mim
+        </Link>
+        <Link href="/estilo" className="hidden underline-offset-4 hover:underline sm:inline">
           Estilo
         </Link>
         <ThemeToggle />

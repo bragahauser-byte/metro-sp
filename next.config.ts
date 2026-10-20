@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
         loaders: ["@tailwindcss/turbopack"],
         as: "*.css",
       },
+      // Dados do mapa em GeoJSON são importados como JSON comum.
+      "*.geojson": {
+        type: "json",
+      },
     },
   },
 };
