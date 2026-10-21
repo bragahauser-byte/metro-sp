@@ -1,9 +1,9 @@
 "use client";
 
-import "maplibre-gl/dist/maplibre-gl.css";
+import "./maplibre-min.css";
 import type { Map as MapLibreMap } from "maplibre-gl";
 import { useEffect, useImperativeHandle, useRef, useSyncExternalStore, type Ref } from "react";
-import { basemapStyle, type Theme } from "./basemap-style";
+import { basemapStyle, blankStyle, type Theme } from "./basemap-style";
 import { easeInOut } from "./geometry";
 import { type LngLat, RAIL_LINES, boundsOf, stationBySlug, stations } from "./network";
 import { NetworkRenderer, type RenderState } from "./network-renderer";
@@ -107,6 +107,9 @@ export function SubwayMap({
   const initialViewRef = useRef(initialView);
   const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => "light" as Theme);
   const themeRef = useRef(theme);
+  // O fundo de ruas só é baixado quando o modo real é usado pela primeira vez.
+  const fullStyleRef = useRef(mode === "real");
+  const styleFor = (t: Theme) => (fullStyleRef.current ? basemapStyle(t) : blankStyle(t));
 
   useEffect(() => {
     clickRef.current = onStationClick;
@@ -121,7 +124,10 @@ export function SubwayMap({
   useEffect(() => {
     let disposed = false;
     let ro: ResizeObserver | null = null;
-    (async () => {
+    // Cria o mapa depois da primeira pintura: o painel e a lista aparecem antes.
+    const idle = (cb: () => void) =>
+      typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(cb, { timeout: 1200 }) : setTimeout(cb, 200);
+    idle(async () => {
       const maplibre = await import("maplibre-gl");
       if (disposed || !containerRef.current || !canvasRef.current) return;
       // O worker do MapLibre 6 é um arquivo à parte, copiado para /public em predev/prebuild.
@@ -129,7 +135,7 @@ export function SubwayMap({
       const initial = stateRef.current.t > 0.5 ? "esquematico" : "real";
       const map = new maplibre.Map({
         container: containerRef.current,
-        style: basemapStyle(themeRef.current),
+        style: styleFor(themeRef.current),
         ...(initialViewRef.current
           ? { center: initialViewRef.current.center, zoom: initialViewRef.current.zoom }
           : { bounds: boundsOf(framePoints(initial, stateRef.current.showRail)), fitBoundsOptions: { padding: framePadding() } }),
@@ -172,11 +178,19 @@ export function SubwayMap({
         }
       });
       map.on("click", (e) => clickRef.current(renderer.hitTest(e.point.x, e.point.y)));
+      if (stateRef.current.t < 0.5 && !fullStyleRef.current) {
+        // Esquemático aberto: carrega as ruas em segundo plano, sem disputar a primeira pintura.
+        window.setTimeout(() => {
+          if (disposed || fullStyleRef.current) return;
+          fullStyleRef.current = true;
+          map.setStyle(basemapStyle(themeRef.current));
+        }, 6000);
+      }
       map.on("moveend", () => {
         const c = map.getCenter();
         viewRef.current?.({ center: [c.lng, c.lat], zoom: map.getZoom() });
       });
-    })();
+    });
     return () => {
       disposed = true;
       ro?.disconnect();
@@ -189,7 +203,7 @@ export function SubwayMap({
   // Tema: troca o estilo do fundo e as cores da rede.
   useEffect(() => {
     themeRef.current = theme;
-    mapRef.current?.setStyle(basemapStyle(theme));
+    mapRef.current?.setStyle(styleFor(theme));
     rendererRef.current?.refreshColors();
     rendererRef.current?.draw();
   }, [theme]);
@@ -206,6 +220,10 @@ export function SubwayMap({
     const from = stateRef.current.t;
     if (from === to) return;
     const map = mapRef.current;
+    if (map && to === 0 && !fullStyleRef.current) {
+      fullStyleRef.current = true;
+      map.setStyle(basemapStyle(themeRef.current));
+    }
     const duration = reducedMotion() ? 0 : 900;
     if (map) {
       const focus = stateRef.current.selectedStation ? stationBySlug.get(stateRef.current.selectedStation) : null;

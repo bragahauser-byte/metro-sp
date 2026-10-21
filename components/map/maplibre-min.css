@@ -1,0 +1,32 @@
+/* Só as regras do maplibre-gl.css que este mapa usa (sem controles, popups nem marcadores):
+   o CSS completo (71 KB) bloqueava a primeira pintura da página. */
+.maplibregl-map {
+  overflow: hidden;
+  position: relative;
+  -webkit-tap-highlight-color: rgb(0 0 0 / 0);
+  -webkit-touch-callout: none;
+}
+.maplibregl-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.maplibregl-canvas-container.maplibregl-interactive {
+  cursor: grab;
+  user-select: none;
+}
+.maplibregl-canvas-container.maplibregl-interactive:active {
+  cursor: grabbing;
+}
+.maplibregl-canvas-container.maplibregl-touch-zoom-rotate,
+.maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas {
+  touch-action: pan-x pan-y;
+}
+.maplibregl-canvas-container.maplibregl-touch-drag-pan,
+.maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas {
+  touch-action: pinch-zoom;
+}
+.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan,
+.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas {
+  touch-action: none;
+}

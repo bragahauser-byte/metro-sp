@@ -170,3 +170,11 @@ export function basemapStyle(theme: Theme): StyleSpecification {
     ],
   };
 }
+
+/**
+ * Estilo mínimo para o modo esquemático: só o fundo. Ruas, tiles e fontes ficam cobertos pelo
+ * "papel" nesse modo, então não vale a pena baixá-los antes de alguém abrir o modo real.
+ */
+export function blankStyle(theme: Theme): StyleSpecification {
+  return { version: 8, sources: {}, layers: [{ id: "terra", type: "background", paint: { "background-color": PALETTE[theme].land } }] };
+}
