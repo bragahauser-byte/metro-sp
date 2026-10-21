@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { PREFS_SCRIPT } from "@/lib/prefs";
 
 // Inter: alternativa livre (OFL) à Helvetica Now das referências, que é comercial.
 const inter = Inter({
@@ -20,13 +21,11 @@ export const metadata: Metadata = {
     "Projeto conceitual independente de design sobre a rede de metrô de São Paulo. Sem vínculo com a Companhia do Metropolitano.",
 };
 
-const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`;
-
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="pt-BR" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: PREFS_SCRIPT }} />
       </head>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>

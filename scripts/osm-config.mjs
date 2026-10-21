@@ -20,9 +20,11 @@ export const ROUTE_RELATIONS = {
   17: [20402219],
 };
 
-// Estações que não estão nas relações de rota: em obras (Linha 6), paradas que faltam na relação da 10,
+// Estações que não estão nas relações de rota: São Bento (Linha 1), em obras (Linha 6), paradas que faltam na relação da 10,
 // ramal novo da 17 e ponta da 15.
 export const EXTRA_STATION_NODES = {
+  // São Bento (Linha 1): falta na relação de rota do OSM.
+  1: [5369277944],
   6: [7717251061, 7717250451, 7717251135, 7717251178, 7717251203, 7717251204, 7717251209, 7717251216, 7717251221],
   10: [6684992821, 4119710092, 2280117742],
   15: [14294028393],

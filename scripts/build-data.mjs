@@ -39,6 +39,7 @@ const LINE_6_FULL = [
 const LINE_6_ASSISTED = new Set(["João Paulo I", "Freguesia do Ó", "Santa Marina", "Água Branca", "SESC-Pompeia", "Perdizes"]);
 // Paradas extras entram depois da estação indicada (Mapa do Transporte Metropolitano, jul/2026).
 const INSERT_AFTER = {
+  1: { "São Bento": "Sé" },
   10: { "Juventus-Mooca": "Brás", Tamanduateí: "Ipiranga", Utinga: "São Caetano do Sul" },
   15: { "Jardim Colonial": "São Mateus" },
 };

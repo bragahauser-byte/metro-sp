@@ -45,8 +45,8 @@ export function CompositionPreview() {
       <div className="relative aspect-[4/5] overflow-hidden border border-rule sm:aspect-[16/9]">
         <MapSketch />
         <Card className="absolute left-2 top-2 w-[calc(100%-32px)] max-w-36 p-2">
-          <p className="text-lead font-bold tracking-tight">Mapa da rede</p>
-          <div className="mt-1 flex gap-2 border-b border-rule text-caption font-semibold" role="presentation">
+          <p className="text-lg font-bold">Mapa da rede</p>
+          <div className="mt-1 flex gap-2 border-b border-rule text-xs font-semibold" role="presentation">
             <span className="-mb-px border-b-2 border-ink pb-0.5">Esquemático</span>
             <span className="pb-0.5 text-ink-muted">Real</span>
           </div>
@@ -68,7 +68,7 @@ export function CompositionPreview() {
           </IconButton>
         </div>
       </div>
-      <p className="text-caption text-ink-muted">Ilustração — não representa o traçado real.</p>
+      <p className="text-xs text-ink-muted">Ilustração — não representa o traçado real.</p>
       <div className="flex flex-wrap gap-1">
         <Button>Ver no mapa</Button>
         <Button variant="secondary">Lista de estações</Button>

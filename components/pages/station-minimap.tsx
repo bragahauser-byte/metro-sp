@@ -61,7 +61,7 @@ export function StationMiniMap({ slug, radius = 1100 }: { slug: string; radius?:
               <text
                 x={x + (self ? 20 : 9)}
                 y={y + 4}
-                fontSize={self ? 17 : 12}
+                fontSize={self ? 16 : 12}
                 fontWeight="700"
                 fill="var(--ink)"
                 stroke="var(--bg)"
@@ -75,7 +75,7 @@ export function StationMiniMap({ slug, radius = 1100 }: { slug: string; radius?:
           );
         })}
       </svg>
-      <figcaption className="text-caption text-ink-muted">
+      <figcaption className="text-xs text-ink-muted">
         Raio de {(radius / 1000).toLocaleString("pt-BR")} km. Quadrados pretos: entradas mapeadas no OpenStreetMap. Traçado ©
         OpenStreetMap contributors.
       </figcaption>

@@ -1,89 +1,30 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
 import { LineBadge } from "@/components/ui/line-badge";
 import { StatusChip } from "@/components/ui/status-chip";
+import { IconButton, Icons, Spinner } from "@/components/ui/button";
+import { StationCombobox } from "@/components/route/station-combobox";
+import { useOps } from "@/components/ops/use-ops";
+import { formatTime } from "@/lib/time/sao-paulo";
 import { type Nearby, formatDistance } from "@/components/geo/nearest";
 import { GEO_MESSAGES, type GeoState } from "@/components/geo/use-geolocation";
 import Link from "next/link";
 import { lineNote, notices } from "./line-notes";
-import { RAIL_LINES, lineById, lines, neighborsOf, stationBySlug, stations, stationsOfLine } from "./network";
-
-const normalize = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+import { RAIL_LINES, lineById, lines, neighborsOf, stationBySlug, stationsOfLine } from "./network";
 
 const TIPO: Record<string, string> = { metro: "Linha de metrô", monotrilho: "Monotrilho", trem: "Trem metropolitano" };
 
 export function BackButton({ onClick, label = "Voltar" }: { onClick: () => void; label?: string }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="-ml-1 inline-flex size-5 items-center justify-center text-ink"
-      aria-label={label}
-      title={label}
-    >
-      <svg viewBox="0 0 24 24" className="size-2.5" aria-hidden>
-        <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </button>
+    <IconButton variant="plain" onClick={onClick} label={label} className="-ml-1.5">
+      {Icons.back}
+    </IconButton>
   );
 }
 
 /** Busca por nome — também é a alternativa quando a localização falha. */
 export function StationSearch({ onPick, autoFocus = false }: { onPick: (slug: string) => void; autoFocus?: boolean }) {
-  const [q, setQ] = useState("");
-  const id = useId();
-  const results = useMemo(() => {
-    const n = normalize(q.trim());
-    if (n.length < 2) return [];
-    return stations
-      .filter((s) => normalize(s.nome).includes(n) || (s.complemento && normalize(s.complemento).includes(n)))
-      .sort((a, b) => Number(!normalize(a.nome).startsWith(n)) - Number(!normalize(b.nome).startsWith(n)) || a.nome.localeCompare(b.nome, "pt-BR"))
-      .slice(0, 8);
-  }, [q]);
-  return (
-    <div>
-      <label htmlFor={id} className="sr-only">
-        Buscar estação pelo nome
-      </label>
-      <input
-        id={id}
-        type="search"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Buscar estação"
-        autoFocus={autoFocus}
-        autoComplete="off"
-        className="h-5 w-full border-b border-rule bg-transparent text-body text-ink placeholder:text-ink-muted focus:border-ink focus:outline-none"
-      />
-      {results.length > 0 && (
-        <ul className="mt-1" aria-label="Resultados da busca">
-          {results.map((s) => (
-            <li key={s.slug}>
-              <button
-                type="button"
-                onClick={() => {
-                  onPick(s.slug);
-                  setQ("");
-                }}
-                className="flex w-full items-center justify-between gap-1 py-1 text-left text-body hover:underline"
-              >
-                <span className="font-semibold">{s.nome}</span>
-                <span className="flex gap-0.5">
-                  {s.linhas.map((l) => (
-                    <LineBadge key={l} line={l} size="sm" />
-                  ))}
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-      {q.trim().length >= 2 && results.length === 0 && (
-        <p className="mt-1 text-caption text-ink-muted">Nenhuma estação com esse nome.</p>
-      )}
-    </div>
-  );
+  return <StationCombobox label="Buscar estação pelo nome" hideLabel placeholder="Buscar estação" onPick={onPick} autoFocus={autoFocus} />;
 }
 
 export function LinesGrid({
@@ -98,13 +39,13 @@ export function LinesGrid({
   const metro = lines.filter((l) => !RAIL_LINES.has(l.id));
   const rail = lines.filter((l) => RAIL_LINES.has(l.id));
   const grid = (ls: typeof lines) => (
-    <ul className="grid grid-cols-6 gap-1 md:grid-cols-6">
+    <ul className="-mx-1 grid grid-cols-6">
       {ls.map((l) => (
         <li key={l.id}>
           <button
             type="button"
             onClick={() => onPickLine(l.id)}
-            className="block transition-transform duration-(--duration-fast) ease-standard hover:scale-110"
+            className="flex size-control items-center justify-center transition-transform duration-(--duration-fast) ease-standard hover:scale-110"
             aria-label={`${l.nome}: ver estações`}
           >
             <LineBadge line={l.id} />
@@ -116,9 +57,9 @@ export function LinesGrid({
   return (
     <div className="flex flex-col gap-2">
       {grid(metro)}
-      <label className="flex cursor-pointer items-center justify-between gap-2 border-t border-rule pt-2 text-caption font-semibold">
+      <label className="flex min-h-control cursor-pointer items-center justify-between gap-2 border-t border-rule text-sm font-semibold">
         <span>Trens metropolitanos (7 a 13)</span>
-        <input type="checkbox" checked={showRail} onChange={onToggleRail} className="size-2 accent-[var(--ink)]" />
+        <input type="checkbox" checked={showRail} onChange={onToggleRail} className="size-icon accent-(--ink)" />
       </label>
       {showRail && grid(rail)}
     </div>
@@ -150,31 +91,31 @@ export function LineView({
         <LineBadge line={id} size="xl" />
       </div>
       <div className="text-center">
-        <h2 className="text-lead font-bold leading-tight tracking-tight">{line.nome}</h2>
-        <p className="text-caption text-ink-muted">
+        <h2 className="text-lg font-bold">{line.nome}</h2>
+        <p className="text-xs text-ink-muted">
           {TIPO[line.tipo]} · operação {line.operador} · {line.extensaoOperacionalKm.toLocaleString("pt-BR")} km
         </p>
       </div>
       <div className="border-t border-rule pt-2">
-        <p className="text-body font-bold">{note.titulo}</p>
-        <p className="text-body text-ink-muted">{note.texto}</p>
+        <p className="text-base font-bold">{note.titulo}</p>
+        <p className="text-base text-ink-muted">{note.texto}</p>
         {note.fonte && (
-          <a className="text-caption text-ink-muted underline" href={note.fonte.url}>
+          <a className="text-xs text-ink-muted underline" href={note.fonte.url}>
             Fonte: {note.fonte.nome}
           </a>
         )}
       </div>
-      <Link href={`/linhas/${id}`} className="text-caption font-semibold underline underline-offset-4">
+      <Link href={`/linhas/${id}`} className="inline-flex min-h-control items-center text-sm font-semibold underline underline-offset-4">
         Página da {line.nome} →
       </Link>
       {branches && (
-        <p className="text-caption text-ink-muted">
+        <p className="text-xs text-ink-muted">
           Linha em “Y”: ramal a partir de {stationBySlug.get(line.sequencias[1][0])?.nome}.
         </p>
       )}
       {/* Régua de estações: a linha vertical na cor da linha, um ponto por estação. */}
       <ol className="relative mt-1" aria-label={`Estações da ${line.nome}`}>
-        <span aria-hidden className="absolute bottom-2 left-[9px] top-2 w-1" style={{ backgroundColor: line.cor }} />
+        <span aria-hidden className="absolute bottom-3 left-[9px] top-3 w-1" style={{ backgroundColor: line.cor }} />
         {seq.map((slug) => {
           const st = stationBySlug.get(slug)!;
           const others = st.linhas.filter((l) => l !== id);
@@ -185,16 +126,16 @@ export function LineView({
                 type="button"
                 onClick={() => onPickStation(slug)}
                 aria-current={slug === selectedStation ? "true" : undefined}
-                className="flex w-full items-center gap-2 py-0.5 pl-0 text-left hover:underline aria-[current=true]:font-bold"
+                className="flex min-h-control w-full items-center gap-2 pl-0 text-left hover:underline aria-[current=true]:font-bold"
               >
                 <span
                   aria-hidden
                   className="relative z-10 ml-0.5 size-1.5 shrink-0 rounded-full border-2 border-surface bg-ink"
                   style={status === "em-obras" ? { background: "var(--surface)", borderColor: line.cor } : undefined}
                 />
-                <span className="flex-1 text-body">
+                <span className="flex-1 text-base">
                   {st.nome}
-                  {status === "em-obras" && <span className="ml-1 text-caption text-ink-muted">em obras</span>}
+                  {status === "em-obras" && <span className="ml-1 text-xs text-ink-muted">em obras</span>}
                 </span>
                 <span className="flex gap-0.5">
                   {others.map((l) => (
@@ -230,14 +171,14 @@ export function StationView({
       <div className="flex items-start gap-1">
         <BackButton onClick={onBack} />
         <div className="min-w-0">
-          <h2 className="text-title-s font-bold leading-tight tracking-tight">{st.nome}</h2>
-          {st.complemento && <p className="text-caption text-ink-muted">{st.complemento}</p>}
+          <h2 className="text-xl font-bold">{st.nome}</h2>
+          {st.complemento && <p className="text-xs text-ink-muted">{st.complemento}</p>}
         </div>
       </div>
-      <ul className="flex flex-wrap gap-1" aria-label="Linhas">
+      <ul className="flex flex-wrap gap-1 pl-1" aria-label="Linhas">
         {st.linhas.map((l) => (
           <li key={l}>
-            <button type="button" onClick={() => onPickLine(l)} aria-label={`Ver ${lineById.get(l)?.nome}`}>
+            <button type="button" className="-m-1 flex size-control items-center justify-center" onClick={() => onPickLine(l)} aria-label={`Ver ${lineById.get(l)?.nome}`}>
               <LineBadge line={l} />
             </button>
           </li>
@@ -248,41 +189,41 @@ export function StationView({
           <StatusChip key={s} status={s} />
         ))}
       </div>
-      <p className="text-caption text-ink-muted">
+      <p className="text-xs text-ink-muted">
         {st.acessivel === "sim"
           ? "♿ Acessível, segundo o OpenStreetMap."
           : st.acessivel === "limitado"
             ? "♿ Acessibilidade parcial, segundo o OpenStreetMap."
             : "Acessibilidade: sem informação confirmada."}
       </p>
-      <Link href={`/estacoes/${slug}`} className="text-caption font-semibold underline underline-offset-4">
+      <Link href={`/estacoes/${slug}`} className="inline-flex min-h-control items-center text-sm font-semibold underline underline-offset-4">
         Página da estação {st.nome} →
       </Link>
       {walk && (
-        <p className="text-body">
+        <p className="text-base">
           <strong>{formatDistance(walk.distanciaM)}</strong> de você · cerca de {walk.minutos} min a pé
         </p>
       )}
       {st.integracoes.length > 0 && (
-        <p className="text-body">
+        <p className="text-base">
           Passagem para{" "}
           {st.integracoes.map((o) => (
-            <button key={o} type="button" className="font-semibold underline underline-offset-2" onClick={() => onPickStation(o)}>
+            <button key={o} type="button" className="inline-flex min-h-control items-center font-semibold underline underline-offset-2" onClick={() => onPickStation(o)}>
               {stationBySlug.get(o)?.nome}
             </button>
           ))}
         </p>
       )}
       <div className="border-t border-rule pt-2">
-        <h3 className="text-caption font-semibold uppercase tracking-widest text-ink-muted">Estações vizinhas</h3>
-        <ul className="mt-1 flex flex-col gap-1">
+        <h3 className="text-xs font-semibold uppercase text-ink-muted">Estações vizinhas</h3>
+        <ul className="mt-1 flex flex-col">
           {nbs.map((n, i) => (
-            <li key={`${n.linha}-${i}`} className="flex items-center gap-1 text-body">
+            <li key={`${n.linha}-${i}`} className="flex items-center gap-1 text-base">
               <LineBadge line={n.linha} size="sm" />
               {[n.anterior, n.proxima].filter(Boolean).map((s, j) => (
                 <span key={s} className="flex items-center gap-1">
                   {j > 0 && <span aria-hidden className="text-ink-muted">·</span>}
-                  <button type="button" className="hover:underline" onClick={() => onPickStation(s!)}>
+                  <button type="button" className="inline-flex min-h-control items-center hover:underline" onClick={() => onPickStation(s!)}>
                     {stationBySlug.get(s!)?.nome}
                   </button>
                 </span>
@@ -314,14 +255,14 @@ export function NearView({
     <div className="flex flex-col gap-2" aria-live="polite">
       <div className="flex items-center gap-1">
         <BackButton onClick={onBack} />
-        <h2 className="text-lead font-bold tracking-tight">Perto de você</h2>
+        <h2 className="text-lg font-bold">Perto de você</h2>
       </div>
-      {geo.status === "locating" && <p className="text-body text-ink-muted">Procurando sua localização…</p>}
+      {geo.status === "locating" && <p className="text-base text-ink-muted">Procurando sua localização…</p>}
       {geo.status === "error" && (
         <>
-          <p className="text-body">{GEO_MESSAGES[geo.reason]}</p>
+          <p className="text-base">{GEO_MESSAGES[geo.reason]}</p>
           {geo.reason !== "unsupported" && (
-            <button type="button" onClick={onRetry} className="self-start text-body font-semibold underline underline-offset-4">
+            <button type="button" onClick={onRetry} className="inline-flex min-h-control items-center self-start text-base font-semibold underline underline-offset-4">
               Tentar de novo
             </button>
           )}
@@ -331,7 +272,7 @@ export function NearView({
       {geo.status === "ok" && (
         <>
           {nearby[0] && nearby[0].distanciaM > 15000 && (
-            <p className="text-caption text-ink-muted">Você parece estar fora da região metropolitana.</p>
+            <p className="text-xs text-ink-muted">Você parece estar fora da região metropolitana.</p>
           )}
           <ol className="flex flex-col">
             {nearby.map((n, i) => {
@@ -342,12 +283,12 @@ export function NearView({
                     type="button"
                     onClick={() => onPick(n.slug)}
                     aria-current={target === n.slug ? "true" : undefined}
-                    className="flex w-full items-center gap-2 py-1.5 text-left aria-[current=true]:font-bold"
+                    className="flex min-h-control w-full items-center gap-2 py-1 text-left aria-[current=true]:font-bold"
                   >
-                    <span className="w-2 text-caption tabular-nums text-ink-muted">{i + 1}</span>
+                    <span className="w-2 text-xs tabular-nums text-ink-muted">{i + 1}</span>
                     <span className="flex-1">
-                      <span className="block text-body font-semibold">{st.nome}</span>
-                      <span className="block text-caption text-ink-muted">
+                      <span className="block text-base font-semibold">{st.nome}</span>
+                      <span className="block text-xs text-ink-muted">
                         {formatDistance(n.distanciaM)} · {n.minutos} min a pé
                       </span>
                     </span>
@@ -361,12 +302,72 @@ export function NearView({
               );
             })}
           </ol>
-          <p className="text-caption text-ink-muted">
+          <p className="text-xs text-ink-muted">
             Distância em linha reta; o tempo a pé é estimado. Sua localização fica só neste navegador.
           </p>
         </>
       )}
     </div>
+  );
+}
+
+const dateFmt = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit" });
+
+/** Comunicados oficiais recentes (RSS da operadora). Nunca apresentados como status em tempo real. */
+export function OfficialUpdates({ onlyLines, limit = 5 }: { onlyLines?: string[]; limit?: number }) {
+  const ops = useOps();
+  return (
+    <section aria-labelledby="comunicados" className="flex flex-col gap-1" aria-busy={ops.status === "loading"}>
+      <h3 id="comunicados" className="text-xs font-semibold uppercase text-ink-muted">
+        Comunicados oficiais recentes
+      </h3>
+      {ops.status === "loading" && (
+        <p className="flex items-center gap-1 text-sm text-ink-muted">
+          <Spinner /> Carregando comunicados…
+        </p>
+      )}
+      {ops.status === "error" && (
+        <p className="text-sm text-ink-muted">
+          Não foi possível carregar os comunicados agora.{" "}
+          <button type="button" onClick={ops.retry} className="inline-flex min-h-control items-center font-semibold underline">
+            Tentar de novo
+          </button>
+        </p>
+      )}
+      {ops.status === "ok" &&
+        (() => {
+          const items = ops.data.itens
+            .filter((i) => i.operacional && (!onlyLines || i.linhas.some((l) => onlyLines.includes(l))))
+            .slice(0, limit);
+          const failed = ops.data.fontes.filter((f) => !f.ok);
+          return (
+            <>
+              {items.length === 0 ? (
+                <p className="text-sm text-ink-muted">Nenhum comunicado operacional recente nas fontes acompanhadas.</p>
+              ) : (
+                <ul className="flex flex-col">
+                  {items.map((i) => (
+                    <li key={i.id} className="border-b border-rule py-1 last:border-0">
+                      <a href={i.link} className="group flex min-h-control flex-col justify-center">
+                        <span className="text-sm font-semibold group-hover:underline">{i.titulo}</span>
+                        <span className="text-xs text-ink-muted">
+                          {i.fonte.nome} · publicado em {dateFmt.format(new Date(i.publicadoEm))}
+                          {i.linhas.length > 0 && ` · linhas ${i.linhas.join(", ")}`}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <p className="text-xs text-ink-muted">
+                Comunicados publicados pelas operadoras, coletados a cada 30 min no máximo (última coleta às{" "}
+                {formatTime(new Date(ops.data.atualizadoEm))}). Não é situação em tempo real.
+                {failed.length > 0 && ` Fonte indisponível agora: ${failed.map((f) => f.nome).join(", ")}.`}
+              </p>
+            </>
+          );
+        })()}
+    </section>
   );
 }
 
@@ -376,19 +377,22 @@ export function AlertsView({ onBack, onPickLine }: { onBack: () => void; onPickL
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-1">
         <BackButton onClick={onBack} />
-        <h2 className="text-lead font-bold tracking-tight">Avisos</h2>
+        <h2 className="text-lg font-bold">Avisos</h2>
       </div>
+      <h3 className="text-xs font-semibold uppercase text-ink-muted">Linhas fora da operação normal</h3>
       <ul className="flex flex-col">
         {notices().map((n) => (
           <li key={n.id} className="flex gap-2 border-b border-rule py-2 last:border-0">
-            <button type="button" onClick={() => onPickLine(n.id)} aria-label={`Ver ${lineById.get(n.id)?.nome}`}>
+            <button type="button" className="-m-1 flex size-control shrink-0 items-center justify-center" onClick={() => onPickLine(n.id)} aria-label={`Ver ${lineById.get(n.id)?.nome}`}>
               <LineBadge line={n.id} />
             </button>
             <div>
-              <p className="text-body font-bold">{n.titulo}</p>
-              <p className="text-body text-ink-muted">{n.texto}</p>
+              <p className="text-base font-bold">
+                {lineById.get(n.id)?.nome}: {n.titulo.toLowerCase()}
+              </p>
+              <p className="text-sm text-ink-muted">{n.texto}</p>
               {n.fonte && (
-                <a className="text-caption text-ink-muted underline" href={n.fonte.url}>
+                <a className="text-xs text-ink-muted underline" href={n.fonte.url}>
                   Fonte: {n.fonte.nome}
                 </a>
               )}
@@ -396,12 +400,13 @@ export function AlertsView({ onBack, onPickLine }: { onBack: () => void; onPickL
           </li>
         ))}
       </ul>
-      <p className="text-caption text-ink-muted">
-        Projeto conceitual: sem dados em tempo real. Situação conhecida em 20/10/2026 — confirme em{" "}
+      <OfficialUpdates />
+      <p className="text-xs text-ink-muted">
+        Projeto conceitual. Para a situação das linhas agora, consulte{" "}
         <a className="underline" href="https://www.metro.sp.gov.br">
           metro.sp.gov.br
-        </a>
-        .
+        </a>{" "}
+        e os canais de cada operadora.
       </p>
     </div>
   );

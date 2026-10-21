@@ -13,6 +13,7 @@ Toda informação factual do site precisa de uma linha aqui, com data de consult
 | `tracks.geojson` | Geometria real de cada trecho (traçado dos trilhos) e `faixa` (posição no feixe de linhas paralelas) | `npm run data:build` |
 | `entrances.geojson` | Entradas das estações (OSM), ligadas à estação mais próxima (até 400 m) | `npm run data:build` |
 | `schematic.json` | Diagrama esquemático próprio: posição de cada estação e caminho octilinear de cada trecho | `npm run data:schematic` |
+| `horarios.json` | Horários oficiais: janelas por tipo de dia, fechamento por estação (Linhas 1–3), regras de transferência, operação especial, com fonte e validade | à mão, a partir das fontes abaixo |
 
 Atualizar: `npm run data:fetch` (baixa do OSM para `data/raw/`, fora do git) → `npm run data:build` → `npm run data:schematic` → `npm run validate`.
 
@@ -31,6 +32,12 @@ Atualizar: `npm run data:fetch` (baixa do OSM para `data/raw/`, fora do git) →
 | Entradas das estações e marca de acessibilidade (wheelchair) | © OpenStreetMap contributors, ODbL — nós railway=subway_entrance/train_station_entrance e railway=station (base OSM de 20/10/2026) | 20/10/2026 |
 | Mapa de fundo (ruas, parques, água, nomes de lugares) | OpenFreeMap, tiles vetoriais no esquema OpenMapTiles — dados © OpenStreetMap contributors | 20/10/2026 |
 | Fontes do mapa: Source Serif 4 (nomes de rua) e Inter Bold (cidades) | Google Fonts, licença SIL Open Font License | 20/10/2026 |
+| Estação São Bento (Linha 1), que faltava na relação de rota do OSM | Lista oficial de estações da Linha 1 em metro.sp.gov.br/sua-viagem/horarios/; nó OSM 5369277944 | 20/10/2026 |
+| Horários das Linhas 1, 2, 3, 15 e 17: abertura 4h40, fechamento de cada estação, embarque após 0h só na mesma linha, baldeações (Sé, Paraíso, Ana Rosa, Vila Prudente) até 0h, integrações com outras operadoras (Luz, República, Consolação, Santa Cruz, Chácara Klabin, Palmeiras-Barra Funda, Tamanduateí, Brás, Corinthians-Itaquera, Tatuapé), Linha 17 de segunda a sábado 6h–22h, operação 24 h experimental nas madrugadas de sábado para domingo até jan/2027 | Metrô, *Sua viagem › Horários* — https://www.metro.sp.gov.br/sua-viagem/horarios/ (a página não traz data de atualização) | 20/10/2026 |
+| Linha 6-Laranja: operação assistida de segunda a sexta, 10h–15h, por 180 dias a partir de 03/07/2026, gratuita | Prefeitura de São Paulo, notícia de 02/07/2026 — https://prefeitura.sp.gov.br/w/linha-6-laranja-inaugura-nova-fase-para-a-brasil%C3%A2ndia-e-aproxima-a-zona-norte-do-centro-de-s%C3%A3o-paulo | 20/10/2026 |
+| Feriados na cidade de São Paulo | Leis federais 662/1949, 6.802/1980 e 14.759/2023; Lei estadual 9.497/1997; Lei municipal 14.485/2007 (Carnaval é ponto facultativo e não entra) | 20/10/2026 |
+| Comunicados oficiais (avisos) | Feed RSS público do Metrô — https://www.metro.sp.gov.br/feed/ ; robots.txt permite `/` (bloqueia só a busca) | 20/10/2026 |
+| Limites do cron na Vercel (plano Hobby: 1 execução por dia, precisão de ±59 min) | https://vercel.com/docs/cron-jobs/usage-and-pricing (atualizada em 15/07/2026) | 20/10/2026 |
 
 ## Observações
 
@@ -40,5 +47,9 @@ Atualizar: `npm run data:fetch` (baixa do OSM para `data/raw/`, fora do git) →
 - **Cores no PDF do mapa:** o *Mapa do Transporte Metropolitano* usa CMYK de impressão, ligeiramente diferente do RGB do Guia; para tela vale o RGB do Guia.
 - As relações do OSM da Linha 10 não têm Juventus-Mooca, Tamanduateí e Utinga; essas paradas são inseridas por `scripts/build-data.mjs` conforme o mapa oficial.
 - **Diagrama esquemático** é gerado por algoritmo próprio (`scripts/build-schematic.mjs`): lupa radial no centro, direções arredondadas para múltiplos de 45°, ajuste por mínimos quadrados e cadeias octilineares entre estações-chave. Não copia o mapa oficial. Com a camada de trens ligada ainda há trechos encavalados perto da Barra Funda e de Osasco (a refinar).
-- **Acessibilidade:** só 58 estações têm a marca no OSM. O site mostra ♿ apenas quando a marca é positiva; sem marca (ou "não", que pode estar desatualizado) aparece "sem informação confirmada". Por isso não há filtro de estações acessíveis.
-- **Avisos e situação das linhas** (`components/map/line-notes.ts`) descrevem a situação conhecida em 20/10/2026; não há dado oficial aberto em tempo real, então não há trens animados nem filtros de horário.
+- **Acessibilidade:** só 58 estações têm a marca no OSM. O site mostra ♿ apenas quando a marca é positiva; sem marca (ou "não", que pode estar desatualizado) aparece "sem informação confirmada". Por isso o planejador não exclui estações: a opção "Priorizar estações acessíveis" só dá preferência às confirmadas e lista as que não têm confirmação.
+- **Situação das linhas** (`components/map/line-notes.ts`) descreve a situação conhecida em 20/10/2026. A Linha 17, antes "dias úteis, 9h–16h" (comunicado de 30/06/2026), passou a "segunda a sábado, 6h–22h" segundo a página de horários consultada em 20/10/2026.
+- **Horários não verificados:** Motiva (4, 5, 8, 9), TIC Trens (7), CPTM (10) e Trivia (11, 12, 13) não têm horário em `horarios.json`: a página do Metrô remete às operadoras, a busca não achou página oficial atual (a da Motiva sobre a Linha 5 é de 2018) e o painel da CPTM carrega por script. O planejador marca essas linhas como "não verificado" — nunca como abertas ou fechadas.
+- **Operação 24 h de sábado para domingo:** a página do Metrô não diz quais linhas nem estações; o projeto aplica às linhas operadas pela Companhia (1, 2, 3, 15) como "não verificado".
+- **Avisos operacionais:** só o feed RSS do Metrô está ligado (`lib/ops/sources.ts`). Sem feed ou API pública: CPTM, Motiva, LinhaUni, TIC Trens, Trivia. Comunicados ficam 10 dias (operacionais) ou 3 dias (outros) e nunca são apresentados como situação em tempo real.
+- **Por que não há cron de 10 minutos:** no plano Hobby a Vercel só aceita cron diário. A coleta é feita sob demanda com cache de 30 min no servidor (`use cache` + `cacheLife`), o que limita a leitura da fonte a no máximo 48 vezes por dia sem depender de agendamento. `/api/avisos/atualizar` (protegido por `CRON_SECRET`) força uma nova coleta.

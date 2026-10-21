@@ -8,10 +8,20 @@
   --color-ink-muted: var(--ink-muted);
   --color-rule: var(--rule);
   --color-rule-strong: var(--rule-strong);
+  --color-fg: var(--fg-primary);
+  --color-fg-muted: var(--fg-secondary);
+  --color-fg-disabled: var(--fg-disabled);
+  --color-fg-inverse: var(--fg-inverse);
+  --color-fg-link: var(--fg-link);
+  --color-fg-danger: var(--fg-danger);
+  --color-fg-warning: var(--fg-warning);
+  --color-fg-success: var(--fg-success);
   --font-sans: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
 }
 
 body {
+  font-size: var(--text-base);
+  line-height: var(--text-base--line-height);
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
@@ -40,4 +50,19 @@ body {
 }
 .anim-panel {
   animation: panel-in var(--duration-base) var(--ease-standard);
+}
+
+/* Folha do celular: enquanto o dedo arrasta, nada de transição; ao soltar, desliza até o lugar. */
+.sheet-snap {
+  transition: transform var(--duration-base) var(--ease-standard), max-height var(--duration-base) var(--ease-standard);
+}
+
+/* "Reduzir movimento" escolhido no site vale também para animações de bibliotecas e utilitários. */
+:root[data-motion="reduce"] *,
+:root[data-motion="reduce"] *::before,
+:root[data-motion="reduce"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0ms !important;
+  scroll-behavior: auto !important;
 }

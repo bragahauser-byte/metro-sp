@@ -5,20 +5,28 @@ import { lineById } from "./network";
 
 export type LineNote = { titulo: string; texto: string; fonte?: { nome: string; url: string } };
 
+const COMUNICADO_17 = {
+  nome: "Metrô, 30/06/2026",
+  url: "https://www.metro.sp.gov.br/2026/06/30/governo-de-sp-entrega-estacao-washington-luis-e-amplia-operacao-transitoria-da-linha-17-ouro-do-metro/",
+};
+
 const NOTES: Record<string, LineNote> = {
   "6": {
     titulo: "Operação assistida",
     texto:
-      "Trecho de João Paulo I a Perdizes funcionando em operação assistida. As outras nove estações, de Brasilândia a São Joaquim, estão em obras.",
-    fonte: { nome: "Linha Uni / Agência SP, jul–ago/2026", url: "https://www.linhauni.com.br" },
+      "Trecho de João Paulo I a Perdizes em operação assistida, de segunda a sexta (exceto feriados), das 10h às 15h, sem cobrança. As outras nove estações, de Brasilândia a São Joaquim, estão em obras.",
+    fonte: {
+      nome: "Prefeitura de São Paulo, 02/07/2026",
+      url: "https://prefeitura.sp.gov.br/w/linha-6-laranja-inaugura-nova-fase-para-a-brasil%C3%A2ndia-e-aproxima-a-zona-norte-do-centro-de-s%C3%A3o-paulo",
+    },
   },
   "17": {
     titulo: "Operação transitória",
     texto:
-      "Funciona em dias úteis, das 9h às 16h, sem cobrança de passagem. Quem vai para Washington Luís troca de trem em Brooklin Paulista.",
+      "Funciona de segunda a sábado, das 6h às 22h, sem cobrança de passagem. Quem vai para Washington Luís troca de trem em Brooklin Paulista.",
     fonte: {
-      nome: "Metrô, 30/06/2026",
-      url: "https://www.metro.sp.gov.br/2026/06/30/governo-de-sp-entrega-estacao-washington-luis-e-amplia-operacao-transitoria-da-linha-17-ouro-do-metro/",
+      nome: "Metrô — Horários (consulta em 20/10/2026) e comunicado de 30/06/2026",
+      url: "https://www.metro.sp.gov.br/sua-viagem/horarios/",
     },
   },
 };
@@ -47,11 +55,11 @@ export const CURIOSITIES: Record<string, Curiosity[]> = {
     {
       texto:
         "É a primeira linha de metrô de São Paulo a chegar a um aeroporto e a funcionar em “formato Y”, com dois destinos finais do mesmo lado: Aeroporto de Congonhas e Washington Luís.",
-      fonte: NOTES["17"].fonte!,
+      fonte: COMUNICADO_17,
     },
     {
       texto: "A estação Washington Luís foi construída sobre o piscinão Água Espraiada, ao lado do pátio de manutenção.",
-      fonte: NOTES["17"].fonte!,
+      fonte: COMUNICADO_17,
     },
   ],
   "6": [

@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 function Block({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="grid gap-2 border-t border-rule-strong pt-3 md:grid-cols-[1fr_2fr]">
-      <h2 className="text-lead font-bold tracking-tight">{title}</h2>
-      <div className="flex max-w-[64ch] flex-col gap-2 text-body">{children}</div>
+      <h2 className="text-lg font-bold">{title}</h2>
+      <div className="flex max-w-[64ch] flex-col gap-2 text-base">{children}</div>
     </section>
   );
 }
@@ -19,8 +19,8 @@ export default function SobrePage() {
   return (
     <main className="mx-auto flex w-full max-w-[1120px] flex-col gap-6 px-2 py-6 sm:px-4">
       <header className="flex flex-col gap-2">
-        <h1 className="text-title-l font-bold tracking-tight sm:text-display">Sobre</h1>
-        <p className="max-w-[60ch] text-lead text-ink-muted">
+        <h1 className="text-2xl font-bold">Sobre</h1>
+        <p className="max-w-[60ch] text-lg text-ink-muted">
           Um estudo de design que trata a rede sobre trilhos de São Paulo como objeto de interface: um mapa vivo, entre o
           diagrama e a geografia.
         </p>
@@ -81,8 +81,44 @@ export default function SobrePage() {
           .
         </p>
         <p>
-          Sem dados em tempo real: os avisos descrevem a situação conhecida em 20/10/2026. O diagrama esquemático é gerado por
-          um algoritmo próprio a partir da geografia.
+          O diagrama esquemático é gerado por um algoritmo próprio a partir da geografia.
+        </p>
+      </Block>
+
+      <Block title="Horários e rotas">
+        <p>
+          O planejador estima o tempo pelo traçado (velocidade média, 30 s por parada, 5 min por baldeação) e oferece até três
+          alternativas. Com data e hora, cada embarque e cada baldeação são conferidos contra os horários publicados pelo Metrô
+          (
+          <a className="underline" href="https://www.metro.sp.gov.br/sua-viagem/horarios/">
+            metro.sp.gov.br/sua-viagem/horarios
+          </a>
+          , consulta em 20/10/2026) — fechamento de cada estação, baldeações só até 0h00, integrações com horário próprio — e,
+          para a Linha 6, pelo comunicado da Prefeitura de 02/07/2026.
+        </p>
+        <p>
+          Linhas de outras operadoras (Motiva, TIC Trens, CPTM, Trivia) aparecem como <strong>horário não verificado</strong>:
+          não estendemos as regras do Metrô para elas. “Impossível” só aparece quando a fonte oficial confirma.
+        </p>
+      </Block>
+
+      <Block title="Avisos">
+        <p>
+          Comunicados oficiais vêm do feed RSS público do site do Metrô, lido no máximo a cada 30 minutos e guardado em
+          cache — não há raspagem de páginas. São comunicados, com data e link, e não situação em tempo real. As linhas fora da
+          operação normal (6 e 17) são descritas com fonte e data.
+        </p>
+      </Block>
+
+      <Block title="Acessibilidade e voz">
+        <p>
+          Preferências no ícone de ajustes: tema Claro, Escuro ou Sistema (nunca muda sozinho pelo horário), texto maior, mais
+          contraste e reduzir movimento. Tudo fica só no seu navegador.
+        </p>
+        <p>
+          Você pode dizer a rota (“da estação São Lucas até a estação Tatuapé”) e ouvir as instruções. O reconhecimento usa o
+          serviço de voz do próprio navegador, que pode processar o áudio fora do aparelho; este site não recebe nem guarda o
+          áudio. Sem suporte a voz, tudo funciona digitando.
         </p>
       </Block>
 

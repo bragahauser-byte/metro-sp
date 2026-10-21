@@ -39,15 +39,15 @@ export default async function EstacaoPage({ params }: PageProps<"/estacoes/[slug
     <main className="mx-auto grid w-full max-w-[1120px] gap-6 px-2 py-6 sm:px-4 md:grid-cols-[3fr_2fr]">
       <div className="flex flex-col gap-4">
         <header className="flex flex-col gap-2">
-          <p className="text-caption font-semibold uppercase tracking-widest text-ink-muted">Estação</p>
-          <h1 className="text-title-l font-bold leading-none tracking-tight sm:text-display">{st.nome}</h1>
-          {st.complemento && <p className="text-lead text-ink-muted">{st.complemento}</p>}
+          <p className="text-xs font-semibold uppercase text-ink-muted">Estação</p>
+          <h1 className="text-2xl font-bold">{st.nome}</h1>
+          {st.complemento && <p className="text-lg text-ink-muted">{st.complemento}</p>}
           <ul className="flex flex-wrap gap-1" aria-label="Linhas">
             {st.linhas.map((l) => (
               <li key={l}>
                 <Link href={`/linhas/${l}`} className="flex items-center gap-1 pr-1 hover:underline">
                   <LineBadge line={l} size="lg" />
-                  <span className="text-body font-semibold">{lineById.get(l)?.nome}</span>
+                  <span className="text-base font-semibold">{lineById.get(l)?.nome}</span>
                 </Link>
               </li>
             ))}
@@ -55,7 +55,7 @@ export default async function EstacaoPage({ params }: PageProps<"/estacoes/[slug
         </header>
 
         <section className="flex flex-col gap-1 border-t border-rule pt-2">
-          <h2 className="text-caption font-semibold uppercase tracking-widest text-ink-muted">Situação</h2>
+          <h2 className="text-xs font-semibold uppercase text-ink-muted">Situação</h2>
           <ul className="flex flex-wrap gap-1">
             {st.linhas.map((l) => (
               <li key={l} className="flex items-center gap-1">
@@ -67,14 +67,14 @@ export default async function EstacaoPage({ params }: PageProps<"/estacoes/[slug
         </section>
 
         <section className="flex flex-col gap-1 border-t border-rule pt-2">
-          <h2 className="text-caption font-semibold uppercase tracking-widest text-ink-muted">Integrações</h2>
+          <h2 className="text-xs font-semibold uppercase text-ink-muted">Integrações</h2>
           {st.linhas.length > 1 ? (
-            <p className="text-body">Baldeação entre {st.linhas.map((l) => lineById.get(l)?.nome).join(" e ")} na própria estação.</p>
+            <p className="text-base">Baldeação entre {st.linhas.map((l) => lineById.get(l)?.nome).join(" e ")} na própria estação.</p>
           ) : (
-            <p className="text-body text-ink-muted">Sem baldeação para outras linhas nesta estação.</p>
+            <p className="text-base text-ink-muted">Sem baldeação para outras linhas nesta estação.</p>
           )}
           {st.integracoes.map((o) => (
-            <p key={o} className="text-body">
+            <p key={o} className="text-base">
               Passagem para a estação{" "}
               <Link className="font-semibold underline" href={`/estacoes/${o}`}>
                 {stationBySlug.get(o)?.nome}
@@ -85,18 +85,18 @@ export default async function EstacaoPage({ params }: PageProps<"/estacoes/[slug
         </section>
 
         <section className="flex flex-col gap-1 border-t border-rule pt-2">
-          <h2 className="text-caption font-semibold uppercase tracking-widest text-ink-muted">Acessibilidade e acessos</h2>
-          <p className="text-body">{(st.acessivel && ACESSO[st.acessivel]) ?? "Sem informação de acessibilidade confirmada."}</p>
-          <p className="text-body text-ink-muted">
+          <h2 className="text-xs font-semibold uppercase text-ink-muted">Acessibilidade e acessos</h2>
+          <p className="text-base">{(st.acessivel && ACESSO[st.acessivel]) ?? "Sem informação de acessibilidade confirmada."}</p>
+          <p className="text-base text-ink-muted">
             {entradas > 0 ? `${entradas} entrada${entradas > 1 ? "s" : ""} mapeada${entradas > 1 ? "s" : ""} no OpenStreetMap.` : "Entradas ainda não mapeadas no OpenStreetMap."}
           </p>
         </section>
 
         <section className="flex flex-col gap-1 border-t border-rule pt-2">
-          <h2 className="text-caption font-semibold uppercase tracking-widest text-ink-muted">Estações vizinhas</h2>
+          <h2 className="text-xs font-semibold uppercase text-ink-muted">Estações vizinhas</h2>
           <ul className="flex flex-col gap-1">
             {nbs.map((n, i) => (
-              <li key={`${n.linha}-${i}`} className="flex flex-wrap items-center gap-1 text-body">
+              <li key={`${n.linha}-${i}`} className="flex flex-wrap items-center gap-1 text-base">
                 <LineBadge line={n.linha} size="sm" />
                 {[n.anterior, n.proxima].filter(Boolean).map((s, j) => (
                   <span key={s} className="flex items-center gap-1">
@@ -116,7 +116,7 @@ export default async function EstacaoPage({ params }: PageProps<"/estacoes/[slug
         <StationMiniMap slug={slug} />
         <Link
           href={`/mapa?estacao=${slug}&modo=real`}
-          className="self-start bg-ink px-3 py-1.5 text-body font-bold text-bg"
+          className="inline-flex h-control items-center self-start bg-ink px-3 text-base font-semibold text-bg hover:opacity-85"
           style={{ borderRadius: 999 }}
         >
           Ver no mapa

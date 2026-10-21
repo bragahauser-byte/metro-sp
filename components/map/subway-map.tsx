@@ -1,5 +1,6 @@
 "use client";
 
+import { prefersReducedMotion } from "@/lib/prefs";
 import "./maplibre-min.css";
 import { useEffect, useImperativeHandle, useRef, useSyncExternalStore, type Ref } from "react";
 import { basemapStyle, type Theme } from "./basemap-style";
@@ -63,9 +64,7 @@ function framePadding() {
   return { top: 130, left: 20, right: 20, bottom: (sheet?.offsetHeight ?? 60) + 90 };
 }
 
-function reducedMotion() {
-  return matchMedia("(prefers-reduced-motion: reduce)").matches;
-}
+const reducedMotion = prefersReducedMotion;
 
 /** Pontos usados para enquadrar a rede num modo (metrô sempre; trens quando a camada está ligada). */
 function framePoints(mode: MapMode, showRail: boolean): LngLat[] {
@@ -286,7 +285,7 @@ export function SubwayMap({
   }));
 
   return (
-    <div className="absolute inset-0" role="region" aria-label="Mapa interativo da rede. A lista no painel tem as mesmas informações.">
+    <div className="absolute inset-0" role="region" aria-label="Mapa interativo da rede" aria-describedby="mapa-alternativa">
       {/* O CSS do MapLibre põe position: relative no contêiner; o invólucro é que ocupa a tela. */}
       <div className="absolute inset-0">
         <div

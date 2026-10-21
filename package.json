@@ -1,7 +1,8 @@
 {
   "name": "metro-sp",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +13,8 @@
     "validate": "node scripts/validate-data.mjs",
     "predev": "node scripts/copy-maplibre-worker.mjs",
     "prebuild": "node scripts/copy-maplibre-worker.mjs",
-    "data:schematic": "node scripts/build-schematic.mjs"
+    "data:schematic": "node scripts/build-schematic.mjs",
+    "test": "node --test --disable-warning=ExperimentalWarning \"tests/*.test.ts\""
   },
   "dependencies": {
     "maplibre-gl": "^6.15.0",

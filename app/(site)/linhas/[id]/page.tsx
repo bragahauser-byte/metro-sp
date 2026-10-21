@@ -5,6 +5,8 @@ import { LineBadge } from "@/components/ui/line-badge";
 import { StatusChip } from "@/components/ui/status-chip";
 import { CURIOSITIES, lineNote } from "@/components/map/line-notes";
 import { lineById, lines, stationBySlug } from "@/components/map/network";
+import horarios from "@/data/horarios.json";
+import { type ScheduleData, lineHoursSummary } from "@/lib/schedule/hours";
 
 const TIPO: Record<string, string> = { metro: "Metrô", monotrilho: "Monotrilho", trem: "Trem metropolitano" };
 
@@ -51,11 +53,11 @@ function StationRule({ slugs, linha, cor }: { slugs: string[]; linha: string; co
               style={{ borderColor: building ? cor : "var(--bg)", background: building ? "var(--bg)" : "var(--ink)" }}
             />
             <span className="flex-1">
-              <Link href={`/estacoes/${slug}`} className="text-lead font-bold tracking-tight hover:underline">
+              <Link href={`/estacoes/${slug}`} className="text-lg font-bold hover:underline">
                 {st.nome}
               </Link>
-              {st.complemento && <span className="block text-caption text-ink-muted">{st.complemento}</span>}
-              {building && <span className="block text-caption text-ink-muted">Em obras</span>}
+              {st.complemento && <span className="block text-xs text-ink-muted">{st.complemento}</span>}
+              {building && <span className="block text-xs text-ink-muted">Em obras</span>}
             </span>
             <span className="flex flex-wrap justify-end gap-0.5">
               {others.map((l) => (
@@ -78,6 +80,7 @@ export default async function LinhaPage({ params }: PageProps<"/linhas/[id]">) {
   const note = lineNote(id);
   const ink = heroInk(line.cor);
   const [main, ...branches] = line.sequencias;
+  const hours = lineHoursSummary(horarios as unknown as ScheduleData, id);
   const curiosities = CURIOSITIES[id] ?? [];
   const total = new Set(line.sequencias.flat()).size;
 
@@ -90,14 +93,14 @@ export default async function LinhaPage({ params }: PageProps<"/linhas/[id]">) {
             <LineBadge line={id} size="xl" />
           </span>
           <div className="flex-1">
-            <p className="text-caption font-semibold uppercase tracking-widest opacity-80">
+            <p className="text-xs font-semibold uppercase opacity-80">
               {TIPO[line.tipo]} · operação {line.operador}
             </p>
-            <h1 className="text-title-l font-bold leading-none tracking-tight sm:text-display">{line.nome}</h1>
+            <h1 className="text-2xl font-bold">{line.nome}</h1>
           </div>
           <Link
             href={`/mapa?linha=${id}`}
-            className="self-start bg-[#ffffff] px-3 py-1.5 text-body font-bold text-[#111111] sm:self-end"
+            className="inline-flex h-control items-center self-start bg-[#ffffff] px-3 text-base font-semibold text-[#111111] hover:opacity-90 sm:self-end"
             style={{ borderRadius: 999 }}
           >
             Ver no mapa
@@ -109,39 +112,57 @@ export default async function LinhaPage({ params }: PageProps<"/linhas/[id]">) {
         <aside className="flex flex-col gap-4">
           <dl className="grid grid-cols-2 gap-2">
             <div className="border-t border-rule-strong pt-1">
-              <dt className="text-caption text-ink-muted">Estações</dt>
-              <dd className="text-title-m font-bold">{total}</dd>
+              <dt className="text-xs text-ink-muted">Estações</dt>
+              <dd className="text-2xl font-bold">{total}</dd>
             </div>
             <div className="border-t border-rule-strong pt-1">
-              <dt className="text-caption text-ink-muted">Em operação</dt>
-              <dd className="text-title-m font-bold">{line.extensaoOperacionalKm.toLocaleString("pt-BR")} km</dd>
+              <dt className="text-xs text-ink-muted">Em operação</dt>
+              <dd className="text-2xl font-bold">{line.extensaoOperacionalKm.toLocaleString("pt-BR")} km</dd>
             </div>
           </dl>
           <section className="flex flex-col gap-1 border-t border-rule pt-2">
             <h2 className="sr-only">Situação</h2>
             <StatusChip status={line.status} />
-            <p className="text-body font-bold">{note.titulo}</p>
-            <p className="text-body text-ink-muted">{note.texto}</p>
+            <p className="text-base font-bold">{note.titulo}</p>
+            <p className="text-base text-ink-muted">{note.texto}</p>
             {note.fonte && (
-              <a className="text-caption text-ink-muted underline" href={note.fonte.url}>
+              <a className="text-xs text-ink-muted underline" href={note.fonte.url}>
                 Fonte: {note.fonte.nome}
               </a>
             )}
           </section>
+          <section className="flex flex-col gap-1 border-t border-rule pt-2">
+            <h2 className="text-xs font-semibold uppercase text-ink-muted">Horário</h2>
+            {hours ? (
+              <>
+                <p className="text-base">{hours.texto}</p>
+                {hours.observacao && <p className="text-sm text-ink-muted">{hours.observacao}</p>}
+                {hours.fonte && (
+                  <a className="text-xs text-ink-muted underline" href={hours.fonte.url}>
+                    Fonte: {hours.fonte.titulo} (consulta em {hours.fonte.consultadoEm.split("-").reverse().join("/")})
+                  </a>
+                )}
+              </>
+            ) : (
+              <p className="text-base text-ink-muted">
+                Horário não verificado em fonte oficial por este projeto. Consulte a operadora ({line.operador}).
+              </p>
+            )}
+          </section>
           {curiosities.length > 0 && (
             <section className="flex flex-col gap-2 border-t border-rule pt-2">
-              <h2 className="text-caption font-semibold uppercase tracking-widest text-ink-muted">Curiosidades</h2>
+              <h2 className="text-xs font-semibold uppercase text-ink-muted">Curiosidades</h2>
               {curiosities.map((c) => (
-                <p key={c.texto} className="text-body">
+                <p key={c.texto} className="text-base">
                   {c.texto}{" "}
-                  <a className="text-caption text-ink-muted underline" href={c.fonte.url}>
+                  <a className="text-xs text-ink-muted underline" href={c.fonte.url}>
                     ({c.fonte.nome})
                   </a>
                 </p>
               ))}
             </section>
           )}
-          <p className="text-caption text-ink-muted">
+          <p className="text-xs text-ink-muted">
             Extensão calculada pelo traçado do OpenStreetMap entre estações em operação. Ver{" "}
             <Link className="underline" href="/sobre">
               fontes
@@ -151,13 +172,13 @@ export default async function LinhaPage({ params }: PageProps<"/linhas/[id]">) {
         </aside>
 
         <section aria-labelledby="estacoes" className="flex flex-col gap-3">
-          <h2 id="estacoes" className="text-title-s font-bold tracking-tight">
+          <h2 id="estacoes" className="text-xl font-bold">
             Estações
           </h2>
           <StationRule slugs={main} linha={id} cor={line.cor} />
           {branches.map((b) => (
             <div key={b.join()} className="flex flex-col gap-1">
-              <h3 className="text-caption font-semibold uppercase tracking-widest text-ink-muted">
+              <h3 className="text-xs font-semibold uppercase text-ink-muted">
                 Ramal a partir de {stationBySlug.get(b[0])?.nome}
               </h3>
               <StationRule slugs={b.slice(1)} linha={id} cor={line.cor} />

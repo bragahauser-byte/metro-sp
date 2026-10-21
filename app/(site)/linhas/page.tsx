@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 function LineList({ title, ids }: { title: string; ids: string[] }) {
   return (
     <section aria-labelledby={`h-${title}`} className="flex flex-col gap-1">
-      <h2 id={`h-${title}`} className="text-caption font-semibold uppercase tracking-widest text-ink-muted">
+      <h2 id={`h-${title}`} className="text-xs font-semibold uppercase text-ink-muted">
         {title}
       </h2>
       <ul className="flex flex-col">
@@ -23,8 +23,8 @@ function LineList({ title, ids }: { title: string; ids: string[] }) {
               <Link href={`/linhas/${l.id}`} className="group flex items-center gap-2 py-2">
                 <LineBadge line={l.id} size="lg" />
                 <span className="flex-1">
-                  <span className="block text-lead font-bold tracking-tight group-hover:underline">{l.nome}</span>
-                  <span className="block text-caption text-ink-muted">
+                  <span className="block text-lg font-bold group-hover:underline">{l.nome}</span>
+                  <span className="block text-xs text-ink-muted">
                     {stationsOfLine(l.id).length} estações · operação {l.operador}
                   </span>
                 </span>
@@ -43,7 +43,7 @@ export default function LinhasPage() {
   return (
     <main className="mx-auto flex w-full max-w-[960px] flex-col gap-6 px-2 py-6 sm:px-4">
       <header>
-        <h1 className="text-title-l font-bold tracking-tight sm:text-display">Linhas</h1>
+        <h1 className="text-2xl font-bold">Linhas</h1>
       </header>
       <LineList title="Metrô e monotrilho" ids={metro} />
       <LineList title="Trens metropolitanos" ids={rail} />

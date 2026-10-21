@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { IconButton } from "@/components/ui/button";
+import { IconButton, Icons } from "@/components/ui/button";
+import { BottomSheet } from "./bottom-sheet";
 import { BetaTag } from "@/components/ui/site-chrome";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { nearestStations } from "@/components/geo/nearest";
@@ -34,10 +35,10 @@ function ModeTabs({ mode, onChange }: { mode: MapMode; onChange: (m: MapMode) =>
           type="button"
           aria-pressed={mode === t.id}
           onClick={() => onChange(t.id)}
-          className="-mt-px border-t-2 border-transparent pt-1 text-left aria-pressed:border-ink"
+          className="-mt-px min-h-control border-t-2 border-transparent pt-1 text-left aria-pressed:border-ink"
         >
-          <span className={`block text-caption font-bold ${mode === t.id ? "text-ink" : "text-ink-muted"}`}>{t.label}</span>
-          <span className="block text-[0.6875rem] text-ink-muted">{t.sub}</span>
+          <span className={`block text-xs font-bold ${mode === t.id ? "text-ink" : "text-ink-muted"}`}>{t.label}</span>
+          <span className="block text-xs text-ink-muted">{t.sub}</span>
         </button>
       ))}
     </div>
@@ -50,7 +51,7 @@ function ModePill({ mode, onChange }: { mode: MapMode; onChange: (m: MapMode) =>
     <div
       role="group"
       aria-label="Tipo de mapa"
-      className="flex h-6 items-center bg-surface p-0.5 text-caption font-bold"
+      className="flex h-control-lg items-center bg-surface p-0.5 text-sm font-bold"
       style={{ borderRadius: 999, boxShadow: "var(--shadow-card)" }}
     >
       {(["esquematico", "real"] as const).map((m) => (
@@ -59,7 +60,7 @@ function ModePill({ mode, onChange }: { mode: MapMode; onChange: (m: MapMode) =>
           type="button"
           aria-pressed={mode === m}
           onClick={() => onChange(m)}
-          className="h-5 px-2 text-ink-muted aria-pressed:bg-ink aria-pressed:text-bg"
+          className="h-control px-2 text-ink-muted aria-pressed:bg-ink aria-pressed:text-bg"
           style={{ borderRadius: 999 }}
         >
           {m === "esquematico" ? "Esquemático" : "Real"}
@@ -72,7 +73,7 @@ function ModePill({ mode, onChange }: { mode: MapMode; onChange: (m: MapMode) =>
 /** Marca do site: círculo com "M" (não é o símbolo oficial) + nome em texto. */
 function Mark() {
   return (
-    <span aria-hidden className="inline-flex size-5 items-center justify-center rounded-full bg-ink text-lead font-bold text-bg">
+    <span aria-hidden className="inline-flex size-5 items-center justify-center rounded-full bg-ink text-lg font-bold text-bg">
       M
     </span>
   );
@@ -83,7 +84,7 @@ function Brand() {
     <div className="flex items-center justify-between">
       <Link href="/" className="inline-flex items-center gap-1" aria-label="Metrô, versão beta — início">
         <Mark />
-        <span className="text-lead font-bold tracking-tight">Metrô</span>
+        <span className="text-lg font-bold">Metrô</span>
         <BetaTag />
       </Link>
       <ThemeToggle />
@@ -116,7 +117,7 @@ function LocateIcon() {
 function AlertButton({ onClick, count }: { onClick: () => void; count: number }) {
   return (
     <IconButton label={`Avisos (${count})`} onClick={onClick}>
-      <span aria-hidden className="inline-flex size-3 items-center justify-center rounded-full bg-line-4 text-body font-bold text-[#111]">
+      <span aria-hidden className="inline-flex size-3 items-center justify-center rounded-full bg-line-4 text-base font-bold text-[#111]">
         !
       </span>
     </IconButton>
@@ -126,7 +127,7 @@ function AlertButton({ onClick, count }: { onClick: () => void; count: number })
 /** Aviso de projeto não oficial + atribuição dos dados do mapa, sempre visíveis. */
 function Disclaimer({ className = "" }: { className?: string }) {
   return (
-    <p className={`flex-wrap items-center gap-x-2 bg-surface/90 px-2 py-0.5 text-[0.6875rem] leading-tight text-ink-muted backdrop-blur ${className}`}>
+    <p className={`flex-wrap items-center gap-x-2 bg-surface/90 px-2 py-0.5 text-xs text-ink-muted backdrop-blur ${className}`}>
       <span>
         Projeto conceitual independente, sem vínculo com a Companhia do Metropolitano de São Paulo. Informações oficiais em{" "}
         <a className="underline" href="https://www.metro.sp.gov.br">
@@ -140,26 +141,6 @@ function Disclaimer({ className = "" }: { className?: string }) {
         <a className="underline" href="https://www.openmaptiles.org">© OpenMapTiles</a>
       </span>
     </p>
-  );
-}
-
-/** Folha que sobe no celular: alça, título e fechar. */
-function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
-  return (
-    <section id="folha-do-mapa" aria-label={title} className="pointer-events-auto md:hidden">
-      <Card className="anim-sheet mx-1 flex max-h-[62vh] min-h-0 flex-col" style={{ borderRadius: "16px 16px 12px 12px" }}>
-        <span aria-hidden className="mx-auto mt-1 h-0.5 w-5 rounded-full bg-rule" />
-        <div className="flex items-center justify-between px-2 pt-0.5">
-          <p className="text-caption font-semibold uppercase tracking-widest text-ink-muted">{title}</p>
-          <button type="button" onClick={onClose} aria-label="Fechar" className="inline-flex size-5 items-center justify-center text-ink">
-            <svg viewBox="0 0 24 24" className="size-2" aria-hidden>
-              <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-        <div className="min-h-0 overflow-y-auto px-2 pb-2">{children}</div>
-      </Card>
-    </section>
   );
 }
 
@@ -199,6 +180,9 @@ export function MapApp() {
   const [panel, setPanel] = useState<Panel>(route ? "route" : selectedStation ? "station" : selectedLine ? "line" : "home");
   // No celular a folha começa fechada (mapa limpo), a não ser que o link já aponte algo.
   const [sheetOpen, setSheetOpen] = useState(Boolean(selectedStation || selectedLine || route));
+  // A folha aberta pelo link (na carga) não rouba o foco; aberta por um toque, recebe o foco.
+  const [sheetByUser, setSheetByUser] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
   const [target, setTarget] = useState<string | null>(null);
   const [view, setView] = useState<{ center: LngLat; zoom: number } | null>(initialView);
   const mapRef = useRef<SubwayMapHandle>(null);
@@ -259,6 +243,7 @@ export function MapApp() {
   const openPanel = (p: Panel) => {
     setPanel(p);
     setSheetOpen(true);
+    setSheetByUser(true);
   };
 
   const pickStation = (slug: string | null) => {
@@ -271,6 +256,7 @@ export function MapApp() {
     const st = stationBySlug.get(slug);
     if (st && st.linhas.every((l) => RAIL_LINES.has(l))) setShowRail(true);
     openPanel("station");
+    setAnnouncement(`Estação ${st?.nome} selecionada no mapa.`);
     mapRef.current?.focusStation(slug);
   };
 
@@ -279,6 +265,12 @@ export function MapApp() {
     setSelectedLine(id);
     setSelectedStation(null);
     openPanel("line");
+    setAnnouncement(`${lineById.get(id)?.nome} destacada no mapa; as outras linhas ficam em cinza.`);
+  };
+
+  const openRoute = () => {
+    setSelectedLine(null);
+    openPanel("route");
   };
 
   const locate = () => {
@@ -308,13 +300,13 @@ export function MapApp() {
           <StationSearch onPick={(s) => pickStation(s)} />
           <button
             type="button"
-            onClick={() => {
-              setSelectedLine(null);
-              setPanel("route");
-            }}
-            className="flex items-center justify-between border-t border-rule pt-2 text-body font-bold"
+            onClick={openRoute}
+            className="flex min-h-control items-center justify-between border-t border-rule text-base font-bold"
           >
-            Como chegar <span aria-hidden>→</span>
+            <span className="flex items-center gap-1">
+              {Icons.search} Como chegar
+            </span>
+            <span aria-hidden>→</span>
           </button>
         </div>
       )}
@@ -350,7 +342,7 @@ export function MapApp() {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-1">
             <BackButton onClick={() => setPanel("home")} />
-            <h2 className="text-lead font-bold tracking-tight">Como chegar</h2>
+            <h2 className="text-lg font-bold">Como chegar</h2>
           </div>
           <RoutePlanner
             initialFrom={routeEnds.from}
@@ -359,7 +351,10 @@ export function MapApp() {
             onRoute={(r, from, to) => {
               setRouteEnds({ from, to });
               setRoute(r);
-              if (r) focusRoute(r);
+              if (r) {
+                focusRoute(r);
+                setAnnouncement(`Rota destacada no mapa: ${r.minutos} minutos.`);
+              }
             }}
           />
         </div>
@@ -402,7 +397,7 @@ export function MapApp() {
       <aside className="absolute left-2 top-2 hidden max-h-[calc(100%-80px)] w-44 flex-col md:flex" aria-label="Painel do mapa">
         <Card className="flex min-h-0 flex-col gap-2 p-3">
           <Brand />
-          {panel === "home" && <p className="text-title-s font-bold tracking-tight">Mapa da rede</p>}
+          {panel === "home" && <p className="text-xl font-bold">Mapa da rede</p>}
           <ModeTabs mode={mode} onChange={setMode} />
           <div className="-mx-3 min-h-0 overflow-y-auto px-3 pb-0.5">{content}</div>
         </Card>
@@ -414,7 +409,7 @@ export function MapApp() {
           <span className="inline-flex size-6 items-center justify-center rounded-full bg-surface" style={{ boxShadow: "var(--shadow-card)" }}>
             <Mark />
           </span>
-          <span className="text-body font-bold tracking-tight [text-shadow:0_0_3px_var(--bg),0_0_6px_var(--bg)]">Mapa da rede</span>
+          <span className="text-base font-bold [text-shadow:0_0_3px_var(--bg),0_0_6px_var(--bg)]">Mapa da rede</span>
           <BetaTag />
         </Link>
         <span className="pointer-events-auto inline-flex size-6 items-center justify-center rounded-full bg-surface" style={{ boxShadow: "var(--shadow-card)" }}>
@@ -425,7 +420,10 @@ export function MapApp() {
       {/* Base da tela. Celular: botões → folha → aviso. Desktop: botões no canto direito. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-stretch gap-1 md:inset-x-auto md:right-2 md:bottom-6">
         <div className="pointer-events-auto flex items-end justify-between gap-1 px-1 md:flex-col md:px-0">
-          <div className="md:hidden">
+          <div className="flex gap-1 md:hidden">
+            <IconButton label="Como chegar: planejar rota" onClick={openRoute}>
+              {Icons.search}
+            </IconButton>
             <IconButton label="Linhas e estações" onClick={() => (sheetOpen && panel === "home" ? setSheetOpen(false) : openPanel("home"))}>
               <LinesIcon />
             </IconButton>
@@ -434,6 +432,11 @@ export function MapApp() {
             <ModePill mode={mode} onChange={setMode} />
           </div>
           <div className="flex flex-col gap-1">
+            <div className="hidden md:contents">
+              <IconButton label="Como chegar: planejar rota" onClick={openRoute}>
+                {Icons.search}
+              </IconButton>
+            </div>
             <AlertButton count={alertCount} onClick={() => openPanel("alerts")} />
             <IconButton label="Estação mais perto de mim" onClick={locate}>
               <LocateIcon />
@@ -441,23 +444,36 @@ export function MapApp() {
             {/* No celular o zoom é por gesto de pinça. */}
             <div className="hidden md:contents">
               <IconButton label="Aproximar" onClick={() => mapRef.current?.zoomBy(1)}>
-                <span aria-hidden className="text-lead font-bold">+</span>
+                <span aria-hidden className="text-lg font-bold">+</span>
               </IconButton>
               <IconButton label="Afastar" onClick={() => mapRef.current?.zoomBy(-1)}>
-                <span aria-hidden className="text-lead font-bold">−</span>
+                <span aria-hidden className="text-lg font-bold">−</span>
               </IconButton>
             </div>
           </div>
         </div>
         {sheetOpen && (
-          <Sheet title={sheetTitle} onClose={() => setSheetOpen(false)}>
+          <BottomSheet title={sheetTitle} onClose={() => setSheetOpen(false)} focusOnOpen={sheetByUser}>
             {content}
-          </Sheet>
+          </BottomSheet>
         )}
         <Disclaimer className="pointer-events-auto flex md:hidden" />
       </div>
       <Disclaimer className="absolute inset-x-0 bottom-0 hidden md:flex" />
-      {/* Lista completa para leitores de tela: o mapa nunca é o único caminho. */}
+      <p className="sr-only" role="status" aria-live="polite">
+        {announcement}
+      </p>
+      {/* Alternativa em texto do mapa: o mapa nunca é o único caminho. */}
+      <div id="mapa-alternativa" className="sr-only">
+        Diagrama da rede com {lines.length} linhas de metrô, monotrilho e trem. O mesmo conteúdo está em texto no painel
+        (linhas, estações e rota) e nas páginas de cada linha. Modo atual: {mode === "real" ? "traçado geográfico" : "esquemático"}.
+        {selectedLine ? ` Linha destacada: ${lineById.get(selectedLine)?.nome}.` : ""}
+        {selectedStation ? ` Estação selecionada: ${stationBySlug.get(selectedStation)?.nome}.` : ""}
+        {panel === "route" && route
+          ? ` Rota destacada de ${stationBySlug.get(route.legs[0].estacoes[0])?.nome} a ${stationBySlug.get(route.legs.at(-1)!.estacoes.at(-1)!)?.nome}.`
+          : ""}
+      </div>
+      {/* Lista completa de linhas para leitores de tela. */}
       <nav className="sr-only" aria-label="Todas as linhas">
         <ul>
           {lines.map((l) => (

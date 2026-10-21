@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function MapaPage() {
   return (
-    <Suspense fallback={<p className="p-4 text-body text-ink-muted">Carregando o mapa…</p>}>
+    <Suspense fallback={<p className="p-4 text-base text-ink-muted">Carregando o mapa…</p>}>
       <MapApp />
     </Suspense>
   );

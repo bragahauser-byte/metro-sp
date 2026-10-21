@@ -5,10 +5,10 @@ import { METRO_LINE_IDS } from "@/components/ui/lines";
 export default function Home() {
   return (
     <main className="flex flex-1 flex-col justify-center gap-4 px-2 py-12 sm:px-4">
-      <p className="text-caption font-medium uppercase tracking-widest text-ink-muted">
+      <p className="text-xs font-medium uppercase text-ink-muted">
         Beta
       </p>
-      <h1 className="max-w-[12ch] text-display font-bold tracking-tight sm:text-hero">
+      <h1 className="max-w-[22ch] text-2xl font-bold">
         A rede de São Paulo como objeto de design.
       </h1>
       <ul className="flex flex-wrap gap-1" aria-label="Linhas de metrô">
@@ -19,10 +19,10 @@ export default function Home() {
         ))}
       </ul>
       <div className="flex flex-wrap gap-3">
-        <Link href="/mapa" className="text-lead font-semibold underline underline-offset-4">
+        <Link href="/mapa" className="text-lg font-semibold underline underline-offset-4">
           Abrir o mapa →
         </Link>
-        <Link href="/perto-de-mim" className="text-lead font-semibold underline underline-offset-4">
+        <Link href="/perto-de-mim" className="text-lg font-semibold underline underline-offset-4">
           Estação mais perto de mim →
         </Link>
       </div>

@@ -25,23 +25,48 @@
   /* Grid */
   --spacing: 0.5rem;
 
-  /* Escala tipográfica modular, razão 1,25 sobre 16px */
-  --text-caption: 0.8rem;
-  --text-caption--line-height: 1.25;
-  --text-body: 1rem;
-  --text-body--line-height: 1.5;
-  --text-lead: 1.25rem;
-  --text-lead--line-height: 1.4;
-  --text-title-s: 1.5625rem;
-  --text-title-s--line-height: 1.2;
-  --text-title-m: 1.953rem;
-  --text-title-m--line-height: 1.1;
-  --text-title-l: 2.441rem;
-  --text-title-l--line-height: 1.05;
-  --text-display: 3.815rem;
-  --text-display--line-height: 1;
-  --text-hero: 4.768rem;
-  --text-hero--line-height: 0.95;
+  /*
+   * Tipografia (Inter): só seis tamanhos, cada um com altura de linha e espaçamento próprios.
+   * xs 12/16 +0,1 · sm 14/20 0 · base 16/24 0 · lg 20/28 −0,2 · xl 24/32 −0,4 · 2xl 28/36 −0,5.
+   * Os tamanhos padrão do Tailwind ficam desligados para ninguém usar um 18 ou 30 por engano.
+   * Pesos permitidos: 400 (normal), 500 (medium), 600 (semibold), 700 (bold).
+   */
+  --text-*: initial;
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-xs--letter-spacing: 0.1px;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-sm--letter-spacing: 0px;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-base--letter-spacing: 0px;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.75rem;
+  --text-lg--letter-spacing: -0.2px;
+  --text-xl: 1.5rem;
+  --text-xl--line-height: 2rem;
+  --text-xl--letter-spacing: -0.4px;
+  --text-2xl: 1.75rem;
+  --text-2xl--line-height: 2.25rem;
+  --text-2xl--letter-spacing: -0.5px;
+
+  --font-weight-*: initial;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Tamanhos de controle e de ícone (área de toque mínima de 48 px). */
+  --spacing-control: 3rem;
+  --spacing-control-lg: 3.5rem;
+  --spacing-icon: 1.5rem;
+  --spacing-icon-sm: 1.25rem;
+
+  /* Raios */
+  --radius-card: 12px;
+  --radius-sheet: 16px;
+  --radius-control: 999px;
 
   /* Movimento */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
@@ -60,20 +85,28 @@
   --map-park: #e3f0df;
   --focus: #0063ba;
   --badge-edge: transparent;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.08);
+
+  /* Cores semânticas de texto (todas ≥ 4,5:1 sobre --surface e --bg, menos 'disabled'). */
+  --fg-primary: var(--ink);
+  --fg-secondary: var(--ink-muted);
+  --fg-disabled: #8f8f8f;
+  --fg-inverse: var(--bg);
+  --fg-link: #0058a6;
+  --fg-danger: #b42318;
+  --fg-warning: #8a4b00;
+  --fg-success: #0b6b3a;
 
   --duration-fast: 120ms;
   --duration-base: 200ms;
   --duration-slow: 400ms;
 
   /* Direção visual: "Mapa vivo" (decidida em 20/10/2026) */
-  --radius-card: 12px;
-  --radius-control: 999px;
   --radius-badge: 999px;
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.08);
   --card-border: transparent;
 }
 
-/* Neutros: escuro (sistema, a não ser que o usuário tenha fixado claro) */
+/* Neutros: escuro. Tema "Sistema" segue o aparelho; "Claro" e "Escuro" fixam (data-theme no <html>). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #000000;
@@ -87,6 +120,11 @@
     --focus: #5ea8ff;
     --badge-edge: rgb(255 255 255 / 0.28);
     --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 4px 16px rgb(0 0 0 / 0.5);
+    --fg-disabled: #6b6b6b;
+    --fg-link: #7db8ff;
+    --fg-danger: #ff8f87;
+    --fg-warning: #ffbf5c;
+    --fg-success: #6fd49a;
   }
 }
 
@@ -102,13 +140,34 @@
   --focus: #5ea8ff;
   --badge-edge: rgb(255 255 255 / 0.28);
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.5), 0 4px 16px rgb(0 0 0 / 0.5);
+  --fg-disabled: #6b6b6b;
+  --fg-link: #7db8ff;
+  --fg-danger: #ff8f87;
+  --fg-warning: #ffbf5c;
+  --fg-success: #6fd49a;
 }
 
+/* Preferência "Mais contraste": texto secundário vira primário e os fios ficam visíveis. */
+:root[data-contrast="more"] {
+  --ink-muted: var(--ink);
+  --rule: #767676;
+  --card-border: var(--rule-strong);
+}
+
+/* Preferência "Texto maior": tudo é em rem, então basta subir a base. */
+:root[data-text="large"] {
+  font-size: 112.5%;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  :root {
+  :root:not([data-motion="full"]) {
     --duration-fast: 0ms;
     --duration-base: 0ms;
     --duration-slow: 0ms;
   }
+}
+:root[data-motion="reduce"] {
+  --duration-fast: 0ms;
+  --duration-base: 0ms;
+  --duration-slow: 0ms;
 }

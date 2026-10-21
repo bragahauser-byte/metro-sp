@@ -1,0 +1,457 @@
+{
+  "_comentario": "Horários de funcionamento. Só entra aqui o que foi lido em fonte oficial; o que não foi verificado fica de fora e aparece como \"não verificado\". Horários depois da meia-noite são escritos como 24:xx (pertencem ao dia de operação anterior). Fuso: America/Sao_Paulo.",
+  "fuso": "America/Sao_Paulo",
+  "consultadoEm": "2026-10-20",
+  "fontes": {
+    "metro-horarios": {
+      "titulo": "Metrô — Sua viagem › Horários",
+      "url": "https://www.metro.sp.gov.br/sua-viagem/horarios/",
+      "consultadoEm": "2026-10-20",
+      "oficial": true
+    },
+    "prefeitura-linha-6": {
+      "titulo": "Prefeitura de São Paulo — Linha 6-Laranja inaugura nova fase (02/07/2026)",
+      "url": "https://prefeitura.sp.gov.br/w/linha-6-laranja-inaugura-nova-fase-para-a-brasil%C3%A2ndia-e-aproxima-a-zona-norte-do-centro-de-s%C3%A3o-paulo",
+      "consultadoEm": "2026-10-20",
+      "oficial": true
+    }
+  },
+  "linhas": {
+    "1": {
+      "fonte": "metro-horarios",
+      "horarios": {
+        "util": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "domingo": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "feriado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fechamentoPorEstacao": {
+        "jabaquara": "24:06",
+        "conceicao": "24:08",
+        "sao-judas": "24:10",
+        "saude": "24:12",
+        "praca-da-arvore": "24:14",
+        "santa-cruz": "24:16",
+        "vila-mariana": "24:18",
+        "ana-rosa": "24:20",
+        "paraiso": "24:22",
+        "vergueiro": "24:24",
+        "sao-joaquim": "24:26",
+        "japao-liberdade": "24:28",
+        "se": "24:29",
+        "sao-bento": "24:32",
+        "luz": "24:30",
+        "tiradentes": "24:28",
+        "armenia": "24:26",
+        "portuguesa-tiete": "24:24",
+        "carandiru": "24:22",
+        "santana": "24:20",
+        "jardim-sao-paulo-ayrton-senna": "24:18",
+        "parada-inglesa": "24:16",
+        "tucuruvi": "24:14"
+      },
+      "aposMeiaNoite": "mesma-linha"
+    },
+    "2": {
+      "fonte": "metro-horarios",
+      "horarios": {
+        "util": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "domingo": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "feriado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fechamentoPorEstacao": {
+        "vila-prudente": "24:07",
+        "tamanduatei": "24:09",
+        "sacoma": "24:11",
+        "alto-do-ipiranga": "24:13",
+        "santos-imigrantes": "24:16",
+        "chacara-klabin": "24:18",
+        "ana-rosa": "24:20",
+        "paraiso": "24:22",
+        "brigadeiro": "24:24",
+        "trianon-masp": "24:22",
+        "consolacao": "24:20",
+        "clinicas": "24:18",
+        "sumare": "24:16",
+        "vila-madalena": "24:14"
+      },
+      "aposMeiaNoite": "mesma-linha"
+    },
+    "3": {
+      "fonte": "metro-horarios",
+      "horarios": {
+        "util": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "domingo": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "feriado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fechamentoPorEstacao": {
+        "corinthians-itaquera": "24:19",
+        "artur-alvim": "24:21",
+        "patriarca-vila-re": "24:23",
+        "guilhermina-esperanca": "24:25",
+        "vila-matilde": "24:27",
+        "penha": "24:29",
+        "carrao": "24:31",
+        "tatuape": "24:33",
+        "belem": "24:35",
+        "bresser-mooca": "24:35",
+        "bras": "24:33",
+        "pedro-ii": "24:31",
+        "se": "24:29",
+        "anhangabau": "24:27",
+        "republica": "24:25",
+        "santa-cecilia": "24:23",
+        "marechal-deodoro": "24:21",
+        "palmeiras-barra-funda": "24:19"
+      },
+      "aposMeiaNoite": "mesma-linha"
+    },
+    "6": {
+      "fonte": "prefeitura-linha-6",
+      "horarios": {
+        "util": [
+          [
+            "10:00",
+            "15:00"
+          ]
+        ],
+        "sabado": [],
+        "domingo": [],
+        "feriado": []
+      },
+      "validoAte": "2026-12-29",
+      "observacao": "Operação assistida (João Paulo I – Perdizes), de segunda a sexta, exceto feriados, por 180 dias a partir de 03/07/2026, gratuita."
+    },
+    "15": {
+      "fonte": "metro-horarios",
+      "horarios": {
+        "util": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "domingo": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "feriado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "aposMeiaNoite": "mesma-linha"
+    },
+    "17": {
+      "fonte": "metro-horarios",
+      "horarios": {
+        "util": [
+          [
+            "06:00",
+            "22:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "06:00",
+            "22:00"
+          ]
+        ],
+        "domingo": [],
+        "feriado": null
+      },
+      "observacao": "Operação transitória, de segunda a sábado, sem cobrança de tarifa. A fonte não fala de feriados."
+    }
+  },
+  "especiais": [
+    {
+      "id": "madrugada-24h",
+      "dia": "sabado",
+      "linhas": [
+        "1",
+        "2",
+        "3",
+        "15"
+      ],
+      "validoAte": "2027-01-31",
+      "fonte": "metro-horarios",
+      "descricao": "Funcionamento 24 horas nas madrugadas de sábado para domingo, em caráter experimental até janeiro de 2027. A fonte não detalha linhas nem estações."
+    }
+  ],
+  "integracoes": [
+    {
+      "estacao": "luz",
+      "linhas": [
+        "4",
+        "10",
+        "11"
+      ],
+      "horarios": {
+        "todos": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fonte": "metro-horarios"
+    },
+    {
+      "estacao": "republica",
+      "linhas": [
+        "4"
+      ],
+      "horarios": {
+        "todos": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fonte": "metro-horarios"
+    },
+    {
+      "estacao": "consolacao",
+      "linhas": [
+        "4"
+      ],
+      "horarios": {
+        "todos": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fonte": "metro-horarios",
+      "observacao": "Pela passagem até a estação Paulista da Linha 4."
+    },
+    {
+      "estacao": "santa-cruz",
+      "linhas": [
+        "5"
+      ],
+      "horarios": {
+        "todos": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fonte": "metro-horarios"
+    },
+    {
+      "estacao": "chacara-klabin",
+      "linhas": [
+        "5"
+      ],
+      "horarios": {
+        "todos": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fonte": "metro-horarios"
+    },
+    {
+      "estacao": "palmeiras-barra-funda",
+      "linhas": [
+        "7",
+        "8",
+        "10"
+      ],
+      "horarios": {
+        "todos": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fonte": "metro-horarios"
+    },
+    {
+      "estacao": "tamanduatei",
+      "linhas": [
+        "10"
+      ],
+      "horarios": {
+        "todos": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fonte": "metro-horarios"
+    },
+    {
+      "estacao": "bras",
+      "linhas": [
+        "10",
+        "11",
+        "12"
+      ],
+      "horarios": {
+        "todos": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fonte": "metro-horarios"
+    },
+    {
+      "estacao": "corinthians-itaquera",
+      "linhas": [
+        "11"
+      ],
+      "horarios": {
+        "util": [
+          [
+            "10:00",
+            "17:00"
+          ],
+          [
+            "20:00",
+            "24:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "domingo": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "feriado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fonte": "metro-horarios"
+    },
+    {
+      "estacao": "tatuape",
+      "linhas": [
+        "11",
+        "12"
+      ],
+      "horarios": {
+        "util": [
+          [
+            "10:00",
+            "17:00"
+          ],
+          [
+            "20:00",
+            "24:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "domingo": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "feriado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "fonte": "metro-horarios"
+    }
+  ]
+}

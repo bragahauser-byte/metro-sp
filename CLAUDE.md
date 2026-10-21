@@ -42,6 +42,10 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 - **Fidelidade às referências (exigência da dona do projeto, 20/10/2026):** a aparência deve ser igual às imagens de `_referencias/imagens do projeto` (Live Subway Map da MTA): formato e largura das linhas, faixas paralelas com fio branco entre elas quando várias linhas correm juntas, cortes a 90° e 45° com curvas de raio constante, estações como pontos pretos com rótulo da linha, transferências como fio preto fino, e zoom semântico (de longe: linhas finas; de perto: faixas largas, nomes de rua em serifa cinza). Paleta de linhas idêntica ao Guia Rápido (`data/line-colors.json`). O mapa real tem de estar geograficamente correto (`data/tracks.geojson`).
 - Ícones de linha: círculo na cor da linha com o número **sempre branco** e centralizado (decisão de 20/10/2026). Como algumas cores claras não chegam a 4,5:1, o ícone nunca pode ser a única informação: sempre com `aria-label` e com o nome da linha escrito por perto.
 - Tipografia: **Inter** (OFL) via `next/font`. Helvetica Now (em `_referencias/tipografia projeto`) é comercial — NÃO commitar.
+- Escala tipográfica fechada (v1.2): só `text-xs` 12/16 (+0,1 px), `text-sm` 14/20, `text-base` 16/24, `text-lg` 20/28 (−0,2), `text-xl` 24/32 (−0,4) e `text-2xl` 28/36 (−0,5); pesos 400/500/600/700. Os tamanhos padrão do Tailwind estão desligados em `styles/tokens.css`. Nada abaixo de 12 px (também nos rótulos do canvas). Não usar `tracking-*`/`leading-*` avulsos: o espaçamento vem do token.
+- Cores de texto semânticas: `text-fg`, `text-fg-muted`, `text-fg-link`, `text-fg-success`, `text-fg-warning`, `text-fg-danger`, `text-fg-disabled` (`ink`/`ink-muted` continuam como apelidos).
+- Controles: área mínima de 48 × 48 px (`size-control`, `h-control`); ícones de 24 px (`size-icon`). Usar `Button`/`IconButton`/`Icons` de `components/ui/button.tsx`.
+- Preferências (`lib/prefs.ts`, diálogo no ícone de ajustes): tema Claro/Escuro/Sistema (nunca automático por horário), texto maior, mais contraste, reduzir movimento, voz e sons. Viram atributos `data-*` no `<html>`, aplicados antes da pintura pelo script do layout.
 - Mobile-first. Testar em 360px, 768px, 1280px e 1920px.
 - Acessibilidade WCAG AA: contraste, foco visível, navegação por teclado, e toda informação do mapa também disponível em lista (o mapa nunca é o único caminho).
 - Dark mode e light mode.
@@ -50,11 +54,21 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 
 - `/mapa`: no modo esquemático a câmera é própria e leve (`components/map/camera.ts`, mesma projeção do MapLibre); o MapLibre só é baixado ao abrir o modo real e assume a mesma vista. Isso mantém o Lighthouse mobile ≥ 90 — não importar `maplibre-gl` de forma estática nem o CSS completo dele (usar `maplibre-min.css`). MapLibre só para o fundo de ruas; linhas, estações e rótulos são desenhados em canvas por `components/map/network-renderer.ts` (faixas paralelas, largura por zoom, curvas de raio constante, rótulos com colisão). A transição esquemático ↔ real interpola cada estação (`t` de 0 a 1).
 - Nível de detalhe por zoom (como no Live Subway Map): longe = linhas finas em troncos; médio = pontos e nomes de baldeações/terminais; perto = todos os nomes com ícones das linhas e ♿, e cada linha vira um par de faixas (ida e volta) com fio branco; máximo = número da linha ao lado do ponto e entradas. Linha selecionada: as outras ficam cinza. Trecho em obras: acinzentado, estação vazada.
-- Planejador de rota (`components/route/plan.ts`): Dijkstra sobre (estação, linha), tempo estimado pela distância do traçado (35 km/h metrô, 30 monotrilho, 45 trem, 30 s por parada) + 5 min por baldeação; sempre apresentado como estimativa. `/rota?de=&para=` e `/mapa?de=&para=`.
+- Planejador de rota (`lib/route/engine.ts`, ligado em `components/route/plan.ts`): Dijkstra sobre (estação, linha), tempo estimado pela distância do traçado (35 km/h metrô, 30 monotrilho, 45 trem, 30 s por parada) + 5 min por baldeação; sempre apresentado como estimativa. `/rota?de=&para=` e `/mapa?de=&para=`.
 - Imagens de compartilhamento por página em `opengraph-image.tsx` (fonte Inter em `assets/fonts`, OFL); `sitemap.ts` e `robots.ts` com o domínio https://metro-sp-beta.vercel.app.
 - Endereço guarda modo, linha, estação e a vista (`?v=lng,lat,zoom`), mas nunca quando o GPS está ativo.
 - O worker do MapLibre 6 é copiado para `public/vendor` em `predev`/`prebuild` (fora do git).
 - Fontes do mapa de fundo via `font-faces` do estilo (Google Fonts, OFL); tiles do OpenFreeMap.
+- Folha do celular (`components/map/bottom-sheet.tsx`): parcial/expandida/arrastando/fechada; arrastar só pela alça/cabeçalho (não briga com a rolagem nem com o mapa), fecha por distância (120 px) ou velocidade (0,6 px/ms), arrasto curto volta; Esc fecha e o foco volta para quem abriu.
+
+## Domínio (lib/, sem React — testável com `npm test`)
+
+- `lib/route/engine.ts`: motor de rotas puro (Dijkstra com heap sobre nós `slug|linha`), alternativas (menos baldeações; evitando cada linha da melhor), junta rotas que só trocam linha paralela ("ou Linha 11"), preferência de acessibilidade (prioriza, não exclui), checagem de horário por embarque e baldeação e replanejamento quando uma baldeação está fechada. `components/route/plan.ts` liga o motor aos dados.
+- `lib/schedule/hours.ts` + `data/horarios.json`: horários SÓ de fonte oficial consultada. Sem dado = `nao-verificado` (nunca supor aberto/fechado). Regras do Metrô não se estendem a outras operadoras. "Inviável" só com confirmação da fonte.
+- `lib/time/sao-paulo.ts`: fuso America/Sao_Paulo via Intl, dia de operação (até 3h conta como o dia anterior), feriados (nacionais, estadual, municipais; Carnaval não).
+- `lib/ops/`: avisos. Só feeds RSS públicos com permissão registrada (`sources.ts` + `data/sources.md`). `/api/avisos` usa `use cache` + `cacheLife` (30 min) — no plano Hobby o cron da Vercel é diário, então não há cron de 10 min. `/api/avisos/atualizar` força nova coleta e exige `CRON_SECRET` (variável de ambiente na Vercel; sem ela responde 503). Comunicado ≠ situação em tempo real.
+- `lib/voice/`: entender "da estação X até Y" (sem acento, com tolerância a erro) e descrever a rota em frases. Reconhecimento e fala usam a Web Speech API do navegador (`components/voice/`), com o texto sempre como alternativa.
+- Testes: `npm test` (node --test com remoção de tipos do Node ≥ 22.6; imports relativos com extensão `.ts` em `lib/` e `tests/`).
 
 ## Regras de dados
 
@@ -73,7 +87,7 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 
 Trabalhe em passos pequenos. Ao final de cada passo concluído:
 
-1. `npm run lint` e `npx tsc --noEmit` e `npm run build` — só siga se tudo passar.
+1. `npm run lint`, `npx tsc --noEmit`, `npm test` e `npm run build` — só siga se tudo passar.
 2. Commit com mensagem clara em português (ex.: `feat(mapa): diagrama esquemático com linhas 1 a 5`).
 3. `git push` para `origin main` (ou para a branch da fase, se estivermos usando branch).
 4. Depois do push, informe: o que mudou, o hash do commit e que a Vercel vai publicar automaticamente. Se a Vercel CLI estiver disponível e linkada, confira o status com `vercel ls`/`vercel inspect` e passe a URL.

@@ -43,7 +43,7 @@ function Marker({ status }: { status: Status }) {
 export function StatusChip({ status }: { status: Status }) {
   return (
     <span
-      className="inline-flex items-center gap-1 border border-rule px-1 py-0.5 text-caption font-medium text-ink"
+      className="inline-flex items-center gap-1 border border-rule px-1 py-0.5 text-xs font-medium text-ink"
       style={{ borderRadius: "var(--radius-control)" }}
     >
       <Marker status={status} />

@@ -21,24 +21,24 @@ export function NearMe() {
         <Button onClick={request} disabled={state.status === "locating"} className="self-start">
           {state.status === "locating" ? "Procurando…" : "Estação mais perto de mim"}
         </Button>
-        <p className="max-w-[56ch] text-caption text-ink-muted">
+        <p className="max-w-[56ch] text-xs text-ink-muted">
           O navegador pede sua permissão. A localização é usada só nesta página para calcular a distância — não é
           enviada, salva nem registrada.
         </p>
       </div>
 
       <div aria-live="polite">
-        {state.status === "error" && <p className="text-body">{GEO_MESSAGES[state.reason]}</p>}
+        {state.status === "error" && <p className="text-base">{GEO_MESSAGES[state.reason]}</p>}
         {state.status === "ok" && (
           <ol className="flex flex-col">
             {nearby.map((n, i) => {
               const st = stationBySlug.get(n.slug)!;
               return (
                 <li key={n.slug} className="flex items-center gap-2 border-b border-rule py-2">
-                  <span className="w-3 text-title-s font-bold tabular-nums text-ink-muted">{i + 1}</span>
+                  <span className="w-3 text-xl font-bold tabular-nums text-ink-muted">{i + 1}</span>
                   <div className="flex-1">
-                    <p className="text-lead font-bold tracking-tight">{st.nome}</p>
-                    <p className="text-caption text-ink-muted">
+                    <p className="text-lg font-bold">{st.nome}</p>
+                    <p className="text-xs text-ink-muted">
                       {formatDistance(n.distanciaM)} em linha reta · cerca de {n.minutos} min a pé
                     </p>
                   </div>
@@ -47,7 +47,7 @@ export function NearMe() {
                       <LineBadge key={l} line={l} size="sm" />
                     ))}
                   </span>
-                  <Link className="text-body font-semibold underline underline-offset-4" href={`/mapa?estacao=${n.slug}&modo=real`}>
+                  <Link className="text-base font-semibold underline underline-offset-4" href={`/mapa?estacao=${n.slug}&modo=real`}>
                     Mapa
                   </Link>
                 </li>
@@ -58,7 +58,7 @@ export function NearMe() {
       </div>
 
       <div className="max-w-sm">
-        <h2 className="mb-1 text-caption font-semibold uppercase tracking-widest text-ink-muted">Ou busque pelo nome</h2>
+        <h2 className="mb-1 text-xs font-semibold uppercase text-ink-muted">Ou busque pelo nome</h2>
         <StationSearch onPick={(slug) => router.push(`/mapa?estacao=${slug}`)} />
       </div>
     </div>

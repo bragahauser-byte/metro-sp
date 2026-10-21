@@ -351,7 +351,7 @@ export class NetworkRenderer {
       }
       // De perto, o número da linha ao lado de cada ponto (como as letras do Live Subway Map).
       if (z >= 15 && t < 0.5) {
-        const size = Math.round(Math.min(18, lineW * 0.8));
+        const size = Math.max(12, Math.min(16, Math.round(lineW * 0.8)));
         ctx.font = `700 ${size}px ${colors.font}`;
         ctx.textAlign = "center";
         ctx.textBaseline = "middle";
@@ -438,9 +438,10 @@ export class NetworkRenderer {
     const t = state.t;
     const effectiveZ = z + t * 0.6; // o esquemático é mais legível no mesmo zoom
     if (effectiveZ < 10.3) return;
-    const size = effectiveZ < 12 ? 11 : effectiveZ < 13.5 ? 12.5 : effectiveZ < 15 ? 14 : 16;
+    // Mesma escala do site (12/14/16 px); nada abaixo de 12.
+    const size = effectiveZ < 13.5 ? 12 : effectiveZ < 15 ? 14 : 16;
     const font = `700 ${size}px ${colors.font}`;
-    const small = `400 ${Math.round(size * 0.72)}px ${colors.font}`;
+    const small = `400 12px ${colors.font}`;
     const showAll = effectiveZ >= 12;
     const showComplement = effectiveZ >= 14;
     // De perto, os ícones das linhas (e ♿) aparecem sob o nome, como no Live Subway Map.

@@ -111,9 +111,18 @@
   {
    "linha": "1",
    "de": "se",
+   "para": "sao-bento",
+   "status": "operando",
+   "distanciaM": 762,
+   "aproximado": false,
+   "faixa": 0
+  },
+  {
+   "linha": "1",
+   "de": "sao-bento",
    "para": "luz",
    "status": "operando",
-   "distanciaM": 1542,
+   "distanciaM": 780,
    "aproximado": false,
    "faixa": 0
   },
