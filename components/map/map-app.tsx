@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Card } from "@/components/ui/card";
 import { IconButton, Icons } from "@/components/ui/button";
+import { LineBadge } from "@/components/ui/line-badge";
 import { BetaTag } from "@/components/ui/site-chrome";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { StaticBadge } from "@/components/ui/static-badge";
@@ -496,10 +497,12 @@ export function MapApp() {
   const pickFind = (s: Spot) => {
     addRecent(s);
     // Origem padrão: sua localização (se liberada); senão, a pessoa escolhe pela busca.
-    const o: RouteOutcome = here ? initialOutcome(gpsSpot(here), s) : { route: null, from: null, to: s, board: null, alight: null, walkOnly: false };
+    const o: RouteOutcome = here ? initialOutcome(gpsSpot(here), s) : { route: null, from: null, to: s, board: null, alight: null, walkOnly: false, summary: null };
     setOutcome(o);
-    open("search", "expandido");
-    if (o.route || o.walkOnly) focusOutcome(o);
+    // Com origem e destino a folha fica no meio: opções embaixo, a rota mais rápida já no mapa em cima.
+    const hasRoute = Boolean(o.route || o.walkOnly);
+    open("search", hasRoute && !isDesktop ? "meio" : "expandido");
+    if (hasRoute) setTimeout(() => focusOutcome(o), isDesktop ? 0 : 320);
     else if (s.kind === "station") mapRef.current?.focusStation(s.slug);
     else {
       // O lugar e a estação mais próxima juntos: dá para ver por onde se chega.
@@ -624,6 +627,12 @@ export function MapApp() {
           permission={permission}
           gpsSpot={gpsSpot}
           onFocusStep={focusStep}
+          onChosen={(o) => {
+            // Celular: a folha desce e a rota aparece inteira no mapa, como no Google Maps.
+            if (isDesktop) return focusOutcome(o);
+            setSnap("recolhido");
+            setTimeout(() => focusOutcome(o), 320);
+          }}
           autoFocus={!outcome?.from || !outcome?.to}
           onBack={closeAll}
           onResult={(o) => {
@@ -646,8 +655,32 @@ export function MapApp() {
 
   // Celular: com o painel fechado não há folha — só os botões sobre o mapa, como no Live Subway Map.
   const sheetOpen = panel !== "home";
+  const summary = panel === "search" ? (outcome?.summary ?? null) : null;
   const peek =
-    snap === "recolhido" ? (
+    snap === "recolhido" && summary ? (
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setSnap("meio")}
+          className="flex min-h-control min-w-0 flex-1 flex-col items-start text-left"
+          aria-label={`Rota de ${summary.minutos} minutos. Ver passo a passo`}
+        >
+          <span className="text-lg font-bold">
+            {summary.aPe ? `A pé · ${summary.minutos} min` : `${summary.minutos} min`}
+            {summary.horario && <span className="ml-1 text-sm font-normal text-ink-muted">{summary.horario}</span>}
+          </span>
+          <span className="flex items-center gap-0.5 text-sm font-semibold text-fg-link">
+            {summary.linhas.map((l, i) => (
+              <LineBadge key={i} line={l} size="sm" />
+            ))}
+            <span className={summary.linhas.length ? "ml-0.5" : ""}>Ver passo a passo</span>
+          </span>
+        </button>
+        <IconButton variant="plain" label="Fechar rota" onClick={closeAll}>
+          {Icons.close}
+        </IconButton>
+      </div>
+    ) : snap === "recolhido" ? (
       <div className="flex items-center justify-between">
         <p className="text-base font-bold">{TITLES[panel]}</p>
         <IconButton variant="plain" label="Fechar painel" onClick={closeAll}>

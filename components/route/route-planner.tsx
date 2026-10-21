@@ -55,7 +55,11 @@ export type RouteOutcome = {
   alight: string | null;
   /** Só caminhada (lugares perto um do outro). */
   walkOnly: boolean;
+  /** Resumo da rota escolhida, para a folha recolhida do celular. */
+  summary: RouteSummary | null;
 };
+
+export type RouteSummary = { minutos: number; horario: string; baldeacoes: number; linhas: string[]; aPe: boolean };
 
 type Computed =
   | { kind: "incompleto" }
@@ -81,6 +85,19 @@ function compute(from: Spot | null, to: Spot | null, when: PlanRequest["when"], 
 
 function toOutcome(f: Spot | null, t: Spot | null, c: Computed, r: Route | null): RouteOutcome {
   const p = c.kind === "porta" ? c.place : null;
+  const ok = p?.status === "ok" ? p : null;
+  const summary: RouteSummary | null =
+    p?.status === "a-pe"
+      ? { minutos: p.walk.minutos, horario: "", baldeacoes: 0, linhas: [], aPe: true }
+      : r
+        ? {
+            minutos: r.minutos + (ok?.walkIn?.minutos ?? 0) + (ok?.walkOut?.minutos ?? 0),
+            horario: doorTimes(r, ok?.walkIn, ok?.walkOut),
+            baldeacoes: r.baldeacoes,
+            linhas: r.legs.map((l) => l.linha),
+            aPe: false,
+          }
+        : null;
   return {
     route: r,
     from: f,
@@ -88,6 +105,7 @@ function toOutcome(f: Spot | null, t: Spot | null, c: Computed, r: Route | null)
     board: p?.status === "ok" ? p.board : null,
     alight: p?.status === "ok" ? p.alight : null,
     walkOnly: p?.status === "a-pe",
+    summary,
   };
 }
 
@@ -104,6 +122,10 @@ type Field = "from" | "to";
  * Busca e rota: origem e destino podem ser estação, endereço, rua, CEP ou lugar (texto ou voz);
  * inverter, sair agora / sair às / chegar até, prioridade a estações acessíveis, alternativas e o
  * detalhe da escolhida. `onResult` avisa o mapa (caminho, marcadores e trechos a pé).
+ *
+ * Como no Google Maps e no Apple Maps: com origem e destino, primeiro aparecem as opções de rota;
+ * tocar numa delas a escolhe (`onChosen`: no celular a folha desce e o mapa mostra a rota) e o
+ * painel passa ao passo a passo, com "Outras rotas" para voltar à lista.
  */
 export function RoutePlanner({
   initialFrom = null,
@@ -116,6 +138,7 @@ export function RoutePlanner({
   permission = "unknown",
   gpsSpot,
   onFocusStep,
+  onChosen,
 }: {
   initialFrom?: Spot | null;
   initialTo?: Spot | null;
@@ -129,6 +152,8 @@ export function RoutePlanner({
   /** Toque num passo: o mapa vai até ele. */
   onFocusStep?: (f: FocusStep) => void;
   onResult?: (o: RouteOutcome) => void;
+  /** Tocou numa opção de rota (ou em "Ver no mapa" quando é a pé). */
+  onChosen?: (o: RouteOutcome) => void;
   onBack?: () => void;
   autoFocus?: boolean;
 }) {
@@ -149,6 +174,7 @@ export function RoutePlanner({
   const [time, setTime] = useState(() => localInputs(now).time);
   const [acessivel, setAcessivel] = useState(false);
   const [selected, setSelected] = useState(0);
+  const [stage, setStage] = useState<"opcoes" | "detalhe">("opcoes");
   const [voiceNote, setVoiceNote] = useState("");
   const [voiceChoices, setVoiceChoices] = useState<{ field: Field; heard: string; options: Place[] } | null>(null);
   const inputs = { from: useRef<HTMLInputElement>(null), to: useRef<HTMLInputElement>(null) };
@@ -202,6 +228,7 @@ export function RoutePlanner({
     }
     setNow(n);
     setSelected(0);
+    setStage("opcoes");
     if (p.mode) setWhenMode(p.mode);
     if (p.d !== undefined) setDate(p.d);
     if (p.h !== undefined) setTime(p.h);
@@ -214,8 +241,11 @@ export function RoutePlanner({
   }
 
   function choose(i: number) {
+    const o = toOutcome(from, to, computed, routes[i] ?? null);
     setSelected(i);
-    onResult?.(toOutcome(from, to, computed, routes[i] ?? null));
+    setStage("detalhe");
+    onResult?.(o);
+    onChosen?.(o);
   }
 
   function pick(field: Field, o: Option) {
@@ -339,7 +369,7 @@ export function RoutePlanner({
             {Icons.back}
           </IconButton>
         )}
-        <h2 className="flex-1 text-lg font-bold">Buscar rota</h2>
+        <h2 className="flex-1 text-lg font-bold">{routes.length && !listOpen ? (stage === "detalhe" ? "Sua rota" : "Rotas") : "Buscar rota"}</h2>
         <VoiceRouteButton compact onIntent={onVoice} />
       </div>
       {voiceNote && (
@@ -481,56 +511,105 @@ export function RoutePlanner({
                 que entrar no metrô.
               </p>
               <p className="text-xs text-ink-muted">Estimativa em linha reta × 1,3 a 4,5 km/h, não um caminho pelas ruas.</p>
+              {onChosen && (
+                <button
+                  type="button"
+                  className="min-h-control self-start font-semibold text-fg-link"
+                  onClick={() => onChosen(toOutcome(from, to, computed, null))}
+                >
+                  Ver no mapa
+                </button>
+              )}
             </div>
           ) : null}
 
-          {route && (
-            <RouteSteps
-              route={route}
-              acessivel={acessivel}
-              walkIn={door?.walkIn}
-              walkOut={door?.walkOut}
-              from={from}
-              to={to}
-              onFocusStep={onFocusStep}
-            />
+          {route && stage === "detalhe" && (
+            <>
+              {routes.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => setStage("opcoes")}
+                  className="-mt-1 flex min-h-control items-center gap-0.5 self-start text-sm font-semibold text-fg-link"
+                >
+                  <span aria-hidden>{Icons.back}</span>
+                  Outras rotas ({routes.length})
+                </button>
+              )}
+              <RouteSteps
+                route={route}
+                acessivel={acessivel}
+                walkIn={door?.walkIn}
+                walkOut={door?.walkOut}
+                from={from}
+                to={to}
+                onFocusStep={onFocusStep}
+              />
+            </>
           )}
-          {routes.length > 1 && (
-            <fieldset>
-              <legend className="mb-1 text-xs font-semibold uppercase text-ink-muted">Opções</legend>
-              <div className="flex flex-col gap-1">
+          {routes.length > 0 && stage === "opcoes" && (
+            <section aria-labelledby={`${ids}-opcoes`} className="flex flex-col gap-1">
+              <h3 id={`${ids}-opcoes`} className="text-sm text-ink-muted">
+                {routes.length > 1 ? `${routes.length} opções` : "1 opção"} · toque para ver no mapa
+              </h3>
+              <ul className="flex flex-col gap-1">
                 {routes.map((r, i) => {
                   const f = FEASIBILITY[r.viabilidade];
                   const walkMin = (door?.walkIn?.minutos ?? 0) + (door?.walkOut?.minutos ?? 0);
+                  const times = doorTimes(r, door?.walkIn, door?.walkOut);
                   return (
-                    <label
-                      key={r.id}
-                      className="flex min-h-control cursor-pointer items-center gap-1 border border-rule px-1.5 py-1 has-[:checked]:border-ink has-[:checked]:bg-ink/5 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-(--focus)"
-                      style={{ borderRadius: "var(--radius-card)" }}
-                    >
-                      <input type="radio" name={`${ids}-opcao`} className="sr-only" checked={route?.id === r.id} onChange={() => choose(i)} />
-                      <span className="flex flex-1 flex-col">
-                        <span className="text-base font-bold">
-                          {r.minutos + walkMin} min
-                          <span className="ml-0.5 font-normal text-ink-muted">
-                            {doorTimes(r, door?.walkIn, door?.walkOut) ? ` · ${doorTimes(r, door?.walkIn, door?.walkOut)}` : ""} ·{" "}
-                            {r.baldeacoes === 0 ? "direta" : transfers(r.baldeacoes)}
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        data-route-option
+                        onClick={() => choose(i)}
+                        className="flex min-h-control-lg w-full items-center gap-1.5 border border-rule bg-surface p-1.5 text-left transition-colors hover:bg-ink/5 active:bg-ink/10"
+                        style={{ borderRadius: "var(--radius-card)" }}
+                      >
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                          <span
+                            className="flex flex-wrap items-center gap-0.5"
+                            aria-label={`Linhas: ${r.legs.map((l) => lineById.get(l.linha)?.nome).join(", ")}`}
+                          >
+                            {r.legs.map((l, k) => (
+                              <span key={k} className="flex items-center gap-0.5">
+                                {k > 0 && (
+                                  <span aria-hidden className="text-xs text-ink-muted">
+                                    ›
+                                  </span>
+                                )}
+                                <LineBadge line={l.linha} size="sm" />
+                              </span>
+                            ))}
                           </span>
+                          <span className="text-sm text-ink-muted">
+                            {times ? `${times} · ` : ""}
+                            {r.baldeacoes === 0 ? "direta" : transfers(r.baldeacoes)}
+                            {walkMin > 0 ? ` · ${walkMin} min a pé` : ""}
+                          </span>
+                          {i === 0 && <span className="text-xs font-semibold text-fg-success">Mais rápida</span>}
+                          {f.label && r.viabilidade !== "viavel" && <span className={`text-xs font-semibold ${f.cls}`}>{f.label}</span>}
                         </span>
-                        {f.label && <span className={`text-xs font-semibold ${f.cls}`}>{f.label}</span>}
-                      </span>
-                      <span className="flex shrink-0 gap-0.5" aria-label={`Linhas: ${r.legs.map((l) => lineById.get(l.linha)?.nome).join(", ")}`}>
-                        {r.legs.map((l, k) => (
-                          <LineBadge key={k} line={l.linha} size="sm" />
-                        ))}
-                      </span>
-                    </label>
+                        <span className="flex shrink-0 flex-col items-end">
+                          <span className="text-xl font-bold">{r.minutos + walkMin}</span>
+                          <span className="text-xs text-ink-muted">min</span>
+                        </span>
+                      </button>
+                    </li>
                   );
                 })}
-              </div>
-            </fieldset>
+              </ul>
+            </section>
           )}
 
+          {stage === "opcoes" && (
+            <details className="group">
+              <summary className="flex min-h-control cursor-pointer list-none items-center justify-between text-sm font-semibold text-fg-link">
+                Horário e acessibilidade
+                <span aria-hidden className="transition-transform group-open:rotate-180">
+                  ⌄
+                </span>
+              </summary>
+              <div className="flex flex-col gap-3 pt-1">
           <fieldset className="flex flex-col gap-1">
             <legend className="mb-1 text-xs font-semibold uppercase text-ink-muted">Quando · horário de São Paulo</legend>
             <div className="flex overflow-hidden border border-rule-strong" style={{ borderRadius: "var(--radius-control)" }}>
@@ -574,7 +653,10 @@ export function RoutePlanner({
           <Switch checked={acessivel} onChange={(a) => update({ a })} hint="Marcação do OpenStreetMap, que não cobre todas as estações.">
             Priorizar estações acessíveis
           </Switch>
-          {route && <OfficialUpdates onlyLines={route.legs.map((l) => l.linha)} limit={3} />}
+              </div>
+            </details>
+          )}
+          {route && stage === "detalhe" && <OfficialUpdates onlyLines={route.legs.map((l) => l.linha)} limit={3} />}
         </>
       )}
     </div>
