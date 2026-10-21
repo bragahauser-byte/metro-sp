@@ -9,6 +9,9 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { StaticBadge } from "@/components/ui/static-badge";
 import { nearestStations } from "@/components/geo/nearest";
 import { useGeolocation } from "@/components/geo/use-geolocation";
+import { checkPermission, requestLocation, startWatch, useLocation } from "@/components/geo/location";
+import { LocationNotice } from "@/components/geo/location-help";
+import { haversine } from "@/lib/geo/walk";
 import { type Route } from "@/components/route/plan";
 import { type RouteOutcome, RoutePlanner, initialOutcome } from "@/components/route/route-planner";
 import { type Spot, decodeSpot, encodeSpot } from "@/components/search/place-search";
@@ -276,17 +279,72 @@ export function MapApp() {
     mapRef.current?.focusPoints([lngLat, st.geo]);
   });
 
+  const { permission } = useLocation();
+  const [askNotice, setAskNotice] = useState(false);
+  const autoAsked = useRef(false);
   const nearby = useMemo(() => (geo.status === "ok" ? nearestStations(geo.lngLat, 3) : []), [geo]);
   const user = geo.status === "ok" ? { lngLat: geo.lngLat, accuracy: geo.accuracy } : null;
+  /** Sua posição (só no aparelho): ordena resultados e é a origem padrão das rotas. */
+  const here: LngLat | null = geo.status === "ok" ? geo.lngLat : null;
   const ops = useOps();
   const changedLines = alertLines(ops);
   const alertCount = notices().length + changedLines;
   // Viés da busca de lugares: centro do mapa, só sem GPS (para não mandar sua posição a ninguém).
-  const bias: LngLat | null = geo.status === "idle" && mode === "real" && view ? view.center : null;
-  // "Buscar por perto": o centro da vista do mapa (no modo real), nunca a posição do GPS.
+  const bias: LngLat | null = geo.status !== "ok" && mode === "real" && view ? view.center : null;
+  // "Buscar por perto": o centro da vista do mapa (no modo real). Se o mapa está em cima de você,
+  // a busca pede confirmação antes de mandar esse ponto ao serviço.
   const findNear: LngLat | null = mode === "real" ? (view?.center ?? [-46.6333, -23.5505]) : null;
+  const nearIsUser = Boolean(here && findNear && haversine(here, findNear) < 1500);
+
+  /** "Sua localização" como ponta da rota (nunca vai para o endereço da página). */
+  const gpsSpot = (ll: LngLat): Spot => {
+    const st = nearestStations(ll, 1)[0];
+    return { kind: "place", nome: "Sua localização", detalhe: st ? `perto da estação ${stationBySlug.get(st.slug)?.nome}` : "", tipo: "gps", lngLat: ll };
+  };
 
   const onReady = useCallback(() => setReady(true), []);
+
+  // Abertura: pede a localização assim que o mapa aparece, com um aviso curto antes do pedido do
+  // navegador. Já permitida: vai direto. Já negada: não insiste (o navegador não perguntaria).
+  useEffect(() => {
+    if (!ready || autoAsked.current) return;
+    autoAsked.current = true;
+    let alive = true;
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    checkPermission().then((p) => {
+      if (!alive || p === "denied") return;
+      if (p !== "granted") setAskNotice(true);
+      timers.push(
+        setTimeout(
+          () =>
+            requestLocation().then((ll) => {
+              if (!alive) return;
+              if (ll && !initialView && !outcome) {
+                const st = nearestStations(ll, 1)[0];
+                if (st) {
+                  setTarget(st.slug);
+                  mapRef.current?.focusPoints([ll, stationBySlug.get(st.slug)!.geo]);
+                  setAnnouncement(`Mapa centrado em você. Estação mais próxima: ${stationBySlug.get(st.slug)?.nome}.`);
+                }
+              }
+              // O aviso some logo se deu certo; se não, fica um pouco para a pessoa ler.
+              timers.push(setTimeout(() => alive && setAskNotice(false), ll ? 1200 : 8000));
+            }),
+          p === "granted" ? 0 : 700,
+        ),
+      );
+    });
+    return () => {
+      alive = false;
+      timers.forEach(clearTimeout);
+    };
+    // Só na abertura.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready]);
+
+  // Posição contínua só com rota ativa saindo de "Sua localização"; fechou a rota, para.
+  const tracking = panel === "search" && Boolean(outcome?.route) && outcome?.from?.kind === "place" && outcome.from.tipo === "gps";
+  useEffect(() => (tracking ? startWatch() : undefined), [tracking]);
   useEffect(() => {
     if (!ready) return;
     const id = setTimeout(() => setSplashGone(true), 450);
@@ -437,10 +495,12 @@ export function MapApp() {
   /** Escolha na busca: vira o destino da rota (a origem fica para a pessoa dizer, ou "minha localização"). */
   const pickFind = (s: Spot) => {
     addRecent(s);
-    const o: RouteOutcome = { route: null, from: null, to: s, board: null, alight: null, walkOnly: false };
+    // Origem padrão: sua localização (se liberada); senão, a pessoa escolhe pela busca.
+    const o: RouteOutcome = here ? initialOutcome(gpsSpot(here), s) : { route: null, from: null, to: s, board: null, alight: null, walkOnly: false };
     setOutcome(o);
     open("search", "expandido");
-    if (s.kind === "station") mapRef.current?.focusStation(s.slug);
+    if (o.route || o.walkOnly) focusOutcome(o);
+    else if (s.kind === "station") mapRef.current?.focusStation(s.slug);
     else {
       // O lugar e a estação mais próxima juntos: dá para ver por onde se chega.
       const st = nearestStations(s.lngLat, 1)[0];
@@ -453,6 +513,23 @@ export function MapApp() {
     open("near");
     requestGeo();
   };
+
+  /** Toque num passo da rota: o mapa vai até ele (estações do trecho e pontos a pé). */
+  function focusStep(step: { stations: string[]; points: LngLat[] }) {
+    // Celular: a folha desce até a metade para o trecho aparecer no mapa.
+    if (!isDesktop && snap === "expandido") setSnap("meio");
+    const real = mode === "real";
+    const pts: LngLat[] = step.stations.map((slug) => {
+      const s = stationBySlug.get(slug)!;
+      return real ? s.geo : s.schem;
+    });
+    if (real) pts.push(...step.points);
+    // Espera a folha terminar de descer: o enquadramento desconta a altura real dela.
+    const go = () => (pts.length === 1 ? mapRef.current?.focusPoints([pts[0], pts[0]]) : pts.length && mapRef.current?.focusPoints(pts));
+    if (!isDesktop && snap === "expandido") setTimeout(go, 320);
+    else go();
+    if (step.stations.some((s) => stationBySlug.get(s)?.linhas.every((l) => RAIL_LINES.has(l)))) setShowRail(true);
+  }
 
   function focusOutcome(o: RouteOutcome) {
     const pts: LngLat[] = [];
@@ -518,7 +595,7 @@ export function MapApp() {
         </div>
       )}
       {panel === "now" && <NowView onBack={closeAll} />}
-      {panel === "find" && <FindView near={findNear} onPick={pickFind} onClose={closeAll} />}
+      {panel === "find" && <FindView near={findNear} bias={bias} rankRef={here} nearIsUser={nearIsUser} onPick={pickFind} onClose={closeAll} />}
       {panel === "line" && selectedLine && (
         <LineView id={selectedLine} selectedStation={selectedStation} onBack={closeAll} onPickStation={(s) => pickStation(s)} />
       )}
@@ -543,6 +620,10 @@ export function MapApp() {
           initialFrom={outcome?.from ?? initial.from}
           initialTo={outcome?.to ?? initial.to}
           bias={bias}
+          here={here}
+          permission={permission}
+          gpsSpot={gpsSpot}
+          onFocusStep={focusStep}
           autoFocus={!outcome?.from || !outcome?.to}
           onBack={closeAll}
           onResult={(o) => {
@@ -624,6 +705,12 @@ export function MapApp() {
             </p>
           </div>
           <StaticBadge className="pointer-events-auto" />
+        </div>
+      )}
+
+      {askNotice && (
+        <div className="pointer-events-none absolute inset-x-1 top-[64px] z-20 flex justify-center md:inset-x-auto md:right-2 md:top-2">
+          <LocationNotice geo={geo} onClose={() => setAskNotice(false)} />
         </div>
       )}
 

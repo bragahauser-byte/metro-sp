@@ -26,6 +26,8 @@ export type StatusSource = {
   linhas: string[];
   /** Variável de ambiente com a chave; sem ela a fonte fica desligada (e o site diz isso). */
   chave?: string;
+  /** Intervalo mínimo entre leituras reais, por instância do servidor (limite da fonte). */
+  minIntervaloS?: number;
   permissao: string;
 };
 
@@ -43,6 +45,8 @@ export const STATUS_SOURCES: StatusSource[] = [
     url: ARTESP_STATUS_URL,
     linhas: ["4", "5", "6", "7", "8", "9"],
     chave: "ARTESP_API_KEY",
+    // Limite da ARTESP: 12 req/h por chave. Aqui: no máximo 4 por hora.
+    minIntervaloS: 15 * 60,
     permissao:
       "API documentada do CCM; exige chave pessoal (Minha Conta → Minhas APIs), limite de 12 requisições/hora e licença CC BY-NC 4.0 com crédito “Fonte: ARTESP — Centro de Controle Multimodal”. Desde 03/09/2026 não cobre linhas do Metrô e da CPTM. Conferido em 21/10/2026.",
   },

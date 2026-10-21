@@ -5,6 +5,8 @@ import { IS_STATIC, withBase } from "@/lib/env";
 import { type NearbyKind, type Place, parsePhoton, photonNearbyUrl, photonUrl } from "@/lib/geo/photon";
 import type { LngLat } from "@/lib/geo/walk";
 import type { Geocoder } from "@/lib/geo/search";
+import { expandQuery } from "@/lib/geo/aliases";
+import { rankPlaces } from "@/lib/geo/rank";
 
 const memo = new Map<string, Place[]>();
 
@@ -14,9 +16,11 @@ export const geocode: Geocoder = async (q, near, signal) => {
   if (hit) return hit;
   let places: Place[];
   if (IS_STATIC) {
-    const res = await fetch(photonUrl(q, near), { signal });
+    // Sem servidor não há Nominatim (a política proíbe autocomplete no navegador): só Photon.
+    const expanded = expandQuery(q);
+    const res = await fetch(photonUrl(expanded, near), { signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    places = parsePhoton(await res.json());
+    places = rankPlaces(parsePhoton(await res.json()), expanded, near);
   } else {
     const u = new URLSearchParams({ q: q.trim() });
     if (near) {

@@ -15,7 +15,8 @@ export type SearchResult = {
 export type Geocoder = (q: string, near: LngLat | null, signal: AbortSignal) => Promise<Place[]>;
 
 export const MIN_GEOCODE_CHARS = 3;
-export const GEOCODE_TIMEOUT_MS = 6000;
+/** O servidor pode precisar do Photon (até 7 s) e do Nominatim (até 4 s). */
+export const GEOCODE_TIMEOUT_MS = 12000;
 
 export async function searchEverywhere(
   q: string,

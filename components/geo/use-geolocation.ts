@@ -1,54 +1,30 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { LngLat } from "@/components/map/network";
+import { type GeoState, requestLocation, useLocation } from "./location";
 
-export type GeoState =
-  | { status: "idle" }
-  | { status: "locating" }
-  | { status: "ok"; lngLat: LngLat; accuracy: number }
-  | { status: "error"; reason: "denied" | "unavailable" | "timeout" | "unsupported" };
+export type { GeoState } from "./location";
 
 export const GEO_MESSAGES: Record<Extract<GeoState, { status: "error" }>["reason"], string> = {
-  denied: "Você não autorizou o acesso à localização. Dá para buscar a estação pelo nome.",
-  unavailable: "Não foi possível descobrir sua localização agora. Tente de novo ou busque pelo nome.",
-  timeout: "A localização demorou demais para responder. Tente de novo ou busque pelo nome.",
-  unsupported: "Este navegador não oferece localização. Busque a estação pelo nome.",
+  denied: "A localização está bloqueada neste navegador. Escolha a origem pela busca — ou libere nas configurações.",
+  unavailable: "Não foi possível descobrir sua localização agora. Tente de novo ou escolha a origem pela busca.",
+  timeout: "A localização demorou demais para responder. Tente de novo ou escolha a origem pela busca.",
+  unsupported: "Este navegador não oferece localização. Escolha a origem pela busca.",
 };
 
 /**
- * Localização sob demanda: só pede permissão quando `request` é chamado por um clique.
- * A posição fica apenas na memória desta página — não é enviada, salva nem registrada.
+ * Localização compartilhada (ver ./location): `request` pede a posição e chama `onLocated` quando
+ * ela chega. A posição fica apenas na memória desta página — não é enviada, salva nem registrada.
  */
 export function useGeolocation(onLocated?: (lngLat: LngLat) => void) {
-  const [state, setState] = useState<GeoState>({ status: "idle" });
+  const { geo } = useLocation();
   const onLocatedRef = useRef(onLocated);
   useEffect(() => {
     onLocatedRef.current = onLocated;
   });
-
   const request = useCallback(() => {
-    if (!("geolocation" in navigator)) {
-      setState({ status: "error", reason: "unsupported" });
-      return;
-    }
-    setState({ status: "locating" });
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lngLat: LngLat = [pos.coords.longitude, pos.coords.latitude];
-        setState({ status: "ok", lngLat, accuracy: pos.coords.accuracy });
-        onLocatedRef.current?.(lngLat);
-      },
-      (err) =>
-        setState({
-          status: "error",
-          reason: err.code === err.PERMISSION_DENIED ? "denied" : err.code === err.TIMEOUT ? "timeout" : "unavailable",
-        }),
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
-    );
+    requestLocation().then((ll) => ll && onLocatedRef.current?.(ll));
   }, []);
-
-  const clear = useCallback(() => setState({ status: "idle" }), []);
-
-  return { state, request, clear };
+  return { state: geo, request };
 }

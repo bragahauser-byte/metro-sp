@@ -6,7 +6,7 @@ import { BackButton } from "@/components/map/panels";
 import { lineById, lines } from "@/components/map/network";
 import { FULL_SITE_URL } from "@/lib/env";
 import { CHANNELS, STATUS_SOURCES } from "@/lib/ops/sources";
-import { type LineStatus, type Situacao, isAlert } from "@/lib/ops/status";
+import { ARTESP_ATTRIBUTION, type LineStatus, type Situacao, isAlert } from "@/lib/ops/status";
 import { type OpsState, useOps } from "./use-ops";
 
 const timeFmt = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
@@ -46,7 +46,16 @@ function channelsFor(id: string) {
   return CHANNELS.filter((c) => c.linhas.includes(id));
 }
 
-function LineRow({ id, s, keyMissing }: { id: string; s: LineStatus | null; keyMissing: boolean }) {
+/** Por que uma linha está sem leitura automática agora. */
+type Why = "sem-fonte" | "sem-chave" | "falhou" | "estatico";
+const WHY: Record<Why, string> = {
+  "sem-fonte": "a operadora não publica a situação em formato aberto",
+  "sem-chave": "aguardando a chave da API da ARTESP",
+  falhou: "a fonte não respondeu agora",
+  estatico: "a versão estática não tem servidor",
+};
+
+function LineRow({ id, s, why }: { id: string; s: LineStatus | null; why: Why }) {
   const line = lineById.get(id)!;
   const ch = channelsFor(id)[0];
   return (
@@ -59,14 +68,14 @@ function LineRow({ id, s, keyMissing }: { id: string; s: LineStatus | null; keyM
             <SituationText s={s} />
             {s.detalhe && s.detalhe !== s.texto && <span className="text-sm text-ink-muted">{s.detalhe}</span>}
             <span className="text-xs text-ink-muted">
-              {s.fonte.nome}
+              {s.fonte.id === "artesp" ? ARTESP_ATTRIBUTION : s.fonte.nome}
               {s.atualizadoEm && ` · atualizado às ${timeFmt.format(new Date(s.atualizadoEm))}`}
               {s.preservado && " · última leitura válida"}
             </span>
           </>
         ) : (
           <span className="text-sm text-ink-muted">
-            {keyMissing ? "Leitura automática desligada nesta versão." : "Sem leitura automática: a operadora não publica a situação em formato aberto."}{" "}
+            Sem leitura automática ({WHY[why]}).{" "}
             {ch && (
               <a className="font-semibold text-fg-link underline" href={ch.url}>
                 Ver em {ch.nome.split(" — ")[0]}
@@ -112,7 +121,13 @@ export function NowView({ onBack }: { onBack: () => void }) {
   const ops = useOps();
   const byLine = statusByLine(ops);
   const sources = ops.status === "ok" ? (ops.data.situacao?.fontes ?? []) : [];
-  const keyMissing = (id: string) => sources.some((f) => f.desligada && STATUS_SOURCES.find((s) => s.id === f.id)?.linhas.includes(id));
+  const why = (id: string): Why => {
+    if (ops.status === "static") return "estatico";
+    const src = STATUS_SOURCES.find((s) => s.linhas.includes(id));
+    if (!src) return "sem-fonte";
+    const f = sources.find((x) => x.id === src.id);
+    return f?.desligada ? "sem-chave" : "falhou";
+  };
   const running = lines.filter((l) => l.status === "operando" || l.status === "operacao-assistida");
   // Problemas primeiro; depois a ordem normal das linhas.
   const order = [...running].sort((a, b) => {
@@ -156,18 +171,16 @@ export function NowView({ onBack }: { onBack: () => void }) {
           </button>
         </p>
       )}
-      {ops.status !== "static" && (
-        <ul className="flex flex-col" aria-label="Situação por linha" aria-busy={ops.status === "loading"}>
-          {order.map((l) => (
-            <LineRow key={l.id} id={l.id} s={byLine.get(l.id) ?? null} keyMissing={keyMissing(l.id)} />
-          ))}
-        </ul>
-      )}
+      <ul className="flex flex-col" aria-label="Situação por linha" aria-busy={ops.status === "loading"}>
+        {order.map((l) => (
+          <LineRow key={l.id} id={l.id} s={byLine.get(l.id) ?? null} why={why(l.id)} />
+        ))}
+      </ul>
       {ops.status === "ok" && (
         <p className="text-xs text-ink-muted">
           {lastOk ? <>Última leitura bem-sucedida às {timeFmt.format(new Date(lastOk))}.</> : "Nenhuma leitura bem-sucedida ainda."}
           {failed.length > 0 && ` Fonte indisponível agora: ${failed.map((f) => f.nome).join(", ")}.`}
-          {sources.some((f) => f.id === "artesp" && f.ok) && " Fonte: ARTESP — Centro de Controle Multimodal (CC BY-NC 4.0)."}
+          {sources.some((f) => f.id === "artesp" && f.ok) && ` ${ARTESP_ATTRIBUTION} — Centro de Controle Multimodal.`}
         </p>
       )}
       <Channels />

@@ -24,3 +24,17 @@ export function stationCandidates(
   }
   return { candidates: [], raioM: null };
 }
+
+/** Acima disto, a origem ou o destino é "longe da rede": avisamos, mas mostramos a estação mais próxima. */
+export const FAR_FROM_NETWORK_M = 3000;
+
+/** Estação em operação mais próxima, e se ela fica longe demais (mais de 3 km em linha reta). */
+export function nearestToNetwork(point: LngLat, stations: StationPoint[]): { slug: string; walk: Walk; longe: boolean } | null {
+  let best: Candidate | null = null;
+  for (const s of stations) {
+    if (!usable(s)) continue;
+    const walk = estimateWalk(point, s.geo);
+    if (!best || walk.retaM < best.walk.retaM) best = { slug: s.slug, walk };
+  }
+  return best ? { ...best, longe: best.walk.retaM > FAR_FROM_NETWORK_M } : null;
+}

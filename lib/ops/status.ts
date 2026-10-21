@@ -70,12 +70,22 @@ export function parseCptm(json: unknown): LineStatus[] {
 }
 
 export const ARTESP_SOURCE = { id: "artesp", nome: "ARTESP — Centro de Controle Multimodal", site: "https://ccm.artesp.sp.gov.br/metroferroviario/status-linhas/" };
+/** "1. Status em Tempo Real" da API Trilhos (docs: /metroferroviario/api/docs/, conferido em 21/10/2026). */
 export const ARTESP_STATUS_URL = "https://ccm.artesp.sp.gov.br/metroferroviario/api/status/";
+export const ARTESP_ATTRIBUTION = "Dados: ARTESP (CC BY-NC 4.0)";
 
 type ArtespLine = {
   nome?: string;
   codigo?: string | number;
-  status?: { situacao?: string; classificacao?: string; operacao_normal?: boolean; atualizado_em?: string; mensagem?: string; descricao?: string };
+  status?: {
+    situacao?: string;
+    /** Texto ("operacional") ou objeto ({ tipo: "problema", label: "Problema (Offline)" }), conforme a documentação. */
+    classificacao?: string | { tipo?: string; label?: string };
+    operacao_normal?: boolean;
+    atualizado_em?: string;
+    mensagem?: string;
+    descricao?: string;
+  };
 };
 
 /** Número da linha a partir de `codigo` (4, "L4", "4") ou do nome ("Linha 4-Amarela"). */
@@ -98,7 +108,11 @@ export function parseArtesp(json: unknown): LineStatus[] {
       const texto = (l.status?.situacao ?? "").trim();
       let situacao = classify(texto);
       // A classificação da própria fonte manda quando o texto não basta.
+      const cls = l.status?.classificacao;
+      const tipo = typeof cls === "string" ? cls : cls?.tipo;
       if (situacao === "desconhecida" && l.status?.operacao_normal === true) situacao = "normal";
+      else if (situacao === "desconhecida" && tipo && /problema|incidente|falha/i.test(tipo)) situacao = "atencao";
+      else if (situacao === "normal" && l.status?.operacao_normal === false) situacao = "atencao";
       out.push({
         linha,
         situacao,
@@ -120,3 +134,14 @@ export function sortStatuses(list: LineStatus[]): LineStatus[] {
 
 /** Linhas que pedem atenção agora (aparecem no contador do botão de avisos). */
 export const isAlert = (s: LineStatus) => s.situacao === "paralisada" || s.situacao === "atencao";
+
+/** Situação de uma linha para um passo da rota: alerta, normal (com fonte) ou sem leitura — nunca suposta. */
+export type StepSituation = { kind: "alerta"; status: LineStatus } | { kind: "normal"; status: LineStatus } | { kind: "sem-leitura" };
+
+export function situationFor(linha: string, statuses: LineStatus[]): StepSituation {
+  const s = statuses.find((x) => x.linha === linha);
+  if (!s) return { kind: "sem-leitura" };
+  if (isAlert(s) || s.situacao === "encerrada") return { kind: "alerta", status: s };
+  if (s.situacao === "normal") return { kind: "normal", status: s };
+  return { kind: "sem-leitura" };
+}

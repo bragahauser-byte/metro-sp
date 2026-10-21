@@ -261,7 +261,8 @@ export function createPlanner(net: NetworkData, schedule?: ScheduleData) {
       }
     }
     const id = rides.map((l) => `${l.linha}:${l.estacoes[0]}`).join(">") + `>${rides.at(-1)?.estacoes.at(-1)}`;
-    const stops = new Set<string>([rides[0].estacoes[0], rides.at(-1)!.estacoes.at(-1)!]);
+    // Só passagem a pé entre estações (ex.: Consolação ↔ Paulista): não é viagem; quem chama descarta.
+    const stops = new Set<string>(rides.length ? [rides[0].estacoes[0], rides.at(-1)!.estacoes.at(-1)!] : []);
     for (const l of rides) {
       stops.add(l.estacoes[0]);
       stops.add(l.estacoes.at(-1)!);

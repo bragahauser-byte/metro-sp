@@ -62,7 +62,7 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 - Fontes do mapa de fundo via `font-faces` do estilo (Google Fonts, OFL); tiles do OpenFreeMap.
 - **Celular (v1.4, 21/10/2026, referência `_referencias/imagens do projeto/detalhes visuais importantes/mobile`):** sem folha com o painel fechado — símbolo "M" (abre ajustes) + nome no alto; embaixo botão de linhas (pontos coloridos), pílula Agora e "!"; à direita busca (no lugar do ♿ da referência) e localização. A busca (`components/search/find-view.tsx`) segue `search.jpeg` (Apple Maps): campo + fechar, Recentes, Buscar por perto.
 - Folha do celular (`components/map/bottom-sheet.tsx`): só com painel aberto, estados recolhido/meio/expandido; arrastar só pela alça/cabeçalho, muda por distância (48 px) ou velocidade (0,5 px/ms). Painel aberto = uma entrada no histórico (o voltar do aparelho fecha); Esc volta um nível; o foco volta para quem abriu (`map-app.tsx`). O conteúdo do painel é renderizado uma vez só (cartão no desktop ou folha no celular).
-- Busca (`components/route/route-planner.tsx` + `components/search/`): origem/destino podem ser estação ou lugar (`Spot`); lugares via Photon (`/api/geocode` na Vercel, direto no Pages). Rota de porta a porta em `lib/geo/place-route.ts`; caminhada é sempre estimativa (`lib/geo/walk.ts`).
+- Busca (`components/route/route-planner.tsx` + `components/search/`): origem/destino podem ser estação ou lugar (`Spot`); lugares via Photon (`/api/geocode` na Vercel, direto no Pages), com apelidos (`lib/geo/aliases.ts`: MASP, Allianz Parque → Nubank Parque), CEP sem traço, ordenação por nome e distância (`lib/geo/rank.ts`) e, só no servidor, Nominatim de reforço (1 req/s, cache 1 dia; `lib/geo/nominatim.ts`). Passo a passo da rota em `lib/route/steps.ts` (puro) + `components/route/route-steps.tsx` (toque no passo → mapa). Rota de porta a porta em `lib/geo/place-route.ts`; caminhada é sempre estimativa (`lib/geo/walk.ts`).
 - GitHub Pages: `npm run build:pages` (`DEPLOY_TARGET=pages`, base `/metro-sp/`, `output: export`, sem `/api` nem OG; `lib/env.ts` diz ao cliente que é estático). Workflow `.github/workflows/pages.yml`.
 
 ## Domínio (lib/, sem React — testável com `npm test`)
@@ -84,9 +84,10 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 
 ## Geolocalização
 
-- Pedir permissão só por ação do usuário (botão "Estação mais perto de mim"), nunca no carregamento.
+- **Mudou em 21/10/2026 (pedido da dona do projeto, v1.5):** o site pede a localização assim que abre, depois de um aviso curto ("Para traçar sua rota, o Metrô SP usa sua localização. Ela não sai do seu aparelho."). Já negada: não insiste; o botão "Usar minha localização" explica como liberar. Estado único em `components/geo/location.ts`; `watchPosition` só com rota ativa saindo de "Sua localização".
 - Localização é processada só no navegador; nunca enviar a servidor, salvar ou logar.
 - Tratar negação/erro/timeout com mensagem clara e alternativa (buscar estação por nome).
+- Com GPS ativo, a busca não manda viés ao servidor (ordena pela sua posição só no aparelho); "Buscar por perto" com o mapa em cima de você pede confirmação antes de mandar o centro do mapa (~1 km).
 
 ## Fluxo de trabalho Git + Vercel (obrigatório)
 

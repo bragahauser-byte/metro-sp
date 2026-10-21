@@ -11,29 +11,54 @@ export const MIN_INTERVAL_S = 15 * 60;
 export const STATUS_MAX_AGE_MS = 60 * 60 * 1000;
 const TIMEOUT_MS = 8000;
 const MAX_PER_SOURCE = 20;
-const UA = "metro-sp-conceitual/1.4 (+https://metro-sp-beta.vercel.app; github.com/bragahauser-byte/metro-sp)";
+const UA = "metro-sp-conceitual/1.5 (+https://metro-sp-beta.vercel.app; github.com/bragahauser-byte/metro-sp)";
 
 type Fetcher = (url: string, init: RequestInit) => Promise<Response>;
 type Env = Record<string, string | undefined>;
 
 const PARSERS: Record<string, (json: unknown) => LineStatus[]> = { cptm: parseCptm, artesp: parseArtesp };
 
-async function readStatus(src: StatusSource, now: Date, fetcher: Fetcher, env: Env) {
+type StatusRead = { linhas: LineStatus[]; fonte: SourceState };
+/** Última leitura real de cada fonte com intervalo mínimo (ex.: ARTESP), para não passar do limite. */
+const lastRead = new Map<string, { at: number; result: StatusRead }>();
+export const resetStatusThrottle = () => lastRead.clear();
+
+async function readStatus(src: StatusSource, now: Date, fetcher: Fetcher, env: Env): Promise<StatusRead> {
   const base = { id: src.id, nome: src.nome, site: src.site, coletadoEm: now.toISOString() };
   const key = src.chave ? env[src.chave] : undefined;
   if (src.chave && !key) {
     return { linhas: [] as LineStatus[], fonte: { ...base, ok: false, desligada: true, erro: `sem ${src.chave}`, ultimaColetaOkEm: null } };
   }
+  if (src.minIntervaloS) {
+    const prev = lastRead.get(src.id);
+    if (prev && now.getTime() - prev.at < src.minIntervaloS * 1000) return prev.result;
+    const result = await readStatusNow(src, base, now, fetcher, key);
+    lastRead.set(src.id, { at: now.getTime(), result });
+    return result;
+  }
+  return readStatusNow(src, base, now, fetcher, key);
+}
+
+const ERRORS: Record<number, string> = { 401: "chave recusada (401)", 403: "IP fora da lista liberada (403)", 429: "limite de requisições (429)" };
+
+async function readStatusNow(
+  src: StatusSource,
+  base: Pick<SourceState, "id" | "nome" | "site" | "coletadoEm">,
+  now: Date,
+  fetcher: Fetcher,
+  key: string | undefined,
+): Promise<StatusRead> {
   try {
     const headers: Record<string, string> = { "User-Agent": UA, Accept: "application/json" };
     if (key) headers.Authorization = `Api-Key ${key}`;
     const res = await fetcher(src.url, { headers, signal: AbortSignal.timeout(TIMEOUT_MS) });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error(ERRORS[res.status] ?? `HTTP ${res.status}`);
     const linhas = (PARSERS[src.id]?.(await res.json()) ?? []).filter((l) => src.linhas.includes(l.linha));
     if (!linhas.length) throw new Error("resposta sem linhas");
     return { linhas, fonte: { ...base, ok: true, ultimaColetaOkEm: now.toISOString() } };
   } catch (e) {
-    return { linhas: [] as LineStatus[], fonte: { ...base, ok: false, erro: e instanceof Error ? e.message : "falha na leitura", ultimaColetaOkEm: null } };
+    const erro = e instanceof Error ? (e.name === "TimeoutError" ? "tempo esgotado" : e.message) : "falha na leitura";
+    return { linhas: [] as LineStatus[], fonte: { ...base, ok: false, erro, ultimaColetaOkEm: null } };
   }
 }
 

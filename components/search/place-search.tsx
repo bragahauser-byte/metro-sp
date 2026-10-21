@@ -9,6 +9,8 @@ import type { LngLat } from "@/lib/geo/walk";
 import type { Place, PlaceKind } from "@/lib/geo/photon";
 import { MIN_GEOCODE_CHARS, type SearchResult, searchEverywhere } from "@/lib/geo/search";
 import { geocode } from "./geocoder";
+import { expandQuery } from "@/lib/geo/aliases";
+import { rankPlaces } from "@/lib/geo/rank";
 
 /** Uma ponta da viagem: estação da rede ou qualquer lugar (endereço, rua, CEP, loja…). */
 export type Spot =
@@ -52,8 +54,11 @@ export type Option =
 
 export type SearchState = SearchResult & { loading: boolean; q: string };
 
-/** Estações na hora; lugares depois de 300 ms sem digitar, cancelando a busca anterior. */
-export function usePlaceSearch(q: string, near: LngLat | null, enabled: boolean): SearchState {
+/**
+ * Estações na hora; lugares depois de 300 ms sem digitar, cancelando a busca anterior.
+ * `near` vai ao servidor como viés (centro do mapa); `rankRef` (sua localização) só ordena aqui.
+ */
+export function usePlaceSearch(q: string, near: LngLat | null, enabled: boolean, rankRef: LngLat | null = null): SearchState {
   const estacoes = useMemo(() => searchStations(q, 6), [q]);
   const [remote, setRemote] = useState<{ q: string; lugares: Place[]; erro: SearchResult["erro"] }>({ q: "", lugares: [], erro: null });
   const wantsGeo = enabled && q.trim().length >= MIN_GEOCODE_CHARS;
@@ -76,10 +81,14 @@ export function usePlaceSearch(q: string, near: LngLat | null, enabled: boolean)
   }, [q, wantsGeo, nearKey]);
 
   const fresh = remote.q === q;
+  const lugares = useMemo(
+    () => (rankRef && remote.lugares.length ? rankPlaces(remote.lugares, expandQuery(remote.q), rankRef) : remote.lugares),
+    [remote, rankRef],
+  );
   return {
     q,
     estacoes: fresh && remote.lugares.length ? estacoes.slice(0, 4) : estacoes,
-    lugares: wantsGeo && fresh ? remote.lugares : [],
+    lugares: wantsGeo && fresh ? lugares : [],
     erro: wantsGeo && fresh ? remote.erro : null,
     loading: wantsGeo && !fresh,
   };
@@ -243,14 +252,19 @@ export function PlaceResults({
       {state.erro && (
         <p className="px-1 text-sm text-fg-warning">
           {state.erro === "tempo" ? "A busca de endereços demorou demais." : "A busca de endereços está indisponível agora."} As estações
-          continuam funcionando.
+          continuam funcionando — digite o nome de uma estação ou tente de novo em instantes.
         </p>
       )}
       {typed && !state.loading && !state.erro && count === 0 && (
         <p className="px-1 text-sm text-ink-muted">
-          {state.q.trim().length < MIN_GEOCODE_CHARS
-            ? "Continue digitando para buscar endereços."
-            : `Nada encontrado para “${state.q.trim()}” na Grande São Paulo.`}
+          {state.q.trim().length < MIN_GEOCODE_CHARS ? (
+            "Continue digitando para buscar endereços."
+          ) : (
+            <>
+              Nada encontrado para “{state.q.trim()}” na Grande São Paulo. Tente a rua com o número (“Rua Augusta 1500”), um CEP
+              (“04210-000”), o nome de um lugar (“MASP”) ou de uma estação (“Paraíso”).
+            </>
+          )}
         </p>
       )}
       {state.lugares.length > 0 && (

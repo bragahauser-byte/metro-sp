@@ -7,8 +7,12 @@ import { Switch } from "@/components/ui/switch";
 import { usePrefs } from "@/components/ui/theme-toggle";
 import { lineById, stationBySlug } from "@/components/map/network";
 import { GEO_MESSAGES, useGeolocation } from "@/components/geo/use-geolocation";
+import type { Permission } from "@/components/geo/location";
+import { LocationHowTo, UseLocationButton } from "@/components/geo/location-help";
 import { OfficialUpdates } from "@/components/map/panels";
-import { RouteSpeech, VoiceRouteButton } from "@/components/voice/voice-controls";
+import { VoiceRouteButton } from "@/components/voice/voice-controls";
+import { type FocusStep, RouteSteps, doorTimes, transfers } from "./route-steps";
+import { nearestToNetwork } from "@/lib/geo/nearest";
 import { beep } from "@/components/voice/speech";
 import { geocode } from "@/components/search/geocoder";
 import {
@@ -20,13 +24,12 @@ import {
   spotName,
   usePlaceSearch,
 } from "@/components/search/place-search";
-import { formatTime, fromLocal, localParts } from "@/lib/time/sao-paulo";
+import { fromLocal, localParts } from "@/lib/time/sao-paulo";
 import { type Endpoint, type PlaceRouteResult, planPlaceRoute } from "@/lib/geo/place-route";
-import { type LngLat, type Walk, formatDistance } from "@/lib/geo/walk";
+import { type LngLat, formatDistance } from "@/lib/geo/walk";
 import type { Place } from "@/lib/geo/photon";
-import type { WalkLegs } from "@/lib/voice/describe-route";
 import type { RouteIntent } from "@/lib/voice/parse-route";
-import { type Notice, type PlanRequest, type PlanResult, type Route, planRoute, planRoutes, stationPoints } from "./plan";
+import { type PlanRequest, type PlanResult, type Route, planRoute, planRoutes, stationPoints } from "./plan";
 
 type WhenMode = "agora" | "partir" | "chegar";
 
@@ -43,17 +46,6 @@ const FEASIBILITY = {
   "sem-horario": { label: "", cls: "" },
 } as const;
 
-const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
-const transfers = (n: number) => (n === 0 ? "sem baldeação" : plural(n, "baldeação", "baldeações"));
-
-/** Saída da origem → chegada ao destino, contando os trechos a pé (o motor só vê a rede). */
-function doorTimes(r: Route, walkIn?: Walk | null, walkOut?: Walk | null): string {
-  if (!r.partida || !r.chegada) return "";
-  const from = new Date(r.partida.getTime() - (walkIn?.minutos ?? 0) * 60_000);
-  const to = new Date(r.chegada.getTime() + (walkOut?.minutos ?? 0) * 60_000);
-  return ` · ${formatTime(from)} → ${formatTime(to)}`;
-}
-
 /** O que o mapa precisa para desenhar: caminho na rede, marcadores e trechos a pé. */
 export type RouteOutcome = {
   route: Route | null;
@@ -64,157 +56,6 @@ export type RouteOutcome = {
   /** Só caminhada (lugares perto um do outro). */
   walkOnly: boolean;
 };
-
-function NoticeItem({ n }: { n: Notice }) {
-  const tone =
-    n.nivel === "bloqueio" ? "border-fg-danger text-fg-danger" : n.nivel === "atencao" ? "border-fg-warning" : "border-rule-strong";
-  return (
-    <li className={`border-l-4 pl-1 text-sm ${tone}`}>
-      <span className="font-semibold">{n.nivel === "bloqueio" ? "Impossível: " : n.nivel === "atencao" ? "Não verificado: " : ""}</span>
-      <span className="text-ink">{n.texto}</span>
-      {n.fonte && (
-        <>
-          {" "}
-          <a href={n.fonte.url} className="text-xs text-ink-muted underline">
-            Fonte
-          </a>
-        </>
-      )}
-    </li>
-  );
-}
-
-/** Trecho a pé: tracejado, sempre rotulado como estimativa. */
-function WalkStep({ walk, text }: { walk: Walk; text: React.ReactNode }) {
-  return (
-    <li className="relative flex gap-2 pb-2">
-      <span aria-hidden className="absolute bottom-0 left-[15px] top-4 w-0 border-l-4 border-dotted border-ink-muted" />
-      <span className="flex size-4 shrink-0 items-center justify-center rounded-full border-2 border-ink-muted bg-surface text-ink">
-        {Icons.walk}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p className="text-base">{text}</p>
-        <p className="text-sm text-ink-muted">
-          a pé · cerca de {walk.minutos} min · ~{formatDistance(walk.distanciaM)} (estimativa)
-        </p>
-      </div>
-    </li>
-  );
-}
-
-export function RouteResult({
-  route,
-  acessivel,
-  walkIn,
-  walkOut,
-  originName,
-  destName,
-}: {
-  route: Route;
-  acessivel?: boolean;
-  walkIn?: Walk | null;
-  walkOut?: Walk | null;
-  originName?: string;
-  destName?: string;
-}) {
-  const prefs = usePrefs();
-  const total = route.minutos + (walkIn?.minutos ?? 0) + (walkOut?.minutos ?? 0);
-  const walkLegs: WalkLegs = { walkIn, walkOut, destino: destName };
-  const firstSt = stationBySlug.get(route.legs[0].estacoes[0])!;
-  const lastSt = stationBySlug.get(route.legs.at(-1)!.estacoes.at(-1)!)!;
-  return (
-    <div className="flex flex-col gap-2">
-      <p className="text-xl font-bold">
-        ~{total} min
-        <span className="ml-1 text-base font-normal text-ink-muted">
-          · {transfers(route.baldeacoes)}
-          {doorTimes(route, walkIn, walkOut)}
-        </span>
-      </p>
-      {prefs.voz && <RouteSpeech key={route.id} route={route} detalhe={prefs.detalheVoz} walk={walkLegs} />}
-      <ol className="flex flex-col" aria-label="Trechos da viagem">
-        {walkIn && (
-          <WalkStep
-            walk={walkIn}
-            text={
-              <>
-                {originName ? `De ${originName}, caminhe` : "Caminhe"} até a estação <strong>{firstSt.nome}</strong>
-              </>
-            }
-          />
-        )}
-        {route.legs.map((leg, i) => {
-          const line = lineById.get(leg.linha)!;
-          const first = stationBySlug.get(leg.estacoes[0])!;
-          const last = stationBySlug.get(leg.estacoes[leg.estacoes.length - 1])!;
-          return (
-            <li key={i} className="relative flex gap-2 pb-2">
-              <span aria-hidden className="absolute bottom-0 left-[15px] top-4 w-1" style={{ backgroundColor: line.cor }} />
-              <LineBadge line={leg.linha} />
-              <div className="min-w-0 flex-1">
-                <p className="text-base">
-                  {leg.partida && <span className="mr-0.5 font-semibold tabular-nums">{formatTime(leg.partida)}</span>}
-                  {i === 0 ? "Embarque em" : "Baldeação em"} <strong>{first.nome}</strong>
-                </p>
-                <p className="text-sm text-ink-muted">
-                  {line.nome}
-                  {leg.alternativas?.length ? ` (ou ${leg.alternativas.map((l) => lineById.get(l)?.nome).join(", ")})` : ""}
-                  {leg.sentido ? `, sentido ${leg.sentido}` : ""} · {plural(leg.estacoes.length - 1, "estação", "estações")} · ~{leg.minutos}{" "}
-                  min
-                </p>
-                <details className="text-sm">
-                  <summary className="inline-flex min-h-control cursor-pointer items-center text-ink-muted underline">ver estações</summary>
-                  <ol className="flex flex-col">
-                    {leg.estacoes.map((s) => (
-                      <li key={s}>{stationBySlug.get(s)?.nome}</li>
-                    ))}
-                  </ol>
-                </details>
-                {i === route.legs.length - 1 && (
-                  <p className="mt-1 text-base">
-                    {leg.chegada && <span className="mr-0.5 font-semibold tabular-nums">{formatTime(leg.chegada)}</span>}
-                    Desembarque em <strong>{last.nome}</strong>
-                  </p>
-                )}
-              </div>
-            </li>
-          );
-        })}
-        {walkOut && (
-          <WalkStep
-            walk={walkOut}
-            text={
-              <>
-                Da estação {lastSt.nome}, caminhe até <strong>{destName ?? "o destino"}</strong>
-              </>
-            }
-          />
-        )}
-      </ol>
-      {route.avisos.length > 0 && (
-        <ul className="flex flex-col gap-1" aria-label="Avisos da rota">
-          {route.avisos.map((a) => (
-            <NoticeItem key={a.texto} n={a} />
-          ))}
-        </ul>
-      )}
-      {acessivel && (
-        <p className="text-sm">
-          {route.acessibilidadeNaoConfirmada.length === 0
-            ? "♿ Embarque, baldeações e desembarque em estações marcadas como acessíveis no OpenStreetMap."
-            : `♿ Sem acessibilidade confirmada no OpenStreetMap: ${route.acessibilidadeNaoConfirmada
-                .map((s) => stationBySlug.get(s)?.nome)
-                .join(", ")}. Confirme com a operadora.`}
-        </p>
-      )}
-      <p className="text-xs text-ink-muted">
-        Tempo estimado pelo traçado (velocidade média por tipo de linha, 30 s por parada, 5 min por baldeação).
-        {walkIn || walkOut ? " Trechos a pé: linha reta × 1,3 a 4,5 km/h — estimativa, não um caminho pelas ruas." : ""} Horários conferidos
-        só onde há fonte oficial.
-      </p>
-    </div>
-  );
-}
 
 type Computed =
   | { kind: "incompleto" }
@@ -271,20 +112,35 @@ export function RoutePlanner({
   onResult,
   onBack,
   autoFocus = false,
+  here = null,
+  permission = "unknown",
+  gpsSpot,
+  onFocusStep,
 }: {
   initialFrom?: Spot | null;
   initialTo?: Spot | null;
   /** Centro do mapa (só sem GPS): dá preferência a lugares perto do que está na tela. */
   bias?: LngLat | null;
+  /** Sua posição (só no aparelho): origem padrão e ordem dos resultados. */
+  here?: LngLat | null;
+  permission?: Permission;
+  /** Monta a ponta "Sua localização" (com a estação mais próxima no detalhe). */
+  gpsSpot?: (ll: LngLat) => Spot;
+  /** Toque num passo: o mapa vai até ele. */
+  onFocusStep?: (f: FocusStep) => void;
   onResult?: (o: RouteOutcome) => void;
   onBack?: () => void;
   autoFocus?: boolean;
 }) {
   const prefs = usePrefs();
   const ids = useId();
-  const [from, setFrom] = useState<Spot | null>(initialFrom);
+  const mkGps = (ll: LngLat): Spot => gpsSpot?.(ll) ?? { kind: "place", nome: "Sua localização", detalhe: "", tipo: "gps", lngLat: ll };
+  // Origem padrão: sua localização, se o navegador já liberou.
+  const startFrom = initialFrom ?? (here ? mkGps(here) : null);
+  const [from, setFrom] = useState<Spot | null>(startFrom);
   const [to, setTo] = useState<Spot | null>(initialTo);
-  const [text, setText] = useState<Record<Field, string>>({ from: spotName(initialFrom), to: spotName(initialTo) });
+  const [text, setText] = useState<Record<Field, string>>({ from: spotName(startFrom), to: spotName(initialTo) });
+  const [gpsHelp, setGpsHelp] = useState(false);
   const [editing, setEditing] = useState<Field | null>(autoFocus ? (!initialTo ? "to" : "from") : null);
   const [active, setActive] = useState(0);
   const [whenMode, setWhenMode] = useState<WhenMode>("agora");
@@ -301,7 +157,7 @@ export function RoutePlanner({
   const editingValue = editing === "from" ? from : editing === "to" ? to : null;
   // Com um valor escolhido, o texto é o nome dele: não busca de novo até a pessoa editar.
   const searching = editing !== null && !editingValue;
-  const search = usePlaceSearch(searching ? q : "", bias, searching);
+  const search = usePlaceSearch(searching ? q : "", bias, searching, here);
   const withGps = searching && editing === "from" && q.trim() === "";
   const options = searching ? optionsOf(search, withGps) : [];
   const listOpen = searching && (options.length > 0 || q.trim().length >= 2);
@@ -319,8 +175,17 @@ export function RoutePlanner({
   const door = place?.status === "ok" ? place : null;
 
   const { state: geo, request: requestGeo } = useGeolocation((lngLat) => {
-    update({ f: { kind: "place", nome: "Sua localização", detalhe: "", tipo: "gps", lngLat } });
+    update({ f: mkGps(lngLat) });
   });
+  const blocked = permission === "denied" || (geo.status === "error" && geo.reason === "denied");
+  const takeMyLocation = () => {
+    if (blocked) {
+      setGpsHelp(true);
+      return;
+    }
+    if (here) update({ f: mkGps(here) });
+    else requestGeo();
+  };
 
   /** Toda mudança passa por aqui: recalcula, avisa o mapa e (se pedido) toca o bipe. */
   function update(p: { f?: Spot | null; t?: Spot | null; mode?: WhenMode; d?: string; h?: string; a?: boolean }) {
@@ -355,7 +220,7 @@ export function RoutePlanner({
 
   function pick(field: Field, o: Option) {
     if (o.type === "gps") {
-      requestGeo();
+      takeMyLocation();
       setEditing(null);
       return;
     }
@@ -439,6 +304,14 @@ export function RoutePlanner({
     setVoiceNote(notes.join(" "));
   }
 
+  // Mais de 3 km da rede: avisa e mostra a estação mais próxima mesmo assim.
+  const far = (["from", "to"] as const).flatMap((field) => {
+    const s = field === "from" ? from : to;
+    if (s?.kind !== "place") return [];
+    const n = nearestToNetwork(s.lngLat, stationPoints);
+    return n?.longe ? [{ field, ...n }] : [];
+  });
+
   const status = !from || !to ? "" : routes.length ? `${routes.length} ${routes.length > 1 ? "opções" : "opção"} de rota.` : "";
   const seg =
     "inline-flex h-control flex-1 cursor-pointer items-center justify-center px-1 text-sm font-semibold text-ink-muted has-[:checked]:bg-ink has-[:checked]:text-bg has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-(--focus)";
@@ -452,7 +325,7 @@ export function RoutePlanner({
         : place?.status === "mesmo-lugar"
           ? "Origem e destino são o mesmo lugar."
           : place?.status === "fora-da-area"
-            ? `${place.lado === "ambos" ? "Origem e destino estão" : place.lado === "origem" ? "A origem está" : "O destino está"} a mais de 5 km de qualquer estação em operação. Não dá para montar uma rota sobre trilhos daqui — use ônibus ou outro meio até a rede.`
+            ? `${place.lado === "ambos" ? "Origem e destino estão" : place.lado === "origem" ? "A origem está" : "O destino está"} a mais de 5 km de qualquer estação em operação — longe demais para ir a pé. Use ônibus ou outro meio até a rede.`
             : place?.status === "sem-caminho"
               ? "Não encontramos caminho em operação entre as estações perto desses lugares."
               : null;
@@ -551,7 +424,28 @@ export function RoutePlanner({
         </IconButton>
       </div>
       {geo.status === "locating" && <p className="-mt-2 text-sm text-ink-muted">Procurando sua localização…</p>}
-      {geo.status === "error" && <p className="-mt-2 text-sm text-ink-muted">{GEO_MESSAGES[geo.reason]}</p>}
+      {geo.status === "error" && !from && <p className="-mt-2 text-sm text-ink-muted">{GEO_MESSAGES[geo.reason]}</p>}
+      {!from && !listOpen ? (
+        <UseLocationButton permission={permission} geo={geo} onUse={takeMyLocation} help={gpsHelp} onHelp={setGpsHelp} />
+      ) : (
+        gpsHelp && blocked && <LocationHowTo />
+      )}
+      {far.map((f) => (
+        <div key={f.field} className="-mt-1 flex flex-col gap-0.5 border-l-4 border-fg-warning pl-1 text-sm" role="note">
+          <p>
+            {f.field === "from" ? "A origem fica" : "O destino fica"} a ~{formatDistance(f.walk.retaM)} em linha reta da estação mais próxima,{" "}
+            <strong>{stationBySlug.get(f.slug)?.nome}</strong> — longe da rede. A pé seria mais de {f.walk.minutos} min; considere ônibus ou
+            outro meio nesse trecho.
+          </p>
+          <button
+            type="button"
+            className="min-h-control self-start font-semibold text-fg-link"
+            onClick={() => update(f.field === "from" ? { f: { kind: "station", slug: f.slug } } : { t: { kind: "station", slug: f.slug } })}
+          >
+            Usar a estação {stationBySlug.get(f.slug)?.nome} como {f.field === "from" ? "origem" : "destino"}
+          </button>
+        </div>
+      ))}
 
       {listOpen ? (
         <PlaceResults
@@ -565,6 +459,78 @@ export function RoutePlanner({
         />
       ) : (
         <>
+
+          <p role="status" aria-live="polite" className="sr-only">
+            {status}
+          </p>
+
+          {!from || !to ? (
+            <p className="text-sm text-ink-muted">
+              Digite uma estação, um endereço, um CEP ou o nome de um lugar — ou toque no microfone e diga, por exemplo, “de Rua
+              Otávio Alves Dundas até Shopping Eldorado”.
+            </p>
+          ) : problem ? (
+            <p className="text-base" role="alert">
+              {problem}
+            </p>
+          ) : place?.status === "a-pe" ? (
+            <div className="flex flex-col gap-1" role="status">
+              <p className="text-xl font-bold">Vá a pé: ~{place.walk.minutos} min</p>
+              <p className="text-base">
+                {spotName(from)} e {spotName(to)} ficam a cerca de {formatDistance(place.walk.distanciaM)} um do outro — mais rápido
+                que entrar no metrô.
+              </p>
+              <p className="text-xs text-ink-muted">Estimativa em linha reta × 1,3 a 4,5 km/h, não um caminho pelas ruas.</p>
+            </div>
+          ) : null}
+
+          {route && (
+            <RouteSteps
+              route={route}
+              acessivel={acessivel}
+              walkIn={door?.walkIn}
+              walkOut={door?.walkOut}
+              from={from}
+              to={to}
+              onFocusStep={onFocusStep}
+            />
+          )}
+          {routes.length > 1 && (
+            <fieldset>
+              <legend className="mb-1 text-xs font-semibold uppercase text-ink-muted">Opções</legend>
+              <div className="flex flex-col gap-1">
+                {routes.map((r, i) => {
+                  const f = FEASIBILITY[r.viabilidade];
+                  const walkMin = (door?.walkIn?.minutos ?? 0) + (door?.walkOut?.minutos ?? 0);
+                  return (
+                    <label
+                      key={r.id}
+                      className="flex min-h-control cursor-pointer items-center gap-1 border border-rule px-1.5 py-1 has-[:checked]:border-ink has-[:checked]:bg-ink/5 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-(--focus)"
+                      style={{ borderRadius: "var(--radius-card)" }}
+                    >
+                      <input type="radio" name={`${ids}-opcao`} className="sr-only" checked={route?.id === r.id} onChange={() => choose(i)} />
+                      <span className="flex flex-1 flex-col">
+                        <span className="text-base font-bold">
+                          {r.minutos + walkMin} min
+                          <span className="ml-0.5 font-normal text-ink-muted">
+                            {doorTimes(r, door?.walkIn, door?.walkOut) ? ` · ${doorTimes(r, door?.walkIn, door?.walkOut)}` : ""} ·{" "}
+                            {r.baldeacoes === 0 ? "direta" : transfers(r.baldeacoes)}
+                          </span>
+                        </span>
+                        {f.label && <span className={`text-xs font-semibold ${f.cls}`}>{f.label}</span>}
+                      </span>
+                      <span className="flex shrink-0 gap-0.5" aria-label={`Linhas: ${r.legs.map((l) => lineById.get(l.linha)?.nome).join(", ")}`}>
+                        {r.legs.map((l, k) => (
+                          <LineBadge key={k} line={l.linha} size="sm" />
+                        ))}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+          )}
+
           <fieldset className="flex flex-col gap-1">
             <legend className="mb-1 text-xs font-semibold uppercase text-ink-muted">Quando · horário de São Paulo</legend>
             <div className="flex overflow-hidden border border-rule-strong" style={{ borderRadius: "var(--radius-control)" }}>
@@ -608,77 +574,6 @@ export function RoutePlanner({
           <Switch checked={acessivel} onChange={(a) => update({ a })} hint="Marcação do OpenStreetMap, que não cobre todas as estações.">
             Priorizar estações acessíveis
           </Switch>
-
-          <p role="status" aria-live="polite" className="sr-only">
-            {status}
-          </p>
-
-          {!from || !to ? (
-            <p className="text-sm text-ink-muted">
-              Digite uma estação, um endereço, um CEP ou o nome de um lugar — ou toque no microfone e diga, por exemplo, “de Rua
-              Otávio Alves Dundas até Shopping Eldorado”.
-            </p>
-          ) : problem ? (
-            <p className="text-base" role="alert">
-              {problem}
-            </p>
-          ) : place?.status === "a-pe" ? (
-            <div className="flex flex-col gap-1" role="status">
-              <p className="text-xl font-bold">Vá a pé: ~{place.walk.minutos} min</p>
-              <p className="text-base">
-                {spotName(from)} e {spotName(to)} ficam a cerca de {formatDistance(place.walk.distanciaM)} um do outro — mais rápido
-                que entrar no metrô.
-              </p>
-              <p className="text-xs text-ink-muted">Estimativa em linha reta × 1,3 a 4,5 km/h, não um caminho pelas ruas.</p>
-            </div>
-          ) : null}
-
-          {routes.length > 1 && (
-            <fieldset>
-              <legend className="mb-1 text-xs font-semibold uppercase text-ink-muted">Opções</legend>
-              <div className="flex flex-col gap-1">
-                {routes.map((r, i) => {
-                  const f = FEASIBILITY[r.viabilidade];
-                  const walkMin = (door?.walkIn?.minutos ?? 0) + (door?.walkOut?.minutos ?? 0);
-                  return (
-                    <label
-                      key={r.id}
-                      className="flex min-h-control cursor-pointer items-center gap-1 border border-rule px-1.5 py-1 has-[:checked]:border-ink has-[:checked]:bg-ink/5 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-(--focus)"
-                      style={{ borderRadius: "var(--radius-card)" }}
-                    >
-                      <input type="radio" name={`${ids}-opcao`} className="sr-only" checked={route?.id === r.id} onChange={() => choose(i)} />
-                      <span className="flex flex-1 flex-col">
-                        <span className="text-base font-bold">
-                          {r.minutos + walkMin} min
-                          <span className="ml-0.5 font-normal text-ink-muted">
-                            {doorTimes(r, door?.walkIn, door?.walkOut)} ·{" "}
-                            {r.baldeacoes === 0 ? "direta" : transfers(r.baldeacoes)}
-                          </span>
-                        </span>
-                        {f.label && <span className={`text-xs font-semibold ${f.cls}`}>{f.label}</span>}
-                      </span>
-                      <span className="flex shrink-0 gap-0.5" aria-label={`Linhas: ${r.legs.map((l) => lineById.get(l.linha)?.nome).join(", ")}`}>
-                        {r.legs.map((l, k) => (
-                          <LineBadge key={k} line={l.linha} size="sm" />
-                        ))}
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
-            </fieldset>
-          )}
-
-          {route && (
-            <RouteResult
-              route={route}
-              acessivel={acessivel}
-              walkIn={door?.walkIn}
-              walkOut={door?.walkOut}
-              originName={from?.kind === "place" ? from.nome : undefined}
-              destName={to?.kind === "place" ? to.nome : undefined}
-            />
-          )}
           {route && <OfficialUpdates onlyLines={route.legs.map((l) => l.linha)} limit={3} />}
         </>
       )}
