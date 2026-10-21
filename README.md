@@ -1,13 +1,37 @@
 # Metrô (beta)
 
-Site conceitual de design sobre a rede sobre trilhos de São Paulo. Abre direto no mapa, como o Google Maps e o Apple Maps: traçado real por padrão (o esquemático continua como opção), busca por estação, endereço, rua, CEP ou lugar, rota de porta a porta com os trechos a pé, horários oficiais quando existem, acessibilidade e voz.
+![Mapa da rede no desktop, com a rota de Tucuruvi a Butantã destacada e o passo a passo no painel](docs/imagens/desktop-rota.webp)
+
+Mapa vivo da rede sobre trilhos de São Paulo — metrô, monotrilho e trens metropolitanos — pensado como um app de mapas: abre direto no mapa, com o traçado real por padrão (o esquemático continua como opção). Você digita para onde quer ir, ele mostra as opções de rota, você escolhe uma e o mapa desenha o caminho de porta a porta, com os trechos a pé, horários oficiais quando existem, acessibilidade e voz.
 
 **No ar:**
 
 - Versão completa (Vercel): https://metro-sp-beta.vercel.app
 - Versão estática (GitHub Pages): https://bragahauser-byte.github.io/metro-sp/
 
-Projeto conceitual independente, sem vínculo com a Companhia do Metropolitano de São Paulo. Informações oficiais em [metro.sp.gov.br](https://www.metro.sp.gov.br).
+Projeto conceitual independente, não oficial e sem endosso da Companhia do Metropolitano de São Paulo. Informações oficiais em [metro.sp.gov.br](https://www.metro.sp.gov.br).
+
+## Homenagem ao Live Subway Map (MTA · Work & Co)
+
+A linguagem visual deste projeto é uma homenagem ao **[Live Subway Map](https://map.mta.info)** do metrô de Nova York, criado pela **[Work & Co](https://work.co)** para a MTA em 2020: faixas paralelas com fio branco quando várias linhas correm juntas, curvas de raio constante, estações como pontos pretos, zoom semântico e a passagem suave entre o diagrama e o mapa real. Aqui essa ideia foi trazida para a rede de São Paulo, com as cores oficiais de cada linha.
+
+É uma homenagem pessoal, **sem fins lucrativos** e sem nenhuma relação comercial com a MTA ou com a Work & Co. Todo o código e o desenho do mapa foram feitos do zero para este projeto.
+
+## Como é no celular
+
+A busca funciona como no Google Maps e no Apple Maps: toque na lupa, digite o destino (estação, endereço, CEP ou lugar) e escolha um resultado. A folha fica na metade da tela com as **opções de rota** — tempo, horário de saída e chegada, baldeações e minutos a pé — enquanto o mapa já mostra a mais rápida. Ao tocar numa opção a folha desce, o mapa enquadra a rota inteira e fica embaixo só o resumo; "Ver passo a passo" sobe a folha de novo.
+
+| Mapa | Busca | Opções de rota | Rota escolhida | Passo a passo |
+|---|---|---|---|---|
+| ![Mapa da rede no celular](docs/imagens/celular-mapa-claro.webp) | ![Resultados da busca por Pinacoteca](docs/imagens/celular-busca.webp) | ![Duas opções de rota até a Pinacoteca](docs/imagens/celular-opcoes.webp) | ![Rota escolhida no mapa com o resumo embaixo](docs/imagens/celular-rota.webp) | ![Passo a passo da rota](docs/imagens/celular-passos.webp) |
+
+Tema escuro:
+
+<img src="docs/imagens/celular-mapa-escuro.webp" alt="Mapa da rede no celular, tema escuro" width="260">
+
+## Marca
+
+O logotipo e o símbolo do Metrô são usados **com autorização** da Companhia do Metropolitano de São Paulo, sempre em uma cor só — preto no tema claro e branco no escuro, sem cores aplicadas e sem alteração de desenho. O vetor em [`components/ui/metro-logo.tsx`](components/ui/metro-logo.tsx) foi extraído do arquivo oficial de divulgação. A autorização não transfere nenhum direito sobre a marca, que continua pertencendo ao Metrô; ela não pode ser reutilizada a partir deste repositório e o uso aqui não significa endosso institucional ao projeto.
 
 ## O que tem
 
@@ -17,7 +41,8 @@ Projeto conceitual independente, sem vínculo com a Companhia do Metropolitano d
 - **Rota de porta a porta:** para cada ponta que é um lugar, as 3 estações mais próximas (2 km, ampliando para 3,5 e 5 km); escolhe a combinação de menor tempo total (a pé + rede + a pé). Caminhada sempre rotulada como estimativa (linha reta × 1,3 a 4,5 km/h). No mapa: marcadores de origem e destino e o trecho a pé tracejado. Mais de 3 km da rede: aviso com a estação mais próxima e o botão para usá-la; mais de 5 km: sem rota a pé, mas com a estação mais próxima.
 - **Passo a passo:** "Caminhe 450 m (6 min) até a Estação Paraíso" → "Pegue a Linha 2-Verde sentido Vila Prudente" → "Baldeie para a Linha 1-Azul sentido Jabaquara" → "Desça em Saúde" → "Caminhe 300 m até o destino", cada passo com a cor e o número da linha, o sentido, as paradas, o tempo e a situação agora da linha (alteração em destaque; "sem leitura automática" quando não há fonte). Tocar num passo leva o mapa até ele.
 - **Horários:** só de fonte oficial consultada (Metrô; Motiva para 4, 5, 8 e 9). Sem fonte = "horário não verificado", nunca tratado como aberto.
-- **Celular como o Live Subway Map:** símbolo (abre os ajustes) e nome no alto; embaixo, botão de linhas, pílula **Agora** e avisos; à direita, busca e localização. A busca abre como no Apple Maps: campo + fechar, **Recentes** (só neste navegador) e **Buscar por perto** (shoppings, farmácias, restaurantes num raio de 2 km do centro do mapa).
+- **Busca → opções → rota (v1.6):** escolhido o destino, a lista de rotas aparece primeiro (mais rápida marcada); tocar numa delas fecha a folha e mostra a rota no mapa, com resumo embaixo e "Outras rotas" para voltar. Horário de saída/chegada e prioridade a estações acessíveis ficam em "Horário e acessibilidade".
+- **Celular como o Live Subway Map:** marca do Metrô (abre os ajustes) no alto; embaixo, botão de linhas, pílula **Agora** e avisos; à direita, busca e localização. A busca abre como no Apple Maps: campo + fechar, **Recentes** (só neste navegador) e **Buscar por perto** (shoppings, farmácias, restaurantes num raio de 2 km do centro do mapa).
 - **Agora (situação das linhas, a cada 15 min):** Linhas 10–13 pelo mesmo endpoint público que o site da CPTM usa; Linhas 4–9 pela API da ARTESP quando `ARTESP_API_KEY` estiver configurada; Linhas 1, 2, 3, 15 e 17 sem leitura automática (o Metrô não publica a situação em formato aberto) — o site mostra o link do canal oficial em vez de supor "normal". Links para TemTrem, ARTESP, Metrô e CPTM (site e X) e concessionárias.
 - **Avisos:** comunicados do feed RSS do Metrô, conferidos a cada 15 min, com última atualização bem-sucedida separada da data de cada comunicado.
 - **Voz:** dizer a rota ("de Rua Otávio Alves Dundas até Shopping Eldorado"), com confirmação quando há mais de um lugar possível; ouvir a rota com tocar, pausar, continuar e parar; bipe opcional (nunca o único aviso).

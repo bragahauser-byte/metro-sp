@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { lineById } from "@/components/map/network";
+import { LOGO_PATHS, LOGO_SIZE } from "@/components/ui/metro-logo";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
@@ -37,21 +38,11 @@ export async function ogImage({ eyebrow, title, subtitle, lines, accent }: Props
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 14, fontSize: 30 }}>
-            <span
-              style={{
-                width: 48,
-                height: 48,
-                borderRadius: 999,
-                background: ink,
-                color: accent ?? "#f5f5f5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              M
-            </span>
-            Metrô
+            <svg width={202} height={60} viewBox={`0 0 ${LOGO_SIZE.width} ${LOGO_SIZE.height}`} fill={ink}>
+              {LOGO_PATHS.map((d, i) => (
+                <path key={i} d={d} />
+              ))}
+            </svg>
             <span style={{ fontSize: 16, background: ink, color: accent ?? "#f5f5f5", padding: "4px 10px", borderRadius: 999 }}>BETA</span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

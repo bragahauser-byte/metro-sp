@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MetroLogo } from "./metro-logo";
 import { ThemeToggle } from "./theme-toggle";
 
 export function BetaTag() {
@@ -12,11 +13,11 @@ export function BetaTag() {
   );
 }
 
-/** Nome do site em texto — nunca o logotipo oficial. */
+/** Marca do Metrô (preto e branco, uso autorizado) + selo BETA. */
 export function Wordmark() {
   return (
     <Link href="/" className="inline-flex min-h-control items-center gap-1" aria-label="Metrô, versão beta — abrir o mapa">
-      <span className="text-xl font-bold">Metrô</span>
+      <MetroLogo className="h-4 w-auto" title="Metrô" />
       <BetaTag />
     </Link>
   );
@@ -40,8 +41,8 @@ export function SiteHeader() {
 export function SiteFooter() {
   return (
     <footer className="border-t border-rule px-2 py-3 text-xs text-ink-muted sm:px-4">
-      Projeto conceitual independente, sem vínculo com a Companhia do Metropolitano de São
-      Paulo. Informações oficiais em{" "}
+      Projeto conceitual independente, não oficial e sem endosso da Companhia do Metropolitano de São
+      Paulo; marca usada com autorização. Informações oficiais em{" "}
       <a className="underline underline-offset-2" href="https://www.metro.sp.gov.br">
         metro.sp.gov.br
       </a>

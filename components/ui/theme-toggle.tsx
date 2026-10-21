@@ -182,7 +182,7 @@ export function ThemeToggle({
                 Sobre este projeto
               </h3>
               <p className="text-sm text-ink-muted">
-                Projeto conceitual independente, sem vínculo com a Companhia do Metropolitano de São Paulo nem com as
+                Projeto conceitual independente, não oficial e sem endosso da Companhia do Metropolitano de São Paulo (marca usada com autorização) nem das
                 concessionárias. Informações oficiais em{" "}
                 <a className="underline" href="https://www.metro.sp.gov.br">
                   metro.sp.gov.br

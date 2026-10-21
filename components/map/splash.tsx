@@ -1,7 +1,8 @@
 import { BetaTag } from "@/components/ui/site-chrome";
+import { MetroLogo } from "@/components/ui/metro-logo";
 
 /**
- * Abertura mínima: nome + indicador discreto, só enquanto o mapa e os dados carregam (sem atraso
+ * Abertura mínima: marca + indicador discreto, só enquanto o mapa e os dados carregam (sem atraso
  * artificial). Sai com um fade curto que vai a zero com "reduzir movimento" (tokens de duração).
  */
 export function Splash({ leaving = false }: { leaving?: boolean }) {
@@ -13,7 +14,7 @@ export function Splash({ leaving = false }: { leaving?: boolean }) {
       }`}
     >
       <p className="flex items-center gap-1" role="status" aria-label="Carregando o mapa">
-        <span className="text-2xl font-bold">Metrô</span>
+        <MetroLogo className="h-7 w-auto" title="Metrô" />
         <BetaTag />
       </p>
       <span aria-hidden className="splash-bar relative h-0.5 w-8 overflow-hidden rounded-full bg-rule" />
