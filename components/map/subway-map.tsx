@@ -1,11 +1,11 @@
 "use client";
 
 import "./maplibre-min.css";
-import type { Map as MapLibreMap } from "maplibre-gl";
 import { useEffect, useImperativeHandle, useRef, useSyncExternalStore, type Ref } from "react";
-import { basemapStyle, blankStyle, type Theme } from "./basemap-style";
+import { basemapStyle, type Theme } from "./basemap-style";
+import { BOUNDS, type Camera, type CameraEvents, MAX_ZOOM, MIN_ZOOM, MapLibreCamera, SchematicCamera } from "./camera";
 import { easeInOut } from "./geometry";
-import { type LngLat, RAIL_LINES, boundsOf, stationBySlug, stations } from "./network";
+import { type LngLat, RAIL_LINES, stationBySlug, stations } from "./network";
 import { NetworkRenderer, type RenderState } from "./network-renderer";
 
 export type MapMode = "real" | "esquematico";
@@ -90,7 +90,8 @@ export function SubwayMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MapLibreMap | null>(null);
+  const cameraRef = useRef<Camera | null>(null);
+  const mapLibreRef = useRef<Promise<Camera> | null>(null);
   const rendererRef = useRef<NetworkRenderer | null>(null);
   const stateRef = useRef<RenderState>({
     t: mode === "esquematico" ? 1 : 0,
@@ -107,103 +108,112 @@ export function SubwayMap({
   const initialViewRef = useRef(initialView);
   const theme = useSyncExternalStore(subscribeTheme, currentTheme, () => "light" as Theme);
   const themeRef = useRef(theme);
-  // O fundo de ruas só é baixado quando o modo real é usado pela primeira vez.
-  const fullStyleRef = useRef(mode === "real");
-  const styleFor = (t: Theme) => (fullStyleRef.current ? basemapStyle(t) : blankStyle(t));
 
   useEffect(() => {
     clickRef.current = onStationClick;
     viewRef.current = onViewChange;
   }, [onStationClick, onViewChange]);
 
-  useEffect(() => {
-    if (paperRef.current) paperRef.current.style.opacity = String(stateRef.current.t);
-  }, []);
+  const eventsRef = useRef<CameraEvents | null>(null);
 
-  // Cria o mapa uma vez.
-  useEffect(() => {
-    let disposed = false;
-    let ro: ResizeObserver | null = null;
-    // Cria o mapa depois da primeira pintura: o painel e a lista aparecem antes.
-    const idle = (cb: () => void) =>
-      typeof window.requestIdleCallback === "function" ? window.requestIdleCallback(cb, { timeout: 1200 }) : setTimeout(cb, 200);
-    idle(async () => {
+  /**
+   * Carrega o MapLibre (só na primeira vez que o modo real é usado) e passa a câmera para ele,
+   * na mesma posição e zoom da câmera própria — a troca não tem salto.
+   */
+  function ensureMapLibre(): Promise<Camera> {
+    if (mapLibreRef.current) return mapLibreRef.current;
+    mapLibreRef.current = (async () => {
       const maplibre = await import("maplibre-gl");
-      if (disposed || !containerRef.current || !canvasRef.current) return;
+      const el = containerRef.current!;
+      const prev = cameraRef.current;
+      const center = prev?.getCenter() ?? stations[0].geo;
+      const zoom = prev?.getZoom() ?? 11;
+      prev?.destroy();
       // O worker do MapLibre 6 é um arquivo à parte, copiado para /public em predev/prebuild.
       maplibre.setWorkerUrl("/vendor/maplibre-gl-worker.mjs");
-      const initial = stateRef.current.t > 0.5 ? "esquematico" : "real";
       const map = new maplibre.Map({
-        container: containerRef.current,
-        style: styleFor(themeRef.current),
-        ...(initialViewRef.current
-          ? { center: initialViewRef.current.center, zoom: initialViewRef.current.zoom }
-          : { bounds: boundsOf(framePoints(initial, stateRef.current.showRail)), fitBoundsOptions: { padding: framePadding() } }),
-        maxBounds: [
-          [-47.6, -24.3],
-          [-45.6, -22.8],
-        ],
-        minZoom: 8.5,
-        maxZoom: 17.5,
+        container: el,
+        style: basemapStyle(themeRef.current),
+        center,
+        zoom,
+        maxBounds: BOUNDS,
+        minZoom: MIN_ZOOM,
+        maxZoom: MAX_ZOOM,
         dragRotate: false,
         pitchWithRotate: false,
         // A atribuição (OSM, OpenFreeMap, OpenMapTiles) fica no painel, visível nos dois modos.
         attributionControl: false,
       });
       map.touchZoomRotate.disableRotation();
-      mapRef.current = map;
-      const renderer = new NetworkRenderer(map, canvasRef.current, stateRef.current);
-      rendererRef.current = renderer;
-      const sync = () => {
-        const el = containerRef.current;
-        if (!el) return;
-        renderer.resize(el.clientWidth, el.clientHeight);
-        renderer.draw();
-      };
-      ro = new ResizeObserver(sync);
-      ro.observe(containerRef.current);
-      sync();
-      map.on("render", () => renderer.draw());
-      // A fonte do site pode terminar de carregar depois do primeiro quadro.
-      document.fonts?.ready.then(() => {
-        renderer.refreshColors();
-        renderer.draw();
-      });
-      map.on("mousemove", (e) => {
-        const slug = renderer.hitTest(e.point.x, e.point.y);
-        map.getCanvas().style.cursor = slug ? "pointer" : "";
+      const cam = new MapLibreCamera(map, eventsRef.current!);
+      cameraRef.current = cam;
+      if (rendererRef.current) rendererRef.current.view = cam;
+      rendererRef.current?.draw();
+      return cam;
+    })();
+    return mapLibreRef.current;
+  }
+
+  // Monta a câmera e o desenho da rede uma vez.
+  useEffect(() => {
+    const el = containerRef.current, canvas = canvasRef.current;
+    if (!el || !canvas) return;
+    if (paperRef.current) paperRef.current.style.opacity = String(stateRef.current.t);
+    const startMode: MapMode = stateRef.current.t > 0.5 ? "esquematico" : "real";
+    const iv = initialViewRef.current;
+    // Eventos comuns às duas câmeras (criados aqui, fora do render).
+    eventsRef.current = {
+      render: () => rendererRef.current?.draw(),
+      moveend: () => {
+        const cam = cameraRef.current;
+        if (cam) viewRef.current?.({ center: cam.getCenter(), zoom: cam.getZoom() });
+      },
+      click: (p) => clickRef.current(rendererRef.current?.hitTest(p.x, p.y) ?? null),
+      hover: (p) => {
+        const renderer = rendererRef.current, cam = cameraRef.current;
+        if (!renderer || !cam) return;
+        const slug = renderer.hitTest(p.x, p.y);
+        cam.setCursor(slug ? "pointer" : "");
         if (slug !== stateRef.current.hoveredStation) {
           stateRef.current.hoveredStation = slug;
           renderer.draw();
         }
-      });
-      map.on("click", (e) => clickRef.current(renderer.hitTest(e.point.x, e.point.y)));
-      if (stateRef.current.t < 0.5 && !fullStyleRef.current) {
-        // Esquemático aberto: carrega as ruas em segundo plano, sem disputar a primeira pintura.
-        window.setTimeout(() => {
-          if (disposed || fullStyleRef.current) return;
-          fullStyleRef.current = true;
-          map.setStyle(basemapStyle(themeRef.current));
-        }, 6000);
-      }
-      map.on("moveend", () => {
-        const c = map.getCenter();
-        viewRef.current?.({ center: [c.lng, c.lat], zoom: map.getZoom() });
-      });
+      },
+    };
+    // Começa sempre com a câmera própria (leve); o modo real troca para o MapLibre.
+    const cam = new SchematicCamera(el, iv ?? { center: stations[0].schem, zoom: 11 }, eventsRef.current!);
+    cameraRef.current = cam;
+    if (!iv) cam.fit(framePoints(startMode, stateRef.current.showRail), framePadding(), { duration: 0 });
+    const renderer = new NetworkRenderer(cam, canvas, stateRef.current);
+    rendererRef.current = renderer;
+    const sync = () => {
+      renderer.resize(el.clientWidth, el.clientHeight);
+      renderer.draw();
+    };
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    sync();
+    // A fonte do site pode terminar de carregar depois do primeiro quadro.
+    document.fonts?.ready.then(() => {
+      renderer.refreshColors();
+      renderer.draw();
     });
+    if (startMode === "real") void ensureMapLibre();
     return () => {
-      disposed = true;
-      ro?.disconnect();
-      mapRef.current?.remove();
-      mapRef.current = null;
+      ro.disconnect();
+      cameraRef.current?.destroy();
+      cameraRef.current = null;
+      mapLibreRef.current = null;
       rendererRef.current = null;
     };
+    // Montagem única; as mudanças de props são tratadas nos efeitos abaixo.
   }, []);
 
-  // Tema: troca o estilo do fundo e as cores da rede.
+  // Tema: troca o estilo do fundo (se o MapLibre já existe) e as cores da rede.
   useEffect(() => {
     themeRef.current = theme;
-    mapRef.current?.setStyle(styleFor(theme));
+    const cam = cameraRef.current;
+    if (cam instanceof MapLibreCamera) cam.map.setStyle(basemapStyle(theme));
     rendererRef.current?.refreshColors();
     rendererRef.current?.draw();
   }, [theme]);
@@ -219,31 +229,24 @@ export function SubwayMap({
     const to = mode === "esquematico" ? 1 : 0;
     const from = stateRef.current.t;
     if (from === to) return;
-    const map = mapRef.current;
-    if (map && to === 0 && !fullStyleRef.current) {
-      fullStyleRef.current = true;
-      map.setStyle(basemapStyle(themeRef.current));
-    }
     const duration = reducedMotion() ? 0 : 900;
-    if (map) {
+    const frame = (cam: Camera) => {
+      const pad = framePadding();
       const focus = stateRef.current.selectedStation ? stationBySlug.get(stateRef.current.selectedStation) : null;
       const { user: me, target: dest } = stateRef.current;
       const destStation = dest ? stationBySlug.get(dest) : null;
       if (me && destStation && mode === "real") {
         // Veio do GPS: enquadra você e a estação mais próxima.
-        const pad = framePadding();
-        const cam = map.cameraForBounds(boundsOf([me.lngLat, destStation.geo]), {
-          padding: { ...pad, top: pad.top + 60, bottom: pad.bottom + 60 },
-          maxZoom: 16,
-        });
-        if (cam) map.easeTo({ ...cam, duration });
+        cam.fit([me.lngLat, destStation.geo], { ...pad, top: pad.top + 60, bottom: pad.bottom + 60 }, { maxZoom: 16, duration });
       } else if (focus) {
-        map.easeTo({ center: mode === "real" ? focus.geo : focus.schem, padding: framePadding(), duration });
+        cam.focus(mode === "real" ? focus.geo : focus.schem, cam.getZoom(), pad, duration);
       } else {
-        const cam = map.cameraForBounds(boundsOf(framePoints(mode, stateRef.current.showRail)), { padding: framePadding() });
-        if (cam) map.easeTo({ ...cam, duration });
+        cam.fit(framePoints(mode, stateRef.current.showRail), pad, { duration });
       }
-    }
+    };
+    // No modo real a câmera é o MapLibre: enquadra quando ele estiver pronto.
+    if (to === 0) void ensureMapLibre().then(frame);
+    else if (cameraRef.current) frame(cameraRef.current);
     if (duration === 0) {
       stateRef.current.t = to;
       if (paperRef.current) paperRef.current.style.opacity = String(to);
@@ -266,22 +269,19 @@ export function SubwayMap({
   useImperativeHandle(ref, () => ({
     focusStation(slug) {
       const st = stationBySlug.get(slug);
-      const map = mapRef.current;
-      if (!st || !map) return;
+      const cam = cameraRef.current;
+      if (!st || !cam) return;
       const center = stateRef.current.t > 0.5 ? st.schem : st.geo;
-      const pad = framePadding();
-      map.flyTo({ center, zoom: Math.max(map.getZoom(), 14), padding: pad, duration: reducedMotion() ? 0 : 1000 });
+      cam.focus(center, Math.max(cam.getZoom(), 14), framePadding(), reducedMotion() ? 0 : 1000);
     },
     focusPoints(points) {
-      const map = mapRef.current;
-      if (!map || points.length === 0) return;
+      const cam = cameraRef.current;
+      if (!cam || points.length === 0) return;
       const pad = framePadding();
-      const cam = map.cameraForBounds(boundsOf(points), { padding: { ...pad, top: pad.top + 40, bottom: pad.bottom + 40 }, maxZoom: 16 });
-      if (cam) map.easeTo({ ...cam, duration: reducedMotion() ? 0 : 900 });
+      cam.fit(points, { ...pad, top: pad.top + 40, bottom: pad.bottom + 40 }, { maxZoom: 16, duration: reducedMotion() ? 0 : 900 });
     },
     zoomBy(delta) {
-      const map = mapRef.current;
-      if (map) map.easeTo({ zoom: map.getZoom() + delta, duration: reducedMotion() ? 0 : 250 });
+      cameraRef.current?.zoomBy(delta, reducedMotion() ? 0 : 250);
     },
   }));
 
@@ -289,7 +289,7 @@ export function SubwayMap({
     <div className="absolute inset-0" role="region" aria-label="Mapa interativo da rede. A lista no painel tem as mesmas informações.">
       {/* O CSS do MapLibre põe position: relative no contêiner; o invólucro é que ocupa a tela. */}
       <div className="absolute inset-0">
-        <div ref={containerRef} className="h-full w-full" />
+        <div ref={containerRef} className="h-full w-full outline-none focus-visible:outline-2" aria-label="Mapa: arraste para mover, use + e − para o zoom" />
       </div>
       {/* "Papel" que cobre as ruas no modo esquemático. */}
       <div ref={paperRef} aria-hidden className="pointer-events-none absolute inset-0 bg-bg opacity-0" />

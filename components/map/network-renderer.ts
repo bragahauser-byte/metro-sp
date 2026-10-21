@@ -8,7 +8,6 @@
 //            par de faixas (ida e volta) com fio branco no meio;
 //   máximo → número da linha ao lado de cada ponto e entradas das estações.
 // O parâmetro `t` interpola real (0) ↔ esquemático (1), estação por estação.
-import type { Map as MapLibreMap } from "maplibre-gl";
 import { type Box, type Pt, intersects, lerp, normal, offsetPolyline, resample, tracePath } from "./geometry";
 import {
   type LngLat,
@@ -109,7 +108,8 @@ export class NetworkRenderer {
   private placed: Placed[] = [];
 
   constructor(
-    private map: MapLibreMap,
+    /** Quem projeta coordenadas e diz o zoom: a câmera própria ou o MapLibre (ver camera.ts). */
+    public view: { project(ll: LngLat): Pt; getZoom(): number },
     private canvas: HTMLCanvasElement,
     public state: RenderState,
   ) {
@@ -151,8 +151,8 @@ export class NetworkRenderer {
   }
 
   private project([lng, lat]: LngLat): Pt {
-    const p = this.map.project([lng, lat]);
-    return { x: p.x, y: p.y };
+    const p = this.view.project([lng, lat]);
+    return p;
   }
 
   private visibleLine(id: string) {
@@ -182,7 +182,7 @@ export class NetworkRenderer {
 
   draw() {
     const { ctx, state, colors } = this;
-    const z = this.map.getZoom();
+    const z = this.view.getZoom();
     const t = state.t;
     const W = lineWidth(z);
     const gap = Math.max(1, W * 0.22);
