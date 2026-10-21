@@ -67,11 +67,13 @@ test("chegar até: a chegada coincide com o limite", () => {
 });
 
 test("linha de outra operadora fica como não verificada, nunca como viável", () => {
-  const r = plan({ from: "butanta", to: "luz", when: { mode: "partir", at: fromLocal("2026-10-20", "12:00") } });
+  // Linha 10 (CPTM): sem horário em fonte oficial consultada.
+  const r = plan({ from: "santo-andre", to: "tamanduatei", when: { mode: "partir", at: fromLocal("2026-10-20", "12:00") } });
   assert.equal(r.status, "ok");
-  const viaL4 = r.routes.find((x) => x.legs.some((l) => l.linha === "4"));
-  assert.ok(viaL4);
-  assert.equal(viaL4.viabilidade, "nao-verificado");
+  const viaL10 = r.routes.find((x) => x.legs.some((l) => l.linha === "10"));
+  assert.ok(viaL10);
+  assert.equal(viaL10.viabilidade, "nao-verificado");
+  assert.ok(viaL10.avisos.some((a) => a.nivel === "atencao"), "aparece aviso de horário não verificado");
 });
 
 test("Linha 6 aos sábados: rota que depende dela é inviável", () => {

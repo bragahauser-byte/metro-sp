@@ -1,16 +1,8 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
-import { MapApp } from "@/components/map/map-app";
+import { MapRedirect } from "@/components/map-redirect";
 
-export const metadata: Metadata = {
-  title: "Mapa",
-  description: "Mapa interativo da rede de metrô de São Paulo: diagrama esquemático e traçado real, com estação mais perto de você.",
-};
+export const metadata: Metadata = { title: "Mapa", robots: { index: false } };
 
-export default function MapaPage() {
-  return (
-    <Suspense fallback={<p className="p-4 text-base text-ink-muted">Carregando o mapa…</p>}>
-      <MapApp />
-    </Suspense>
-  );
+export default function Page() {
+  return <MapRedirect />;
 }

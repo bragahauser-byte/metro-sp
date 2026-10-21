@@ -48,8 +48,8 @@ test("Linha 6: 10h–15h em dias úteis; depois da validade vira não verificado
   assert.equal(boardingVerdict(data, "6", "perdizes", at("2027-02-01", "11:00")).status, "nao-verificado");
 });
 
-test("linhas de outras operadoras não herdam regras do Metrô", () => {
-  for (const l of ["4", "5", "7", "8", "9", "10", "11", "12", "13"]) {
+test("linhas sem horário oficial confirmado não herdam regras do Metrô", () => {
+  for (const l of ["7", "10", "11", "12", "13"]) {
     assert.equal(boardingVerdict(data, l, "x", at("2026-10-20", "12:00")).status, "nao-verificado", `linha ${l}`);
   }
 });
@@ -69,4 +69,12 @@ test("transferências", () => {
   assert.equal(transferVerdict(data, ["tatuape"], "3", "11", at("2026-10-24", "08:00")).status, "aberto");
   // Sem regra publicada: não verificado.
   assert.equal(transferVerdict(data, ["luz"], "10", "11", at("2026-10-20", "12:00")).status, "nao-verificado");
+});
+
+test("Motiva: Linhas 4 e 5 das 4h40 à 0h; Linhas 8 e 9 das 4h à 0h (página oficial)", () => {
+  assert.equal(boardingVerdict(data, "4", "x", at("2026-10-20", "12:00")).status, "aberto");
+  assert.equal(boardingVerdict(data, "5", "x", at("2026-10-25", "04:45")).status, "aberto");
+  assert.notEqual(boardingVerdict(data, "4", "x", at("2026-10-20", "04:20")).status, "aberto");
+  assert.equal(boardingVerdict(data, "8", "x", at("2026-10-20", "04:20")).status, "aberto");
+  assert.notEqual(boardingVerdict(data, "9", "x", at("2026-10-21", "00:30")).status, "aberto");
 });

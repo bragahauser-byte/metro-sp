@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { decode, dedupeAndExpire, mentionedLines, normalizeItem, parseRss, stableId } from "../lib/ops/normalize.ts";
-import { collect } from "../lib/ops/collect.ts";
+import { collect, keepLastGood } from "../lib/ops/collect.ts";
 import type { OpsSource } from "../lib/ops/types.ts";
 
 const SRC: OpsSource = {
@@ -82,4 +82,22 @@ test("coleta: uma fonte com erro não derruba a outra e o resultado é idempoten
   assert.equal(a.itens.length, 1);
   assert.equal(a.fontes.find((f) => f.id === "quebrada")?.ok, false);
   assert.equal(a.fontes.find((f) => f.id === "quebrada")?.erro, "HTTP 503");
+});
+
+test("fonte que falha mantém os últimos dados válidos e a data da última leitura boa", async () => {
+  const ok = async () => new Response(FEED, { status: 200 });
+  const down = async () => new Response("x", { status: 500 });
+  const before = await collect([SRC], NOW, ok);
+  assert.equal(before.fontes[0].ultimaColetaOkEm, NOW.toISOString());
+  const later = new Date(NOW.getTime() + 3600_000);
+  const failed = await collect([SRC], later, down);
+  assert.equal(failed.itens.length, 0);
+  const merged = keepLastGood(failed, before, later);
+  assert.equal(merged.itens.length, before.itens.length, "itens da última coleta boa continuam");
+  assert.equal(merged.fontes[0].ok, false);
+  assert.equal(merged.fontes[0].preservado, true);
+  assert.equal(merged.fontes[0].ultimaColetaOkEm, NOW.toISOString(), "última atualização bem-sucedida ≠ horário desta tentativa");
+  assert.equal(merged.atualizadoEm, later.toISOString());
+  // Sem coleta anterior, nada é inventado.
+  assert.deepEqual(keepLastGood(failed, null, later), failed);
 });

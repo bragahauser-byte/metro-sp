@@ -30,3 +30,6 @@ export function planRoute(from: string, to: string, opts: Omit<PlanRequest, "fro
 
 /** Alias usado pelo mapa. */
 export type Route = RouteOption;
+
+/** Estações como pontos geográficos (para achar as mais perto de um endereço). */
+export const stationPoints = stations.map((s) => ({ slug: s.slug, geo: s.geo, status: s.status }));

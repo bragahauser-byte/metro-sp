@@ -37,7 +37,19 @@ export type OpsItem = {
 
 export type OpsSnapshot = {
   itens: OpsItem[];
-  fontes: { id: string; nome: string; site: string; ok: boolean; erro?: string; coletadoEm: string }[];
+  fontes: {
+    id: string;
+    nome: string;
+    site: string;
+    ok: boolean;
+    erro?: string;
+    /** Quando esta coleta tentou ler a fonte. */
+    coletadoEm: string;
+    /** Última leitura que deu certo (pode ser de uma coleta anterior); null se nunca deu. */
+    ultimaColetaOkEm: string | null;
+    /** Os itens desta fonte vieram da última coleta boa, porque a de agora falhou. */
+    preservado?: boolean;
+  }[];
   atualizadoEm: string;
   /** Intervalo mínimo entre coletas, em segundos (o cache do servidor segura o resto). */
   intervaloS: number;

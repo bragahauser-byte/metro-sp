@@ -8,9 +8,21 @@ export type StationMatch = { slug: string; nome: string; score: number };
 export type RouteIntent = {
   de: StationMatch | null;
   para: StationMatch | null;
-  /** Trecho falado que não virou estação (para pedir confirmação). */
+  /** Trecho falado que não virou estação (para procurar como lugar ou pedir confirmação). */
   naoEntendido: string[];
+  /** Texto de cada ponta como foi entendido, já sem "da/até" (para buscar como endereço). */
+  deTexto: string | null;
+  paraTexto: string | null;
 };
+
+// Começos típicos de endereço ou lugar: aí só vale estação com nome praticamente igual.
+const PLACE_WORDS = /^(rua|r|avenida|av|alameda|al|praca|pca|travessa|tv|estrada|rodovia|rod|largo|viaduto|ladeira|shopping|parque|cep|condominio|edificio|escola|faculdade|universidade|aeroporto|rodoviaria|igreja|mercado|supermercado|padaria|restaurante|bar|hotel|teatro|museu|estadio|clube)\b/;
+
+/** Parece endereço, CEP ou nome de lugar (e não nome de estação)? */
+export function looksLikePlace(phrase: string) {
+  const q = normalize(phrase);
+  return PLACE_WORDS.test(q) || /\d/.test(q);
+}
 
 export const normalize = (s: string) =>
   s
@@ -74,8 +86,9 @@ export function parseRouteIntent(text: string, stations: StationName[]): RouteIn
   else if ((m = t.match(ONLY_TO))) paraTxt = m[1];
   else paraTxt = t;
 
-  const de = deTxt ? matchStation(deTxt, stations) : null;
-  const para = paraTxt ? matchStation(paraTxt, stations) : null;
+  const station = (txt: string | null) => (txt ? matchStation(txt, stations, looksLikePlace(txt) ? 0.92 : 0.72) : null);
+  const de = station(deTxt);
+  const para = station(paraTxt);
   const naoEntendido = [deTxt && !de ? deTxt : null, paraTxt && !para ? paraTxt : null].filter(Boolean) as string[];
-  return { de, para, naoEntendido };
+  return { de, para, naoEntendido, deTexto: deTxt, paraTexto: paraTxt };
 }

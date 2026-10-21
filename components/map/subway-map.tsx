@@ -1,6 +1,7 @@
 "use client";
 
 import { prefersReducedMotion } from "@/lib/prefs";
+import { withBase } from "@/lib/env";
 import "./maplibre-min.css";
 import { useEffect, useImperativeHandle, useRef, useSyncExternalStore, type Ref } from "react";
 import { basemapStyle, type Theme } from "./basemap-style";
@@ -25,6 +26,9 @@ type Props = {
   user: RenderState["user"];
   target: string | null;
   route: RenderState["route"];
+  walk?: RenderState["walk"];
+  /** Avisada uma vez, quando o mapa já pode ser visto (fundo carregado no modo real). */
+  onReady?: () => void;
   onStationClick: (slug: string | null) => void;
   /** Vista inicial vinda do endereço (?v=lng,lat,zoom). */
   initialView?: { center: LngLat; zoom: number } | null;
@@ -81,6 +85,8 @@ export function SubwayMap({
   user,
   target,
   route,
+  walk = null,
+  onReady,
   onStationClick,
   initialView,
   onViewChange,
@@ -101,7 +107,9 @@ export function SubwayMap({
     user,
     target,
     route,
+    walk,
   });
+  const readyRef = useRef(onReady);
   const clickRef = useRef(onStationClick);
   const viewRef = useRef(onViewChange);
   const initialViewRef = useRef(initialView);
@@ -114,6 +122,12 @@ export function SubwayMap({
   }, [onStationClick, onViewChange]);
 
   const eventsRef = useRef<CameraEvents | null>(null);
+
+  function signalReady() {
+    const cb = readyRef.current;
+    readyRef.current = undefined;
+    cb?.();
+  }
 
   /**
    * Carrega o MapLibre (só na primeira vez que o modo real é usado) e passa a câmera para ele,
@@ -129,7 +143,7 @@ export function SubwayMap({
       const zoom = prev?.getZoom() ?? 11;
       prev?.destroy();
       // O worker do MapLibre 6 é um arquivo à parte, copiado para /public em predev/prebuild.
-      maplibre.setWorkerUrl("/vendor/maplibre-gl-worker.mjs");
+      maplibre.setWorkerUrl(withBase("/vendor/maplibre-gl-worker.mjs"));
       const map = new maplibre.Map({
         container: el,
         style: basemapStyle(themeRef.current),
@@ -144,6 +158,12 @@ export function SubwayMap({
         attributionControl: false,
       });
       map.touchZoomRotate.disableRotation();
+      // Um só ponto de foco para o mapa: o canvas do MapLibre (que tem o teclado dele) com o nosso rótulo.
+      el.tabIndex = -1;
+      map.getCanvas().setAttribute("aria-label", "Mapa: arraste ou use as setas para mover, + e − para o zoom");
+      map.getCanvas().setAttribute("aria-roledescription", "mapa");
+      // Pronto para ver quando o estilo e os primeiros tiles chegarem.
+      map.once("load", () => signalReady());
       const cam = new MapLibreCamera(map, eventsRef.current!);
       cameraRef.current = cam;
       if (rendererRef.current) rendererRef.current.view = cam;
@@ -197,8 +217,16 @@ export function SubwayMap({
       renderer.refreshColors();
       renderer.draw();
     });
-    if (startMode === "real") void ensureMapLibre();
+    // Esquemático: pronto no primeiro quadro. Real: quando o fundo carregar (ou, no pior caso, em
+    // 6 s — sem WebGL ou com a rede lenta a rede de trilhos já aparece sobre o fundo liso).
+    const fallback = setTimeout(signalReady, 6000);
+    if (startMode === "real") {
+      ensureMapLibre().catch(() => signalReady());
+    } else {
+      requestAnimationFrame(() => signalReady());
+    }
     return () => {
+      clearTimeout(fallback);
       ro.disconnect();
       cameraRef.current?.destroy();
       cameraRef.current = null;
@@ -219,9 +247,9 @@ export function SubwayMap({
 
   // Estado simples: redesenha.
   useEffect(() => {
-    Object.assign(stateRef.current, { showRail, selectedLine, selectedStation, user, target, route });
+    Object.assign(stateRef.current, { showRail, selectedLine, selectedStation, user, target, route, walk });
     rendererRef.current?.draw();
-  }, [showRail, selectedLine, selectedStation, user, target, route]);
+  }, [showRail, selectedLine, selectedStation, user, target, route, walk]);
 
   // Troca de modo: anima t e enquadra a rede no destino ao mesmo tempo.
   useEffect(() => {

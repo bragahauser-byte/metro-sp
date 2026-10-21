@@ -1,57 +1,45 @@
 "use client";
 
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode, type Ref } from "react";
 import { Card } from "@/components/ui/card";
-import { IconButton, Icons } from "@/components/ui/button";
-import { prefersReducedMotion } from "@/lib/prefs";
 
-type Snap = "parcial" | "expandida";
+export type Snap = "recolhido" | "meio" | "expandido";
+const ORDER: Snap[] = ["recolhido", "meio", "expandido"];
 
-/** Arrasto para baixo maior que isto (ou mais rápido que CLOSE_VELOCITY) fecha a folha. */
-const CLOSE_DISTANCE = 120;
-const CLOSE_VELOCITY = 0.6; // px/ms
-const EXPAND_DISTANCE = 60;
+/** Arrasto maior que isto (ou mais rápido que FLICK_VELOCITY) muda de estado. */
+const SNAP_DISTANCE = 48;
+const FLICK_VELOCITY = 0.5; // px/ms
 
 /**
- * Folha que sobe no celular (como no Live Subway Map). Estados: parcial, expandida, arrastando e
- * fechada (desmontada). O arrasto vale só na alça/cabeçalho, então não briga com a rolagem do
- * conteúdo nem com o gesto do mapa. Arrasto curto volta ao lugar. O botão de fechar continua lá,
- * Esc fecha, e o foco volta para o botão que abriu a folha.
+ * Folha do celular, como no Google Maps e no Apple Maps: sempre presente, com três estados —
+ * recolhido (só a parte de cima), meio e expandido. Arrasta-se pela alça ou pelo cabeçalho (não
+ * briga com a rolagem do conteúdo nem com o mapa); toque na alça alterna; arrasto curto volta.
+ * Esc e o botão voltar do aparelho são tratados por quem usa a folha (map-app).
  */
 export function BottomSheet({
   title,
-  onClose,
+  snap,
+  onSnap,
+  peek,
   children,
-  focusOnOpen = true,
+  headingRef,
+  onEscape,
 }: {
   title: string;
-  onClose: () => void;
+  snap: Snap;
+  onSnap: (s: Snap) => void;
+  /** Sempre visível, logo abaixo da alça (ex.: botão de busca e modo do mapa). */
+  peek?: ReactNode;
   children: ReactNode;
-  focusOnOpen?: boolean;
+  headingRef?: Ref<HTMLHeadingElement>;
+  onEscape: () => void;
 }) {
-  const [snap, setSnap] = useState<Snap>("parcial");
   const [dragY, setDragY] = useState<number | null>(null);
-  const [closing, setClosing] = useState(false);
   const drag = useRef<{ startY: number; lastY: number; lastT: number; v: number; id: number } | null>(null);
-  const heading = useRef<HTMLHeadingElement>(null);
-
-  // Foco: entra no título ao abrir e volta para quem abriu ao fechar.
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    if (focusOnOpen) heading.current?.focus({ preventScroll: true });
-    return () => {
-      if (opener && opener.isConnected && opener !== document.body) opener.focus({ preventScroll: true });
-    };
-  }, [focusOnOpen]);
-
-  function close() {
-    if (prefersReducedMotion()) return onClose();
-    setClosing(true);
-    setTimeout(onClose, 200);
-  }
+  const idx = ORDER.indexOf(snap);
 
   function onPointerDown(e: ReactPointerEvent<HTMLDivElement>) {
-    if ((e.target as HTMLElement).closest("button:not([data-alca])") || e.button !== 0) return;
+    if ((e.target as HTMLElement).closest("button:not([data-alca]), a, input") || e.button !== 0) return;
     e.currentTarget.setPointerCapture(e.pointerId);
     drag.current = { startY: e.clientY, lastY: e.clientY, lastT: e.timeStamp, v: 0, id: e.pointerId };
   }
@@ -63,8 +51,9 @@ export function BottomSheet({
     d.lastY = e.clientY;
     d.lastT = e.timeStamp;
     const dy = e.clientY - d.startY;
-    // Para cima resiste (efeito elástico); para baixo acompanha o dedo.
-    setDragY(dy < 0 ? dy * 0.35 : dy);
+    // Nos extremos resiste (efeito elástico); no meio acompanha o dedo.
+    const atEdge = (dy < 0 && idx === ORDER.length - 1) || (dy > 0 && idx === 0);
+    setDragY(atEdge ? dy * 0.3 : dy);
   }
   function onPointerUp(e: ReactPointerEvent<HTMLDivElement>) {
     const d = drag.current;
@@ -73,15 +62,16 @@ export function BottomSheet({
     const dy = e.clientY - d.startY;
     setDragY(null);
     if (Math.abs(dy) < 6) return; // foi um toque, não um arrasto
-    if (dy > 0 && snap === "expandida" && dy < CLOSE_DISTANCE * 2 && d.v < CLOSE_VELOCITY) return setSnap("parcial");
-    if (dy > CLOSE_DISTANCE || d.v > CLOSE_VELOCITY) return close();
-    if (dy < -EXPAND_DISTANCE || d.v < -CLOSE_VELOCITY) return setSnap("expandida");
-    // Senão, volta ao lugar (dragY = null).
+    if (dy < -SNAP_DISTANCE || d.v < -FLICK_VELOCITY) {
+      // Arrasto longo para cima vai direto ao expandido.
+      onSnap(ORDER[Math.min(ORDER.length - 1, idx + (dy < -240 ? 2 : 1))]);
+    } else if (dy > SNAP_DISTANCE || d.v > FLICK_VELOCITY) {
+      onSnap(ORDER[Math.max(0, idx - (dy > 240 ? 2 : 1))]);
+    }
   }
 
-  // Com "reduzir movimento", a duração da transição vai a zero pelos tokens (sem ler o DOM no render).
   const animated = dragY === null;
-  const offset = closing ? "110%" : dragY !== null ? `${dragY}px` : "0px";
+  const maxH = snap === "expandido" ? "calc(100dvh - 88px)" : snap === "meio" ? "48dvh" : undefined;
 
   return (
     <section
@@ -91,7 +81,7 @@ export function BottomSheet({
       onKeyDown={(e) => {
         if (e.key === "Escape") {
           e.stopPropagation();
-          close();
+          onEscape();
         }
       }}
     >
@@ -99,8 +89,7 @@ export function BottomSheet({
         className={`anim-sheet mx-1 flex min-h-0 flex-col ${animated ? "sheet-snap" : ""}`}
         style={{
           borderRadius: "var(--radius-sheet) var(--radius-sheet) var(--radius-card) var(--radius-card)",
-          transform: `translateY(${offset})`,
-          maxHeight: snap === "expandida" ? "calc(100dvh - 120px)" : "62vh",
+          transform: `translateY(${dragY ?? 0}px)`,
         }}
       >
         <div
@@ -116,23 +105,27 @@ export function BottomSheet({
           <button
             type="button"
             data-alca
-            aria-label={snap === "expandida" ? "Recolher painel" : "Expandir painel"}
-            aria-expanded={snap === "expandida"}
-            onClick={() => setSnap((s) => (s === "expandida" ? "parcial" : "expandida"))}
+            aria-label={snap === "expandido" ? "Recolher painel" : "Expandir painel"}
+            aria-expanded={snap !== "recolhido"}
+            aria-controls="folha-conteudo"
+            onClick={() => onSnap(snap === "expandido" ? "recolhido" : ORDER[idx + 1])}
             className="flex h-3 w-full items-center justify-center"
           >
-            <span aria-hidden className="h-0.5 w-5 rounded-full bg-rule-strong/40" />
+            <span aria-hidden className="h-0.5 w-5 rounded-full bg-ink-muted/60" />
           </button>
-          <div className="flex items-center justify-between pl-2 pr-0.5">
-            <h2 id="folha-titulo" ref={heading} tabIndex={-1} className="text-xs font-semibold uppercase text-ink-muted focus:outline-none">
-              {title}
-            </h2>
-            <IconButton variant="plain" label="Fechar painel" onClick={close}>
-              {Icons.close}
-            </IconButton>
-          </div>
+          <h2 id="folha-titulo" ref={headingRef} tabIndex={-1} className="sr-only">
+            {title}
+          </h2>
+          {peek && <div className="px-2 pb-1.5">{peek}</div>}
         </div>
-        <div className="min-h-0 overflow-y-auto overscroll-contain px-2 pb-2">{children}</div>
+        <div
+          id="folha-conteudo"
+          hidden={snap === "recolhido"}
+          className="min-h-0 overflow-y-auto overscroll-contain px-2 pb-2"
+          style={{ maxHeight: maxH }}
+        >
+          {children}
+        </div>
       </Card>
     </section>
   );

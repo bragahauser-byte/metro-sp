@@ -2,7 +2,9 @@
 
 import { useId, useLayoutEffect, useRef, useSyncExternalStore, type ReactNode } from "react";
 import { type Prefs, DEFAULT_PREFS, applyPrefs, getPrefs, setPrefs, subscribePrefs } from "@/lib/prefs";
+import Link from "next/link";
 import { IconButton, Icons } from "./button";
+import { Switch } from "./switch";
 
 export function usePrefs(): Prefs {
   return useSyncExternalStore(subscribePrefs, getPrefs, () => DEFAULT_PREFS);
@@ -53,26 +55,10 @@ function Choice<K extends keyof Prefs>({
 }
 
 function Toggle({ label, checked, onChange, hint }: { label: string; checked: boolean; onChange: (v: boolean) => void; hint?: string }) {
-  const id = useId();
   return (
-    <div className="flex flex-col gap-0.5">
-      <label className="flex min-h-control cursor-pointer items-center justify-between gap-2 text-sm font-semibold">
-        <span>{label}</span>
-        <input
-          type="checkbox"
-          role="switch"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          aria-describedby={hint ? id : undefined}
-          className="size-icon accent-(--ink)"
-        />
-      </label>
-      {hint && (
-        <p id={id} className="text-xs text-ink-muted">
-          {hint}
-        </p>
-      )}
-    </div>
+    <Switch checked={checked} onChange={onChange} hint={hint}>
+      {label}
+    </Switch>
   );
 }
 
@@ -80,7 +66,7 @@ function Toggle({ label, checked, onChange, hint }: { label: string; checked: bo
  * Botão de preferências (tema Claro / Escuro / Sistema, movimento, contraste, texto, voz e sons).
  * Abre um <dialog> modal: o foco fica preso nele, Esc fecha e o foco volta para o botão.
  */
-export function ThemeToggle() {
+export function ThemeToggle({ onAbout }: { onAbout?: () => void } = {}) {
   const prefs = usePrefs();
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -90,7 +76,7 @@ export function ThemeToggle() {
 
   return (
     <>
-      <IconButton variant="plain" label="Preferências de tema e acessibilidade" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>
+      <IconButton variant="plain" label="Ajustes: tema, acessibilidade, sobre e fontes" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>
         {Icons.settings}
       </IconButton>
       <dialog
@@ -106,9 +92,9 @@ export function ThemeToggle() {
         <div className="flex max-h-[85vh] flex-col">
           <div className="flex items-center justify-between border-b border-rule py-1 pl-3 pr-1">
             <h2 id={titleId} className="text-lg font-bold">
-              Preferências
+              Ajustes
             </h2>
-            <IconButton variant="plain" label="Fechar preferências" onClick={() => dialog.current?.close()}>
+            <IconButton variant="plain" label="Fechar ajustes" onClick={() => dialog.current?.close()}>
               {Icons.close}
             </IconButton>
           </div>
@@ -175,6 +161,68 @@ export function ThemeToggle() {
               hint="Um bipe curto quando a rota tiver restrição de horário ou operação."
             />
             <p className="text-xs text-ink-muted">Tudo fica salvo só neste navegador.</p>
+            <section aria-labelledby={`${titleId}-sobre`} className="flex flex-col gap-1 border-t border-rule pt-3">
+              <h3 id={`${titleId}-sobre`} className="text-sm font-semibold">
+                Sobre este projeto
+              </h3>
+              <p className="text-sm text-ink-muted">
+                Projeto conceitual independente, sem vínculo com a Companhia do Metropolitano de São Paulo nem com as
+                concessionárias. Informações oficiais em{" "}
+                <a className="underline" href="https://www.metro.sp.gov.br">
+                  metro.sp.gov.br
+                </a>
+                .
+              </p>
+              <ul className="flex flex-col text-sm font-semibold">
+                <li>
+                  {onAbout ? (
+                    <button
+                      type="button"
+                      className="inline-flex min-h-control items-center underline underline-offset-4"
+                      onClick={() => {
+                        dialog.current?.close();
+                        onAbout();
+                      }}
+                    >
+                      Sobre, fontes e créditos
+                    </button>
+                  ) : (
+                    <Link className="inline-flex min-h-control items-center underline underline-offset-4" href="/?painel=sobre">
+                      Sobre, fontes e créditos
+                    </Link>
+                  )}
+                </li>
+                <li>
+                  <Link className="inline-flex min-h-control items-center underline underline-offset-4" href="/estilo">
+                    Estilo (sistema visual)
+                  </Link>
+                </li>
+                <li>
+                  <a className="inline-flex min-h-control items-center underline underline-offset-4" href="https://github.com/bragahauser-byte/metro-sp/blob/main/data/sources.md">
+                    Lista de fontes dos dados
+                  </a>
+                </li>
+              </ul>
+              <p className="text-xs text-ink-muted">
+                Mapa: ©{" "}
+                <a className="underline" href="https://www.openstreetmap.org/copyright">
+                  OpenStreetMap contributors
+                </a>{" "}
+                ·{" "}
+                <a className="underline" href="https://openfreemap.org">
+                  OpenFreeMap
+                </a>{" "}
+                ·{" "}
+                <a className="underline" href="https://www.openmaptiles.org">
+                  © OpenMapTiles
+                </a>
+                . Busca de endereços:{" "}
+                <a className="underline" href="https://photon.komoot.io">
+                  Photon
+                </a>{" "}
+                (komoot), dados © OpenStreetMap.
+              </p>
+            </section>
           </div>
         </div>
       </dialog>

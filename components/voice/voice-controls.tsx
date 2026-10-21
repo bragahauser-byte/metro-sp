@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { IconButton, Icons, Spinner } from "@/components/ui/button";
 import { lineById, stationBySlug, stations } from "@/components/map/network";
 import { type RouteIntent, parseRouteIntent } from "@/lib/voice/parse-route";
-import { describeRoute } from "@/lib/voice/describe-route";
+import { type WalkLegs, describeRoute } from "@/lib/voice/describe-route";
 import type { RouteOption } from "@/lib/route/engine";
 import { RECOGNITION_ERRORS, canSpeak, getRecognition, ptVoice } from "./speech";
 
@@ -18,7 +18,14 @@ function useSupported(check: () => boolean) {
  * Microfone: ouve uma frase ("da estação São Lucas até Tatuapé") e devolve as estações entendidas.
  * Se o navegador não tiver reconhecimento de voz, o botão nem aparece — o texto sempre funciona.
  */
-export function VoiceRouteButton({ onIntent }: { onIntent: (intent: RouteIntent, heard: string) => void }) {
+export function VoiceRouteButton({
+  onIntent,
+  compact = false,
+}: {
+  onIntent: (intent: RouteIntent, heard: string) => void | Promise<void>;
+  /** Só o ícone (no cabeçalho da busca); a mensagem de estado vira dica do botão e anúncio. */
+  compact?: boolean;
+}) {
   const supported = useSupported(() => getRecognition() !== null);
   const [state, setState] = useState<"idle" | "listening" | "error">("idle");
   const [message, setMessage] = useState("");
@@ -44,7 +51,7 @@ export function VoiceRouteButton({ onIntent }: { onIntent: (intent: RouteIntent,
     r.maxAlternatives = 3;
     r.onresult = (e) => {
       const alts = Array.from(e.results[0]).map((a) => a.transcript);
-      // Fica com a primeira alternativa que achou alguma estação.
+      // Fica com a primeira alternativa que achou alguma estação (ou, senão, a mais provável).
       const parsed = alts.map((t) => ({ t, i: parseRouteIntent(t, stations) }));
       const best = parsed.find((p) => p.i.de || p.i.para) ?? parsed[0];
       onIntent(best.i, best.t);
@@ -57,9 +64,36 @@ export function VoiceRouteButton({ onIntent }: { onIntent: (intent: RouteIntent,
     };
     r.onend = () => setState((s) => (s === "listening" ? "idle" : s));
     rec.current = r;
-    setMessage("Ouvindo… diga, por exemplo: “da estação São Lucas até a estação Tatuapé”.");
+    setMessage("Ouvindo… diga, por exemplo: “de Rua Otávio Alves Dundas até Shopping Eldorado”.");
     setState("listening");
     r.start();
+  }
+
+  const button = (
+    <IconButton
+      variant={compact ? "plain" : "floating"}
+      label={state === "listening" ? "Parar de ouvir" : "Falar a rota (origem e destino)"}
+      aria-pressed={state === "listening"}
+      onClick={start}
+      className={state === "listening" ? "!bg-ink !text-bg" : ""}
+    >
+      {state === "listening" ? <Spinner className="size-icon" /> : Icons.mic}
+    </IconButton>
+  );
+  if (compact) {
+    return (
+      <>
+        {button}
+        <p role="status" className="sr-only">
+          {message}
+        </p>
+        {state !== "idle" && message && (
+          <p className="absolute inset-x-2 top-full z-10 mt-0.5 bg-surface p-1 text-xs text-ink-muted shadow-(--shadow-card)" style={{ borderRadius: 8 }} aria-hidden>
+            {message}
+          </p>
+        )}
+      </>
+    );
   }
 
   return (
@@ -83,7 +117,7 @@ export function VoiceRouteButton({ onIntent }: { onIntent: (intent: RouteIntent,
 }
 
 /** Ler a rota em voz alta, com começar, pausar, continuar e parar. */
-export function RouteSpeech({ route, detalhe }: { route: RouteOption; detalhe: "resumido" | "completo" }) {
+export function RouteSpeech({ route, detalhe, walk }: { route: RouteOption; detalhe: "resumido" | "completo"; walk?: WalkLegs }) {
   const supported = useSupported(canSpeak);
   const [state, setState] = useState<"idle" | "speaking" | "paused">("idle");
 
@@ -99,7 +133,7 @@ export function RouteSpeech({ route, detalhe }: { route: RouteOption; detalhe: "
   function play() {
     const synth = window.speechSynthesis;
     synth.cancel();
-    const lines = describeRoute(route, { station: (s) => stationBySlug.get(s)?.nome ?? s, line: (l) => lineById.get(l)?.nome ?? `Linha ${l}` }, detalhe);
+    const lines = describeRoute(route, { station: (s) => stationBySlug.get(s)?.nome ?? s, line: (l) => lineById.get(l)?.nome ?? `Linha ${l}` }, detalhe, walk);
     const voice = ptVoice();
     lines.forEach((text, i) => {
       const u = new SpeechSynthesisUtterance(text);

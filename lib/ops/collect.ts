@@ -16,7 +16,7 @@ export async function collect(sources: OpsSource[], now: Date, fetcher: Fetcher 
       const base = { id: src.id, nome: src.nome, site: src.site, coletadoEm: now.toISOString() };
       try {
         const res = await fetcher(src.feed, {
-          headers: { "User-Agent": "metro-sp-conceitual/1.2 (+https://metro-sp-beta.vercel.app/sobre)", Accept: "application/rss+xml, application/xml" },
+          headers: { "User-Agent": "metro-sp-conceitual/1.3 (+https://metro-sp-beta.vercel.app/sobre)", Accept: "application/rss+xml, application/xml" },
           signal: AbortSignal.timeout(TIMEOUT_MS),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -24,13 +24,30 @@ export async function collect(sources: OpsSource[], now: Date, fetcher: Fetcher 
           .slice(0, MAX_PER_SOURCE)
           .map((r) => normalizeItem(r, src, now))
           .filter((x): x is OpsItem => x !== null);
-        return { items, fonte: { ...base, ok: true } };
+        return { items, fonte: { ...base, ok: true, ultimaColetaOkEm: now.toISOString() } };
       } catch (e) {
-        return { items: [] as OpsItem[], fonte: { ...base, ok: false, erro: e instanceof Error ? e.message : "falha na leitura" } };
+        return { items: [] as OpsItem[], fonte: { ...base, ok: false, erro: e instanceof Error ? e.message : "falha na leitura", ultimaColetaOkEm: null } };
       }
     }),
   );
   const all = results.flatMap((r) => r.items);
   const fontes: OpsSnapshot["fontes"] = results.map((r) => r.fonte);
   return { itens: dedupeAndExpire(all, now), fontes, atualizadoEm: now.toISOString(), intervaloS: MIN_INTERVAL_S };
+}
+
+/**
+ * Junta a coleta nova com a última boa: se uma fonte falhou agora, os itens dela da coleta anterior
+ * continuam (marcados como preservados, com a data da última leitura boa) até expirarem.
+ */
+export function keepLastGood(current: OpsSnapshot, previous: OpsSnapshot | null, now: Date): OpsSnapshot {
+  if (!previous) return current;
+  const kept: OpsItem[] = [];
+  const fontes = current.fontes.map((f) => {
+    if (f.ok) return f;
+    const before = previous.fontes.find((p) => p.id === f.id);
+    const items = previous.itens.filter((i) => i.fonte.id === f.id);
+    kept.push(...items);
+    return { ...f, ultimaColetaOkEm: before?.ultimaColetaOkEm ?? null, preservado: items.length > 0 };
+  });
+  return { ...current, itens: dedupeAndExpire([...current.itens, ...kept], now), fontes };
 }

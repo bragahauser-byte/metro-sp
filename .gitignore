@@ -52,3 +52,4 @@ next-env.d.ts
 
 # worker do MapLibre copiado por scripts/copy-maplibre-worker.mjs
 /public/vendor/
+/.fora-do-build-pages/

@@ -1,31 +1,46 @@
 "use client";
 
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Card } from "@/components/ui/card";
 import { IconButton, Icons } from "@/components/ui/button";
-import { BottomSheet } from "./bottom-sheet";
 import { BetaTag } from "@/components/ui/site-chrome";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { StaticBadge } from "@/components/ui/static-badge";
 import { nearestStations } from "@/components/geo/nearest";
 import { useGeolocation } from "@/components/geo/use-geolocation";
+import { type Route } from "@/components/route/plan";
+import { type RouteOutcome, RoutePlanner, initialOutcome } from "@/components/route/route-planner";
+import { type Spot, decodeSpot, encodeSpot } from "@/components/search/place-search";
+import { AboutPanel } from "./about-panel";
+import { BottomSheet, type Snap } from "./bottom-sheet";
 import { notices } from "./line-notes";
 import { type LngLat, RAIL_LINES, lineById, lines, stationBySlug } from "./network";
-import { AlertsView, LineView, LinesGrid, NearView, StationSearch, StationView } from "./panels";
+import type { WalkEnd } from "./network-renderer";
+import { AlertsView, LineView, LinesGrid, NearView, StationView } from "./panels";
+import { Splash } from "./splash";
 import { type MapMode, SubwayMap, type SubwayMapHandle } from "./subway-map";
-import { type Route, planRoute } from "@/components/route/plan";
-import { RoutePlanner } from "@/components/route/route-planner";
-import { BackButton } from "./panels";
 
-type Panel = "home" | "line" | "station" | "near" | "alerts" | "route";
+type Panel = "home" | "line" | "station" | "near" | "alerts" | "search" | "sobre";
+
+const DESKTOP = "(min-width: 768px)";
+function subscribeDesktop(cb: () => void) {
+  const mq = matchMedia(DESKTOP);
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+}
+/** Um só lugar para o conteúdo do painel: cartão no desktop, folha no celular. */
+function useIsDesktop() {
+  return useSyncExternalStore(subscribeDesktop, () => matchMedia(DESKTOP).matches, () => false);
+}
 
 // ---------------------------------------------------------------- peças
 
+/** Modo do mapa. Real (traçado geográfico) vem primeiro e é o padrão. */
 function ModeTabs({ mode, onChange }: { mode: MapMode; onChange: (m: MapMode) => void }) {
   const tabs: { id: MapMode; label: string; sub: string }[] = [
-    { id: "esquematico", label: "Esquemático", sub: "diagrama 45°/90°" },
     { id: "real", label: "Real", sub: "traçado geográfico" },
+    { id: "esquematico", label: "Esquemático", sub: "diagrama 45°/90°" },
   ];
   return (
     <div className="grid grid-cols-2 border-t border-rule" role="group" aria-label="Tipo de mapa">
@@ -45,62 +60,53 @@ function ModeTabs({ mode, onChange }: { mode: MapMode; onChange: (m: MapMode) =>
   );
 }
 
-/** Pílula central do celular (no lugar do "Now" do Live Subway Map): esquemático ou real. */
 function ModePill({ mode, onChange }: { mode: MapMode; onChange: (m: MapMode) => void }) {
   return (
-    <div
-      role="group"
-      aria-label="Tipo de mapa"
-      className="flex h-control-lg items-center bg-surface p-0.5 text-sm font-bold"
-      style={{ borderRadius: 999, boxShadow: "var(--shadow-card)" }}
-    >
-      {(["esquematico", "real"] as const).map((m) => (
+    <div role="group" aria-label="Tipo de mapa" className="flex h-control shrink-0 items-center bg-bg p-0.5 text-sm font-bold" style={{ borderRadius: 999 }}>
+      {(["real", "esquematico"] as const).map((m) => (
         <button
           key={m}
           type="button"
           aria-pressed={mode === m}
           onClick={() => onChange(m)}
-          className="h-control px-2 text-ink-muted aria-pressed:bg-ink aria-pressed:text-bg"
+          className="h-[40px] px-1.5 text-ink-muted aria-pressed:bg-ink aria-pressed:text-bg"
           style={{ borderRadius: 999 }}
         >
-          {m === "esquematico" ? "Esquemático" : "Real"}
+          {m === "esquematico" ? "Esquema" : "Real"}
         </button>
       ))}
     </div>
   );
 }
 
-/** Marca do site: círculo com "M" (não é o símbolo oficial) + nome em texto. */
-function Mark() {
+/** Abre a busca (estação, endereço ou lugar). É um botão, como era o "Buscar estação". */
+function SearchButton({ onClick, buttonRef, short = false }: { onClick: () => void; buttonRef?: React.Ref<HTMLButtonElement>; short?: boolean }) {
   return (
-    <span aria-hidden className="inline-flex size-5 items-center justify-center rounded-full bg-ink text-lg font-bold text-bg">
-      M
-    </span>
+    <button
+      ref={buttonRef}
+      type="button"
+      onClick={onClick}
+      aria-label={short ? "Para onde? Buscar estação ou endereço" : undefined}
+      className={`flex h-control min-w-0 shrink-0 items-center gap-1 bg-bg px-1.5 text-left text-base text-ink-muted hover:text-ink ${short ? "flex-1" : "w-full"}`}
+      style={{ borderRadius: 999 }}
+    >
+      {Icons.search}
+      <span className="truncate">{short ? "Para onde?" : "Buscar estação ou endereço"}</span>
+    </button>
   );
 }
 
-function Brand() {
+function Brand({ onAbout }: { onAbout: () => void }) {
   return (
     <div className="flex items-center justify-between">
-      <Link href="/" className="inline-flex items-center gap-1" aria-label="Metrô, versão beta — início">
-        <Mark />
-        <span className="text-lg font-bold">Metrô</span>
+      <p className="inline-flex items-center gap-1" aria-label="Metrô, versão beta">
+        <span aria-hidden className="text-lg font-bold">
+          Metrô
+        </span>
         <BetaTag />
-      </Link>
-      <ThemeToggle />
+      </p>
+      <ThemeToggle onAbout={onAbout} />
     </div>
-  );
-}
-
-function LinesIcon() {
-  // Grade de pontos coloridos, como o botão de linhas do Live Subway Map.
-  const ids = ["1", "2", "3", "4", "5", "6", "15", "17", "11"];
-  return (
-    <svg viewBox="0 0 24 24" className="size-2.5" aria-hidden>
-      {ids.map((id, i) => (
-        <circle key={id} cx={5 + (i % 3) * 7} cy={5 + Math.floor(i / 3) * 7} r="2.6" fill={lineById.get(id)?.cor} />
-      ))}
-    </svg>
   );
 }
 
@@ -124,7 +130,7 @@ function AlertButton({ onClick, count }: { onClick: () => void; count: number })
   );
 }
 
-/** Aviso de projeto não oficial + atribuição dos dados do mapa, sempre visíveis. */
+/** Aviso de projeto não oficial + atribuição dos dados do mapa, sempre visíveis (exigência da ODbL). */
 function Disclaimer({ className = "" }: { className?: string }) {
   return (
     <p className={`flex-wrap items-center gap-x-2 bg-surface/90 px-2 py-0.5 text-xs text-ink-muted backdrop-blur ${className}`}>
@@ -136,9 +142,17 @@ function Disclaimer({ className = "" }: { className?: string }) {
         .
       </span>
       <span>
-        <a className="underline" href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a> ·{" "}
-        <a className="underline" href="https://openfreemap.org">OpenFreeMap</a> ·{" "}
-        <a className="underline" href="https://www.openmaptiles.org">© OpenMapTiles</a>
+        <a className="underline" href="https://www.openstreetmap.org/copyright">
+          © OpenStreetMap contributors
+        </a>{" "}
+        ·{" "}
+        <a className="underline" href="https://openfreemap.org">
+          OpenFreeMap
+        </a>{" "}
+        ·{" "}
+        <a className="underline" href="https://www.openmaptiles.org">
+          © OpenMapTiles
+        </a>
       </span>
     </p>
   );
@@ -154,38 +168,70 @@ function parseView(v: string | null): { center: LngLat; zoom: number } | null {
   return { center: [lng, lat], zoom };
 }
 
+const TITLES: Record<Panel, string> = {
+  home: "Linhas",
+  line: "Linha",
+  station: "Estação",
+  near: "Perto de você",
+  alerts: "Avisos",
+  search: "Buscar rota",
+  sobre: "Sobre",
+};
+
 export function MapApp() {
   const params = useSearchParams();
-  const initialLine = params.get("linha");
-  const initialStation = params.get("estacao");
-  const [initialView] = useState(() => parseView(params.get("v")));
-  const valid = (s: string | null) => (s && stationBySlug.has(s) ? s : null);
-  const [routeEnds, setRouteEnds] = useState<{ from: string | null; to: string | null }>(() => ({
-    from: valid(params.get("de")),
-    to: valid(params.get("para")),
-  }));
-  const [route, setRoute] = useState<Route | null>(() =>
-    routeEnds.from && routeEnds.to ? planRoute(routeEnds.from, routeEnds.to) : null,
-  );
-  const [mode, setMode] = useState<MapMode>(params.get("modo") === "real" ? "real" : "esquematico");
-  const [selectedLine, setSelectedLine] = useState<string | null>(initialLine && lineById.has(initialLine) ? initialLine : null);
-  const [selectedStation, setSelectedStation] = useState<string | null>(
-    initialStation && stationBySlug.has(initialStation) ? initialStation : null,
-  );
-  const [showRail, setShowRail] = useState(() => {
-    const l = initialLine ?? "";
-    const s = initialStation ? stationBySlug.get(initialStation) : null;
-    return RAIL_LINES.has(l) || Boolean(s && s.linhas.every((x) => RAIL_LINES.has(x)));
+  const isDesktop = useIsDesktop();
+  const [initial] = useState(() => {
+    const line = params.get("linha");
+    const station = params.get("estacao");
+    const painel = params.get("painel");
+    const from = decodeSpot(params.get("de"));
+    const to = decodeSpot(params.get("para"));
+    const selectedLine = line && lineById.has(line) ? line : null;
+    const selectedStation = station && stationBySlug.has(station) ? station : null;
+    const panel: Panel =
+      from || to || painel === "busca" || painel === "rota"
+        ? "search"
+        : painel === "sobre"
+          ? "sobre"
+          : painel === "perto"
+            ? "near"
+            : painel === "avisos"
+              ? "alerts"
+              : selectedStation
+                ? "station"
+                : selectedLine
+                  ? "line"
+                  : "home";
+    const snap: Snap = panel === "search" ? "expandido" : panel !== "home" || painel === "linhas" ? "meio" : "recolhido";
+    return { selectedLine, selectedStation, panel, snap, from, to, view: parseView(params.get("v")) };
   });
-  const [panel, setPanel] = useState<Panel>(route ? "route" : selectedStation ? "station" : selectedLine ? "line" : "home");
-  // No celular a folha começa fechada (mapa limpo), a não ser que o link já aponte algo.
-  const [sheetOpen, setSheetOpen] = useState(Boolean(selectedStation || selectedLine || route));
-  // A folha aberta pelo link (na carga) não rouba o foco; aberta por um toque, recebe o foco.
-  const [sheetByUser, setSheetByUser] = useState(false);
+  const initialView = initial.view;
+  const [outcome, setOutcome] = useState<RouteOutcome | null>(() => (initial.from && initial.to ? initialOutcome(initial.from, initial.to) : null));
+  // O modo Real é sempre o padrão; o esquemático só vem se o link pedir.
+  const [mode, setMode] = useState<MapMode>(params.get("modo") === "esquematico" ? "esquematico" : "real");
+  const [selectedLine, setSelectedLine] = useState<string | null>(initial.selectedLine);
+  const [selectedStation, setSelectedStation] = useState<string | null>(initial.selectedStation);
+  const [showRail, setShowRail] = useState(() => {
+    const s = initial.selectedStation ? stationBySlug.get(initial.selectedStation) : null;
+    return RAIL_LINES.has(initial.selectedLine ?? "") || Boolean(s && s.linhas.every((x) => RAIL_LINES.has(x)));
+  });
+  const [panel, setPanel] = useState<Panel>(initial.panel);
+  const [snap, setSnap] = useState<Snap>(initial.snap);
   const [announcement, setAnnouncement] = useState("");
   const [target, setTarget] = useState<string | null>(null);
   const [view, setView] = useState<{ center: LngLat; zoom: number } | null>(initialView);
+  const [ready, setReady] = useState(false);
+  const [splashGone, setSplashGone] = useState(false);
   const mapRef = useRef<SubwayMapHandle>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const searchBtn = useRef<HTMLButtonElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  const byUser = useRef(false);
+  const restoreFocus = useRef(false);
+  const pushed = useRef(false);
+  const ignorePop = useRef(false);
+
   // Quando a localização chega: mira a estação mais próxima e enquadra você e ela.
   const { state: geo, request: requestGeo } = useGeolocation((lngLat) => {
     const first = nearestStations(lngLat, 1)[0];
@@ -200,62 +246,134 @@ export function MapApp() {
   const nearby = useMemo(() => (geo.status === "ok" ? nearestStations(geo.lngLat, 3) : []), [geo]);
   const user = geo.status === "ok" ? { lngLat: geo.lngLat, accuracy: geo.accuracy } : null;
   const alertCount = notices().length;
+  // Viés da busca de lugares: centro do mapa, só sem GPS (para não mandar sua posição a ninguém).
+  const bias: LngLat | null = geo.status === "idle" && mode === "real" && view ? view.center : null;
 
-  // Endereço compartilhável: modo, linha, estação e a vista do mapa (?v=lng,lat,zoom).
+  const onReady = useCallback(() => setReady(true), []);
+  useEffect(() => {
+    if (!ready) return;
+    const id = setTimeout(() => setSplashGone(true), 450);
+    return () => clearTimeout(id);
+  }, [ready]);
+
+  // Endereço compartilhável: modo, linha, estação, rota e a vista do mapa (?v=lng,lat,zoom).
   // Com o GPS ativo a vista NÃO vai para o endereço — ela revelaria onde você está.
   useEffect(() => {
     const u = new URLSearchParams();
-    if (mode === "real") u.set("modo", "real");
+    if (mode === "esquematico") u.set("modo", "esquematico");
     if (selectedLine) u.set("linha", selectedLine);
     if (selectedStation) u.set("estacao", selectedStation);
-    if (panel === "route" && routeEnds.from) u.set("de", routeEnds.from);
-    if (panel === "route" && routeEnds.to) u.set("para", routeEnds.to);
+    if (panel === "search") {
+      const de = encodeSpot(outcome?.from ?? null);
+      const para = encodeSpot(outcome?.to ?? null);
+      if (de) u.set("de", de);
+      if (para) u.set("para", para);
+      if (!de && !para) u.set("painel", "busca");
+    }
+    if (panel === "sobre") u.set("painel", "sobre");
     if (view && geo.status === "idle") u.set("v", `${view.center[0].toFixed(4)},${view.center[1].toFixed(4)},${view.zoom.toFixed(1)}`);
     const qs = u.toString();
-    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-  }, [mode, selectedLine, selectedStation, view, geo.status, panel, routeEnds]);
+    window.history.replaceState(window.history.state, "", qs ? `?${qs}` : window.location.pathname);
+  }, [mode, selectedLine, selectedStation, view, geo.status, panel, outcome]);
+
+  // Botão voltar do aparelho: painel aberto (ou folha levantada) é uma entrada no histórico.
+  const isOpen = panel !== "home" || (!isDesktop && snap !== "recolhido");
+  useEffect(() => {
+    if (isOpen && !pushed.current) {
+      window.history.pushState({ mapaPainel: true }, "", window.location.href);
+      pushed.current = true;
+    } else if (!isOpen && pushed.current) {
+      pushed.current = false;
+      ignorePop.current = true;
+      window.history.back();
+    }
+  }, [isOpen]);
+
+  const closeAll = useCallback(() => {
+    setPanel("home");
+    setSelectedLine(null);
+    setSelectedStation(null);
+    setSnap("recolhido");
+    restoreFocus.current = true;
+  }, []);
+
+  useEffect(() => {
+    const onPop = () => {
+      if (ignorePop.current) {
+        ignorePop.current = false;
+        return;
+      }
+      if (pushed.current) {
+        pushed.current = false;
+        closeAll();
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [closeAll]);
+
+  // Foco: ao abrir por toque/teclado vai para o título do painel; ao fechar volta para quem abriu.
+  useEffect(() => {
+    if (restoreFocus.current) {
+      restoreFocus.current = false;
+      const el = opener.current?.isConnected ? opener.current : searchBtn.current;
+      opener.current = null;
+      el?.focus({ preventScroll: true });
+      return;
+    }
+    if (!byUser.current || panel === "search") return;
+    byUser.current = false;
+    const h = contentRef.current?.querySelector<HTMLElement>("h2");
+    if (h) {
+      h.tabIndex = -1;
+      h.focus({ preventScroll: true });
+    }
+  }, [panel, snap]);
 
   // Rota vinda do endereço: enquadra o caminho quando o mapa estiver pronto.
   useEffect(() => {
-    if (!route || initialView) return;
-    const id = setTimeout(() => focusRoute(route), 700);
-    return () => clearTimeout(id);
+    if (!ready) return;
+    if (outcome && !initialView) focusOutcome(outcome);
+    else if (initial.selectedStation && !initialView) mapRef.current?.focusStation(initial.selectedStation);
     // Só na abertura.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [ready]);
 
-  const routeState = useMemo(
-    () =>
-      panel === "route" && route
-        ? { trechos: new Set(route.trechos), estacoes: new Set(route.legs.flatMap((l) => l.estacoes)) }
-        : null,
-    [panel, route],
-  );
+  const routeState = useMemo(() => {
+    const r: Route | null = panel === "search" ? (outcome?.route ?? null) : null;
+    return r ? { trechos: new Set(r.trechos), estacoes: new Set(r.legs.flatMap((l) => l.estacoes)) } : null;
+  }, [panel, outcome]);
 
-  // Ao abrir pelo link de uma estação (sem vista salva), centraliza nela.
-  useEffect(() => {
-    if (initialStation && stationBySlug.has(initialStation) && !initialView) {
-      const id = setTimeout(() => mapRef.current?.focusStation(initialStation), 600);
-      return () => clearTimeout(id);
-    }
-  }, [initialStation, initialView]);
+  const walk = useMemo(() => {
+    if (panel !== "search" || !outcome) return null;
+    const end = (s: Spot | null, station: string | null): WalkEnd | null => {
+      if (s?.kind !== "place") return null;
+      const anchor = station ?? nearestStations(s.lngLat, 1)[0]?.slug;
+      return anchor ? { lngLat: s.lngLat, station: anchor, dashed: Boolean(station) } : null;
+    };
+    const w = { from: end(outcome.from, outcome.board), to: end(outcome.to, outcome.alight) };
+    return w.from || w.to ? w : null;
+  }, [panel, outcome]);
 
-  const openPanel = (p: Panel) => {
+  function open(p: Panel, s?: Snap) {
+    if (panel === "home" && !opener.current) opener.current = document.activeElement as HTMLElement | null;
+    byUser.current = true;
     setPanel(p);
-    setSheetOpen(true);
-    setSheetByUser(true);
-  };
+    setSnap(s ?? (p === "search" ? "expandido" : "meio"));
+  }
 
   const pickStation = (slug: string | null) => {
     setSelectedStation(slug);
     if (!slug) {
-      if (panel === "station") setPanel(selectedLine ? "line" : "home");
-      setSheetOpen(Boolean(selectedLine) && panel !== "station");
+      if (panel === "station") {
+        if (selectedLine) setPanel("line");
+        else closeAll();
+      }
       return;
     }
     const st = stationBySlug.get(slug);
     if (st && st.linhas.every((l) => RAIL_LINES.has(l))) setShowRail(true);
-    openPanel("station");
+    open("station");
     setAnnouncement(`Estação ${st?.nome} selecionada no mapa.`);
     mapRef.current?.focusStation(slug);
   };
@@ -264,66 +382,77 @@ export function MapApp() {
     if (RAIL_LINES.has(id)) setShowRail(true);
     setSelectedLine(id);
     setSelectedStation(null);
-    openPanel("line");
+    open("line");
     setAnnouncement(`${lineById.get(id)?.nome} destacada no mapa; as outras linhas ficam em cinza.`);
   };
 
-  const openRoute = () => {
+  const openSearch = () => {
     setSelectedLine(null);
-    openPanel("route");
+    setSelectedStation(null);
+    open("search");
   };
 
   const locate = () => {
-    openPanel("near");
+    open("near");
     requestGeo();
   };
 
-  function focusRoute(r: Route) {
-    const pts = r.legs.flatMap((l) => l.estacoes).map((s) => stationBySlug.get(s)!);
-    if (pts.some((s) => s.linhas.every((l) => RAIL_LINES.has(l))) || r.legs.some((l) => RAIL_LINES.has(l.linha))) setShowRail(true);
-    mapRef.current?.focusPoints(pts.map((s) => (mode === "real" ? s.geo : s.schem)));
+  function focusOutcome(o: RouteOutcome) {
+    const pts: LngLat[] = [];
+    const real = mode === "real";
+    const stationPt = (slug: string) => {
+      const s = stationBySlug.get(slug)!;
+      return real ? s.geo : s.schem;
+    };
+    if (o.route) {
+      o.route.legs.flatMap((l) => l.estacoes).forEach((s) => pts.push(stationPt(s)));
+      if (o.route.legs.some((l) => RAIL_LINES.has(l.linha))) setShowRail(true);
+    }
+    for (const s of [o.from, o.to]) {
+      if (s?.kind === "station") pts.push(stationPt(s.slug));
+      else if (s?.kind === "place" && real) pts.push(s.lngLat);
+      else if (s?.kind === "place") {
+        const n = nearestStations(s.lngLat, 1)[0];
+        if (n) pts.push(stationPt(n.slug));
+      }
+    }
+    if (pts.length) mapRef.current?.focusPoints(pts);
   }
 
-  const backHome = () => {
-    setSelectedLine(null);
-    setSelectedStation(null);
-    setPanel("home");
-  };
+  /** Esc (e o voltar do painel): volta um nível; no início, recolhe a folha. */
+  const back = useCallback(() => {
+    if (panel === "station" && selectedLine) {
+      setSelectedStation(null);
+      setPanel("line");
+    } else if (panel !== "home") {
+      closeAll();
+    } else if (snap !== "recolhido") {
+      setSnap("recolhido");
+      restoreFocus.current = true;
+    }
+  }, [panel, selectedLine, snap, closeAll]);
 
-  const walkTo = selectedStation ? nearby.find((n) => n.slug === selectedStation) ?? null : null;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented || document.querySelector("dialog[open]")) return;
+      back();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [back]);
+
+  const walkTo = selectedStation ? (nearby.find((n) => n.slug === selectedStation) ?? null) : null;
+
+  const linesGrid = <LinesGrid showRail={showRail} onToggleRail={setShowRail} onPickLine={pickLine} />;
 
   const content = (
     <div key={panel} className="anim-panel">
-      {panel === "home" && (
-        <div className="flex flex-col gap-3">
-          <LinesGrid showRail={showRail} onToggleRail={() => setShowRail((v) => !v)} onPickLine={pickLine} />
-          <StationSearch onPick={(s) => pickStation(s)} />
-          <button
-            type="button"
-            onClick={openRoute}
-            className="flex min-h-control items-center justify-between border-t border-rule text-base font-bold"
-          >
-            <span className="flex items-center gap-1">
-              {Icons.search} Como chegar
-            </span>
-            <span aria-hidden>→</span>
-          </button>
-        </div>
-      )}
+      {panel === "home" && linesGrid}
       {panel === "line" && selectedLine && (
-        <LineView id={selectedLine} selectedStation={selectedStation} onBack={backHome} onPickStation={(s) => pickStation(s)} />
+        <LineView id={selectedLine} selectedStation={selectedStation} onBack={closeAll} onPickStation={(s) => pickStation(s)} />
       )}
       {panel === "station" && selectedStation && (
-        <StationView
-          slug={selectedStation}
-          walk={walkTo}
-          onBack={() => {
-            setSelectedStation(null);
-            setPanel(selectedLine ? "line" : "home");
-          }}
-          onPickLine={pickLine}
-          onPickStation={(s) => pickStation(s)}
-        />
+        <StationView slug={selectedStation} walk={walkTo} onBack={back} onPickLine={pickLine} onPickStation={(s) => pickStation(s)} />
       )}
       {panel === "near" && (
         <NearView
@@ -331,54 +460,137 @@ export function MapApp() {
           nearby={nearby}
           target={target}
           onRetry={requestGeo}
-          onBack={() => setPanel(selectedStation ? "station" : selectedLine ? "line" : "home")}
+          onBack={closeAll}
           onPick={(s) => {
             setTarget(s);
             pickStation(s);
           }}
         />
       )}
-      {panel === "route" && (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-1">
-            <BackButton onClick={() => setPanel("home")} />
-            <h2 className="text-lg font-bold">Como chegar</h2>
-          </div>
-          <RoutePlanner
-            initialFrom={routeEnds.from}
-            initialTo={routeEnds.to}
-            showMapLink={false}
-            onRoute={(r, from, to) => {
-              setRouteEnds({ from, to });
-              setRoute(r);
-              if (r) {
-                focusRoute(r);
-                setAnnouncement(`Rota destacada no mapa: ${r.minutos} minutos.`);
-              }
-            }}
-          />
-        </div>
+      {panel === "search" && (
+        <RoutePlanner
+          initialFrom={outcome?.from ?? initial.from}
+          initialTo={outcome?.to ?? initial.to}
+          bias={bias}
+          autoFocus={!outcome?.from || !outcome?.to}
+          onBack={closeAll}
+          onResult={(o) => {
+            setOutcome(o);
+            if (o.route || o.walkOnly) {
+              focusOutcome(o);
+              setAnnouncement(o.route ? `Rota destacada no mapa: cerca de ${o.route.minutos} minutos na rede.` : "Destino perto: dá para ir a pé.");
+            } else if (o.to?.kind === "station" && !o.from) {
+              mapRef.current?.focusStation(o.to.slug);
+            } else if (o.to?.kind === "place" && !o.from) {
+              focusOutcome(o);
+            }
+          }}
+        />
       )}
-      {panel === "alerts" && <AlertsView onBack={() => setPanel(selectedLine ? "line" : "home")} onPickLine={pickLine} />}
+      {panel === "alerts" && <AlertsView onBack={closeAll} onPickLine={pickLine} />}
+      {panel === "sobre" && <AboutPanel onBack={closeAll} />}
     </div>
   );
 
-  const sheetTitle =
-    panel === "line" && selectedLine
-      ? "Linha"
-      : panel === "station"
-        ? "Estação"
-        : panel === "near"
-          ? "Perto de você"
-          : panel === "alerts"
-            ? "Avisos"
-            : panel === "route"
-              ? "Rota"
-              : "Linhas";
+  const peek =
+    panel === "home" ? (
+      <div className="flex items-center gap-1">
+        <SearchButton short onClick={openSearch} buttonRef={searchBtn} />
+        <ModePill mode={mode} onChange={setMode} />
+      </div>
+    ) : snap === "recolhido" ? (
+      <div className="flex items-center justify-between">
+        <p className="text-base font-bold">{TITLES[panel]}</p>
+        <IconButton variant="plain" label="Fechar painel" onClick={closeAll}>
+          {Icons.close}
+        </IconButton>
+      </div>
+    ) : null;
 
   return (
     <main className="fixed inset-0 overflow-hidden bg-bg">
-      <h1 className="sr-only">Mapa da rede de metrô de São Paulo</h1>
+      <h1 className="sr-only">Mapa da rede de metrô e trens de São Paulo</h1>
+
+      {isDesktop ? (
+        /* Desktop: cartão flutuante no canto, como no Live Subway Map. */
+        <aside className="absolute left-2 top-2 z-10 flex max-h-[calc(100%-80px)] w-44 flex-col" aria-label="Painel do mapa">
+          <Card className="flex min-h-0 flex-col gap-2 p-3">
+            <Brand onAbout={() => open("sobre")} />
+            {panel === "home" && (
+              <>
+                <ModeTabs mode={mode} onChange={setMode} />
+                <SearchButton onClick={openSearch} buttonRef={searchBtn} />
+              </>
+            )}
+            <div ref={contentRef} className="-mx-3 min-h-0 overflow-y-auto px-3 pb-0.5">
+              {content}
+            </div>
+            <StaticBadge />
+          </Card>
+        </aside>
+      ) : (
+        /* Celular: marca e ajustes flutuando no alto. */
+        <div className="pointer-events-none absolute inset-x-1 top-1 z-10 flex flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <p
+              className="pointer-events-auto flex h-control items-center gap-1 bg-surface px-1.5"
+              style={{ borderRadius: 999, boxShadow: "var(--shadow-card)" }}
+              aria-label="Metrô, versão beta"
+            >
+              <span aria-hidden className="text-base font-bold">
+                Metrô
+              </span>
+              <BetaTag />
+            </p>
+            <span className="pointer-events-auto inline-flex size-control items-center justify-center rounded-full bg-surface" style={{ boxShadow: "var(--shadow-card)" }}>
+              <ThemeToggle onAbout={() => open("sobre")} />
+            </span>
+          </div>
+          <StaticBadge className="pointer-events-auto self-start" />
+        </div>
+      )}
+
+      {/* Base da tela. Celular: botões → folha → aviso. Desktop: botões no canto direito. */}
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-stretch gap-1 md:inset-x-auto md:right-2 md:bottom-6">
+        <div className="pointer-events-auto flex flex-col items-end gap-1 self-end px-1 md:px-0">
+          <AlertButton count={alertCount} onClick={() => open("alerts")} />
+          <IconButton label="Estação mais perto de mim" onClick={locate}>
+            <LocateIcon />
+          </IconButton>
+          {isDesktop && (
+            <>
+              <IconButton label="Aproximar" onClick={() => mapRef.current?.zoomBy(1)}>
+                <span aria-hidden className="text-lg font-bold">
+                  +
+                </span>
+              </IconButton>
+              <IconButton label="Afastar" onClick={() => mapRef.current?.zoomBy(-1)}>
+                <span aria-hidden className="text-lg font-bold">
+                  −
+                </span>
+              </IconButton>
+            </>
+          )}
+        </div>
+        {!isDesktop && (
+          <BottomSheet title={TITLES[panel]} snap={snap} onSnap={setSnap} peek={peek} onEscape={back}>
+            <div ref={contentRef}>{content}</div>
+          </BottomSheet>
+        )}
+        <Disclaimer className="pointer-events-auto flex md:hidden" />
+      </div>
+      <Disclaimer className="absolute inset-x-0 bottom-0 z-10 hidden md:flex" />
+      <p className="sr-only" role="status" aria-live="polite">
+        {announcement}
+      </p>
+      {/* Alternativa em texto do mapa: o mapa nunca é o único caminho. */}
+      <div id="mapa-alternativa" className="sr-only">
+        Mapa da rede com {lines.length} linhas de metrô, monotrilho e trem. O mesmo conteúdo está em texto no painel: linhas, estações
+        e rotas. Modo atual: {mode === "real" ? "traçado geográfico" : "esquemático"}.
+        {selectedLine ? ` Linha destacada: ${lineById.get(selectedLine)?.nome}.` : ""}
+        {selectedStation ? ` Estação selecionada: ${stationBySlug.get(selectedStation)?.nome}.` : ""}
+      </div>
+      {/* O mapa vem depois dos painéis no DOM: o Tab passa primeiro pela busca e pelos controles. */}
       <SubwayMap
         ref={mapRef}
         mode={mode}
@@ -388,101 +600,13 @@ export function MapApp() {
         user={user}
         target={target}
         route={routeState}
+        walk={walk}
+        onReady={onReady}
         onStationClick={pickStation}
         initialView={initialView}
         onViewChange={setView}
       />
-
-      {/* Desktop: cartão flutuante no canto, como no Live Subway Map. */}
-      <aside className="absolute left-2 top-2 hidden max-h-[calc(100%-80px)] w-44 flex-col md:flex" aria-label="Painel do mapa">
-        <Card className="flex min-h-0 flex-col gap-2 p-3">
-          <Brand />
-          {panel === "home" && <p className="text-xl font-bold">Mapa da rede</p>}
-          <ModeTabs mode={mode} onChange={setMode} />
-          <div className="-mx-3 min-h-0 overflow-y-auto px-3 pb-0.5">{content}</div>
-        </Card>
-      </aside>
-
-      {/* Celular: marca flutuando no canto, como o logo do Live Subway Map. */}
-      <div className="pointer-events-none absolute inset-x-1 top-1 flex items-center justify-between md:hidden">
-        <Link href="/" className="pointer-events-auto flex items-center gap-1" aria-label="Metrô, versão beta — início">
-          <span className="inline-flex size-6 items-center justify-center rounded-full bg-surface" style={{ boxShadow: "var(--shadow-card)" }}>
-            <Mark />
-          </span>
-          <span className="text-base font-bold [text-shadow:0_0_3px_var(--bg),0_0_6px_var(--bg)]">Mapa da rede</span>
-          <BetaTag />
-        </Link>
-        <span className="pointer-events-auto inline-flex size-6 items-center justify-center rounded-full bg-surface" style={{ boxShadow: "var(--shadow-card)" }}>
-          <ThemeToggle />
-        </span>
-      </div>
-
-      {/* Base da tela. Celular: botões → folha → aviso. Desktop: botões no canto direito. */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col items-stretch gap-1 md:inset-x-auto md:right-2 md:bottom-6">
-        <div className="pointer-events-auto flex items-end justify-between gap-1 px-1 md:flex-col md:px-0">
-          <div className="flex gap-1 md:hidden">
-            <IconButton label="Como chegar: planejar rota" onClick={openRoute}>
-              {Icons.search}
-            </IconButton>
-            <IconButton label="Linhas e estações" onClick={() => (sheetOpen && panel === "home" ? setSheetOpen(false) : openPanel("home"))}>
-              <LinesIcon />
-            </IconButton>
-          </div>
-          <div className="md:hidden">
-            <ModePill mode={mode} onChange={setMode} />
-          </div>
-          <div className="flex flex-col gap-1">
-            <div className="hidden md:contents">
-              <IconButton label="Como chegar: planejar rota" onClick={openRoute}>
-                {Icons.search}
-              </IconButton>
-            </div>
-            <AlertButton count={alertCount} onClick={() => openPanel("alerts")} />
-            <IconButton label="Estação mais perto de mim" onClick={locate}>
-              <LocateIcon />
-            </IconButton>
-            {/* No celular o zoom é por gesto de pinça. */}
-            <div className="hidden md:contents">
-              <IconButton label="Aproximar" onClick={() => mapRef.current?.zoomBy(1)}>
-                <span aria-hidden className="text-lg font-bold">+</span>
-              </IconButton>
-              <IconButton label="Afastar" onClick={() => mapRef.current?.zoomBy(-1)}>
-                <span aria-hidden className="text-lg font-bold">−</span>
-              </IconButton>
-            </div>
-          </div>
-        </div>
-        {sheetOpen && (
-          <BottomSheet title={sheetTitle} onClose={() => setSheetOpen(false)} focusOnOpen={sheetByUser}>
-            {content}
-          </BottomSheet>
-        )}
-        <Disclaimer className="pointer-events-auto flex md:hidden" />
-      </div>
-      <Disclaimer className="absolute inset-x-0 bottom-0 hidden md:flex" />
-      <p className="sr-only" role="status" aria-live="polite">
-        {announcement}
-      </p>
-      {/* Alternativa em texto do mapa: o mapa nunca é o único caminho. */}
-      <div id="mapa-alternativa" className="sr-only">
-        Diagrama da rede com {lines.length} linhas de metrô, monotrilho e trem. O mesmo conteúdo está em texto no painel
-        (linhas, estações e rota) e nas páginas de cada linha. Modo atual: {mode === "real" ? "traçado geográfico" : "esquemático"}.
-        {selectedLine ? ` Linha destacada: ${lineById.get(selectedLine)?.nome}.` : ""}
-        {selectedStation ? ` Estação selecionada: ${stationBySlug.get(selectedStation)?.nome}.` : ""}
-        {panel === "route" && route
-          ? ` Rota destacada de ${stationBySlug.get(route.legs[0].estacoes[0])?.nome} a ${stationBySlug.get(route.legs.at(-1)!.estacoes.at(-1)!)?.nome}.`
-          : ""}
-      </div>
-      {/* Lista completa de linhas para leitores de tela. */}
-      <nav className="sr-only" aria-label="Todas as linhas">
-        <ul>
-          {lines.map((l) => (
-            <li key={l.id}>
-              <Link href={`/linhas/${l.id}`}>{l.nome}</Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
+      {!splashGone && <Splash leaving={ready} />}
     </main>
   );
 }

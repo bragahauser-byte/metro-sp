@@ -5,10 +5,12 @@ import { StatusChip } from "@/components/ui/status-chip";
 import { IconButton, Icons, Spinner } from "@/components/ui/button";
 import { StationCombobox } from "@/components/route/station-combobox";
 import { useOps } from "@/components/ops/use-ops";
-import { formatTime } from "@/lib/time/sao-paulo";
+import { FULL_SITE_URL } from "@/lib/env";
 import { type Nearby, formatDistance } from "@/components/geo/nearest";
 import { GEO_MESSAGES, type GeoState } from "@/components/geo/use-geolocation";
-import Link from "next/link";
+import { Switch } from "@/components/ui/switch";
+import { schedule } from "@/components/route/plan";
+import { lineHoursSummary } from "@/lib/schedule/hours";
 import { lineNote, notices } from "./line-notes";
 import { RAIL_LINES, lineById, lines, neighborsOf, stationBySlug, stationsOfLine } from "./network";
 
@@ -33,7 +35,7 @@ export function LinesGrid({
   onPickLine,
 }: {
   showRail: boolean;
-  onToggleRail: () => void;
+  onToggleRail: (v: boolean) => void;
   onPickLine: (id: string) => void;
 }) {
   const metro = lines.filter((l) => !RAIL_LINES.has(l.id));
@@ -57,10 +59,9 @@ export function LinesGrid({
   return (
     <div className="flex flex-col gap-2">
       {grid(metro)}
-      <label className="flex min-h-control cursor-pointer items-center justify-between gap-2 border-t border-rule text-sm font-semibold">
-        <span>Trens metropolitanos (7 a 13)</span>
-        <input type="checkbox" checked={showRail} onChange={onToggleRail} className="size-icon accent-(--ink)" />
-      </label>
+      <Switch checked={showRail} onChange={onToggleRail} className="border-t border-rule">
+        Trens metropolitanos (7 a 13)
+      </Switch>
       {showRail && grid(rail)}
     </div>
   );
@@ -81,6 +82,7 @@ export function LineView({
   const seq = stationsOfLine(id);
   const branches = line.sequencias.length > 1;
   const note = lineNote(id);
+  const hours = lineHoursSummary(schedule, id);
   return (
     <div className="flex flex-col gap-2">
       {/* Como no Live Subway Map: voltar à esquerda, ícone grande da linha no centro. */}
@@ -105,9 +107,24 @@ export function LineView({
           </a>
         )}
       </div>
-      <Link href={`/linhas/${id}`} className="inline-flex min-h-control items-center text-sm font-semibold underline underline-offset-4">
-        Página da {line.nome} →
-      </Link>
+      <div className="border-t border-rule pt-2">
+        <h3 className="text-xs font-semibold uppercase text-ink-muted">Horário de funcionamento</h3>
+        {hours ? (
+          <>
+            <p className="text-sm">{hours.texto}</p>
+            {hours.observacao && <p className="text-xs text-ink-muted">{hours.observacao}</p>}
+            {hours.fonte && (
+              <a className="text-xs text-ink-muted underline" href={hours.fonte.url}>
+                Fonte: {hours.fonte.titulo} (consulta em {hours.fonte.consultadoEm.split("-").reverse().join("/")})
+              </a>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-fg-warning">
+            Horário não verificado em fonte oficial. Consulte a operadora ({line.operador}) antes de viajar.
+          </p>
+        )}
+      </div>
       {branches && (
         <p className="text-xs text-ink-muted">
           Linha em “Y”: ramal a partir de {stationBySlug.get(line.sequencias[1][0])?.nome}.
@@ -196,9 +213,6 @@ export function StationView({
             ? "♿ Acessibilidade parcial, segundo o OpenStreetMap."
             : "Acessibilidade: sem informação confirmada."}
       </p>
-      <Link href={`/estacoes/${slug}`} className="inline-flex min-h-control items-center text-sm font-semibold underline underline-offset-4">
-        Página da estação {st.nome} →
-      </Link>
       {walk && (
         <p className="text-base">
           <strong>{formatDistance(walk.distanciaM)}</strong> de você · cerca de {walk.minutos} min a pé
@@ -257,6 +271,20 @@ export function NearView({
         <BackButton onClick={onBack} />
         <h2 className="text-lg font-bold">Perto de você</h2>
       </div>
+      {geo.status === "idle" && (
+        <>
+          <p className="text-base">Mostramos as três estações mais perto de você, com a distância e o tempo a pé estimados.</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="inline-flex h-control items-center self-start bg-ink px-3 text-base font-semibold text-bg"
+            style={{ borderRadius: "var(--radius-control)" }}
+          >
+            Usar minha localização
+          </button>
+          <p className="text-xs text-ink-muted">A localização fica só neste aparelho.</p>
+        </>
+      )}
       {geo.status === "locating" && <p className="text-base text-ink-muted">Procurando sua localização…</p>}
       {geo.status === "error" && (
         <>
@@ -312,6 +340,7 @@ export function NearView({
 }
 
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit" });
+const dateTimeFmt = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 /** Comunicados oficiais recentes (RSS da operadora). Nunca apresentados como status em tempo real. */
 export function OfficialUpdates({ onlyLines, limit = 5 }: { onlyLines?: string[]; limit?: number }) {
@@ -321,6 +350,15 @@ export function OfficialUpdates({ onlyLines, limit = 5 }: { onlyLines?: string[]
       <h3 id="comunicados" className="text-xs font-semibold uppercase text-ink-muted">
         Comunicados oficiais recentes
       </h3>
+      {ops.status === "static" && (
+        <p className="text-sm text-ink-muted">
+          Comunicados oficiais estão disponíveis na{" "}
+          <a className="font-semibold underline" href={FULL_SITE_URL}>
+            versão completa
+          </a>{" "}
+          (precisa de servidor, que esta versão estática não tem).
+        </p>
+      )}
       {ops.status === "loading" && (
         <p className="flex items-center gap-1 text-sm text-ink-muted">
           <Spinner /> Carregando comunicados…
@@ -340,6 +378,7 @@ export function OfficialUpdates({ onlyLines, limit = 5 }: { onlyLines?: string[]
             .filter((i) => i.operacional && (!onlyLines || i.linhas.some((l) => onlyLines.includes(l))))
             .slice(0, limit);
           const failed = ops.data.fontes.filter((f) => !f.ok);
+          const lastOk = ops.data.fontes.map((f) => f.ultimaColetaOkEm).filter(Boolean).sort().at(-1) ?? null;
           return (
             <>
               {items.length === 0 ? (
@@ -360,9 +399,11 @@ export function OfficialUpdates({ onlyLines, limit = 5 }: { onlyLines?: string[]
                 </ul>
               )}
               <p className="text-xs text-ink-muted">
-                Comunicados publicados pelas operadoras, coletados a cada 30 min no máximo (última coleta às{" "}
-                {formatTime(new Date(ops.data.atualizadoEm))}). Não é situação em tempo real.
-                {failed.length > 0 && ` Fonte indisponível agora: ${failed.map((f) => f.nome).join(", ")}.`}
+                Comunicados publicados pelas operadoras (a data de cada um é a de publicação). Lidos a cada 30 min no máximo;{" "}
+                {lastOk ? <>última atualização bem-sucedida: {dateTimeFmt.format(new Date(lastOk))}.</> : "nenhuma leitura bem-sucedida ainda."}{" "}
+                Não é situação em tempo real.
+                {failed.length > 0 &&
+                  ` Fonte indisponível agora: ${failed.map((f) => f.nome).join(", ")}${failed.some((f) => f.preservado) ? " — mostrando os últimos dados válidos" : ""}.`}
               </p>
             </>
           );

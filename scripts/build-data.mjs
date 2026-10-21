@@ -23,9 +23,11 @@ const LINE_META = {
   8: { operador: "Motiva", tipo: "trem", status: "operando" },
   9: { operador: "Motiva", tipo: "trem", status: "operando" },
   10: { operador: "CPTM", tipo: "trem", status: "operando" },
-  11: { operador: "Trivia", tipo: "trem", status: "operando" },
-  12: { operador: "Trivia", tipo: "trem", status: "operando" },
-  13: { operador: "Trivia", tipo: "trem", status: "operando" },
+  // Concessão da Trivia (jul/2026); após falhas a Artesp devolveu as linhas à CPTM (23/07/2026) e a
+  // Trivia volta aos poucos: Linha 13 sob supervisão da CPTM desde 06/10/2026; 11 e 12 só depois.
+  11: { operador: "CPTM (em transição para a Trivia)", tipo: "trem", status: "operando" },
+  12: { operador: "CPTM (em transição para a Trivia)", tipo: "trem", status: "operando" },
+  13: { operador: "Trivia, sob supervisão da CPTM", tipo: "trem", status: "operando" },
   15: { operador: "Metrô", tipo: "monotrilho", status: "operando" },
   17: { operador: "Metrô", tipo: "monotrilho", status: "operacao-assistida" },
 };

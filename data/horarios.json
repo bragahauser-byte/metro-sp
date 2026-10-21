@@ -14,6 +14,24 @@
       "url": "https://prefeitura.sp.gov.br/w/linha-6-laranja-inaugura-nova-fase-para-a-brasil%C3%A2ndia-e-aproxima-a-zona-norte-do-centro-de-s%C3%A3o-paulo",
       "consultadoEm": "2026-10-20",
       "oficial": true
+    },
+    "motiva-linha-4": {
+      "titulo": "Motiva Trilhos — Linha 4-Amarela (Informações úteis: “Todos os dias, das 4h40 à 0h”)",
+      "url": "https://trilhos.motiva.com.br/linha-4-amarela/",
+      "consultadoEm": "2026-10-20",
+      "oficial": true
+    },
+    "motiva-linha-5": {
+      "titulo": "Motiva Trilhos — Linha 5-Lilás (Informações úteis: “Todos os dias, das 4h40 à 0h”)",
+      "url": "https://trilhos.motiva.com.br/linha-5-lilas/",
+      "consultadoEm": "2026-10-20",
+      "oficial": true
+    },
+    "motiva-linhas-8-9": {
+      "titulo": "Motiva Trilhos — ViaMobilidade Linhas 8 e 9 (“Horário de funcionamento da linha: Todos os dias, das 4h à 0h”)",
+      "url": "https://trilhos.motiva.com.br/viamobilidade8e9/",
+      "consultadoEm": "2026-10-20",
+      "oficial": true
     }
   },
   "linhas": {
@@ -168,6 +186,66 @@
       },
       "aposMeiaNoite": "mesma-linha"
     },
+    "4": {
+      "fonte": "motiva-linha-4",
+      "horarios": {
+        "util": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "domingo": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "feriado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "observacao": "A página diz “todos os dias”, sem detalhar feriados nem o horário de fechamento de cada estação; a operação 24 h experimental do Metrô não se aplica a esta linha."
+    },
+    "5": {
+      "fonte": "motiva-linha-5",
+      "horarios": {
+        "util": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "domingo": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ],
+        "feriado": [
+          [
+            "04:40",
+            "24:00"
+          ]
+        ]
+      },
+      "observacao": "A página diz “todos os dias”, sem detalhar feriados nem o horário de fechamento de cada estação; a operação 24 h experimental do Metrô não se aplica a esta linha."
+    },
     "6": {
       "fonte": "prefeitura-linha-6",
       "horarios": {
@@ -183,6 +261,66 @@
       },
       "validoAte": "2026-12-29",
       "observacao": "Operação assistida (João Paulo I – Perdizes), de segunda a sexta, exceto feriados, por 180 dias a partir de 03/07/2026, gratuita."
+    },
+    "8": {
+      "fonte": "motiva-linhas-8-9",
+      "horarios": {
+        "util": [
+          [
+            "04:00",
+            "24:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "04:00",
+            "24:00"
+          ]
+        ],
+        "domingo": [
+          [
+            "04:00",
+            "24:00"
+          ]
+        ],
+        "feriado": [
+          [
+            "04:00",
+            "24:00"
+          ]
+        ]
+      },
+      "observacao": "A página diz “todos os dias”, sem detalhar feriados nem o horário de fechamento de cada estação; a operação 24 h experimental do Metrô não se aplica a esta linha."
+    },
+    "9": {
+      "fonte": "motiva-linhas-8-9",
+      "horarios": {
+        "util": [
+          [
+            "04:00",
+            "24:00"
+          ]
+        ],
+        "sabado": [
+          [
+            "04:00",
+            "24:00"
+          ]
+        ],
+        "domingo": [
+          [
+            "04:00",
+            "24:00"
+          ]
+        ],
+        "feriado": [
+          [
+            "04:00",
+            "24:00"
+          ]
+        ]
+      },
+      "observacao": "A página diz “todos os dias”, sem detalhar feriados nem o horário de fechamento de cada estação; a operação 24 h experimental do Metrô não se aplica a esta linha."
     },
     "15": {
       "fonte": "metro-horarios",

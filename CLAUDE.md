@@ -25,7 +25,7 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 ## Estrutura de pastas
 
 ```
-/app            rotas (/, /mapa, /linhas/[id], /estacoes/[slug], /perto-de-mim, /sobre)
+/app            / é o mapa; /estilo; /mapa, /linhas, /estacoes, /rota, /como-chegar, /perto-de-mim, /sobre só redirecionam; /api (avisos, geocode)
 /components     UI (map/, diagram/, ui/)
 /data           lines.json, stations.geojson, edges.json, sources.md
 /scripts        coleta/normalização de dados (Overpass/OSM, GeoSampa)
@@ -52,14 +52,17 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 
 ## Arquitetura do mapa
 
-- `/mapa`: no modo esquemático a câmera é própria e leve (`components/map/camera.ts`, mesma projeção do MapLibre); o MapLibre só é baixado ao abrir o modo real e assume a mesma vista. Isso mantém o Lighthouse mobile ≥ 90 — não importar `maplibre-gl` de forma estática nem o CSS completo dele (usar `maplibre-min.css`). MapLibre só para o fundo de ruas; linhas, estações e rótulos são desenhados em canvas por `components/map/network-renderer.ts` (faixas paralelas, largura por zoom, curvas de raio constante, rótulos com colisão). A transição esquemático ↔ real interpola cada estação (`t` de 0 a 1).
+- **Map-first (v1.3, 20/10/2026):** o site abre direto no mapa em `/` (sem landing, sem menu no topo), com abertura curta (`components/map/splash.tsx`) só até o mapa ficar pronto (`onReady` do `SubwayMap`). Modo **Real é o padrão sempre**; esquemático só com `?modo=esquematico`. Sobre/Fontes/Estilo ficam no diálogo de ajustes (`theme-toggle.tsx`) e no painel `sobre`. Rotas antigas redirecionam (308 em `next.config.ts` na Vercel; `components/map-redirect.tsx` no Pages).
+- No modo esquemático a câmera é própria e leve (`components/map/camera.ts`, mesma projeção do MapLibre); o MapLibre só é baixado ao abrir o modo real e assume a mesma vista. Isso mantém o Lighthouse mobile ≥ 90 — não importar `maplibre-gl` de forma estática nem o CSS completo dele (usar `maplibre-min.css`). MapLibre só para o fundo de ruas; linhas, estações e rótulos são desenhados em canvas por `components/map/network-renderer.ts` (faixas paralelas, largura por zoom, curvas de raio constante, rótulos com colisão). A transição esquemático ↔ real interpola cada estação (`t` de 0 a 1).
 - Nível de detalhe por zoom (como no Live Subway Map): longe = linhas finas em troncos; médio = pontos e nomes de baldeações/terminais; perto = todos os nomes com ícones das linhas e ♿, e cada linha vira um par de faixas (ida e volta) com fio branco; máximo = número da linha ao lado do ponto e entradas. Linha selecionada: as outras ficam cinza. Trecho em obras: acinzentado, estação vazada.
 - Planejador de rota (`lib/route/engine.ts`, ligado em `components/route/plan.ts`): Dijkstra sobre (estação, linha), tempo estimado pela distância do traçado (35 km/h metrô, 30 monotrilho, 45 trem, 30 s por parada) + 5 min por baldeação; sempre apresentado como estimativa. `/rota?de=&para=` e `/mapa?de=&para=`.
-- Imagens de compartilhamento por página em `opengraph-image.tsx` (fonte Inter em `assets/fonts`, OFL); `sitemap.ts` e `robots.ts` com o domínio https://metro-sp-beta.vercel.app.
+- Imagem de compartilhamento só da raiz (`app/opengraph-image.tsx`, fonte Inter em `assets/fonts`, OFL; fora do build do Pages); `public/sitemap.xml` e `public/robots.txt` com o domínio https://metro-sp-beta.vercel.app.
 - Endereço guarda modo, linha, estação e a vista (`?v=lng,lat,zoom`), mas nunca quando o GPS está ativo.
 - O worker do MapLibre 6 é copiado para `public/vendor` em `predev`/`prebuild` (fora do git).
 - Fontes do mapa de fundo via `font-faces` do estilo (Google Fonts, OFL); tiles do OpenFreeMap.
-- Folha do celular (`components/map/bottom-sheet.tsx`): parcial/expandida/arrastando/fechada; arrastar só pela alça/cabeçalho (não briga com a rolagem nem com o mapa), fecha por distância (120 px) ou velocidade (0,6 px/ms), arrasto curto volta; Esc fecha e o foco volta para quem abriu.
+- Folha do celular (`components/map/bottom-sheet.tsx`): sempre presente, estados recolhido/meio/expandido; arrastar só pela alça/cabeçalho, muda por distância (48 px) ou velocidade (0,5 px/ms). Painel aberto = uma entrada no histórico (o voltar do aparelho fecha); Esc volta um nível; o foco volta para quem abriu (`map-app.tsx`). O conteúdo do painel é renderizado uma vez só (cartão no desktop ou folha no celular).
+- Busca (`components/route/route-planner.tsx` + `components/search/`): origem/destino podem ser estação ou lugar (`Spot`); lugares via Photon (`/api/geocode` na Vercel, direto no Pages). Rota de porta a porta em `lib/geo/place-route.ts`; caminhada é sempre estimativa (`lib/geo/walk.ts`).
+- GitHub Pages: `npm run build:pages` (`DEPLOY_TARGET=pages`, base `/metro-sp/`, `output: export`, sem `/api` nem OG; `lib/env.ts` diz ao cliente que é estático). Workflow `.github/workflows/pages.yml`.
 
 ## Domínio (lib/, sem React — testável com `npm test`)
 
@@ -68,6 +71,7 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 - `lib/time/sao-paulo.ts`: fuso America/Sao_Paulo via Intl, dia de operação (até 3h conta como o dia anterior), feriados (nacionais, estadual, municipais; Carnaval não).
 - `lib/ops/`: avisos. Só feeds RSS públicos com permissão registrada (`sources.ts` + `data/sources.md`). `/api/avisos` usa `use cache` + `cacheLife` (30 min) — no plano Hobby o cron da Vercel é diário, então não há cron de 10 min. `/api/avisos/atualizar` força nova coleta e exige `CRON_SECRET` (variável de ambiente na Vercel; sem ela responde 503). Comunicado ≠ situação em tempo real.
 - `lib/voice/`: entender "da estação X até Y" (sem acento, com tolerância a erro) e descrever a rota em frases. Reconhecimento e fala usam a Web Speech API do navegador (`components/voice/`), com o texto sempre como alternativa.
+- `lib/geo/`: caminhada (haversine × 1,3 a 4,5 km/h), estações candidatas (3 mais perto em 2 → 3,5 → 5 km), melhor combinação embarque × desembarque, conversão da resposta do Photon e busca mista com tempo-limite.
 - Testes: `npm test` (node --test com remoção de tipos do Node ≥ 22.6; imports relativos com extensão `.ts` em `lib/` e `tests/`).
 
 ## Regras de dados

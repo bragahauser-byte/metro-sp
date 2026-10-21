@@ -88,7 +88,14 @@ export type RenderState = {
   target: string | null; // estação de destino a pé (GPS)
   /** Caminho do planejador: trechos ("linha|a|b") e estações a destacar. */
   route: { trechos: Set<string>; estacoes: Set<string> } | null;
+  /**
+   * Pontas de uma rota de porta a porta: lugar de origem/destino e a estação ligada a cada um
+   * (embarque/desembarque, ou a mais próxima). O trecho a pé é desenhado tracejado.
+   */
+  walk: { from: WalkEnd | null; to: WalkEnd | null } | null;
 };
+
+export type WalkEnd = { lngLat: LngLat; station: string; dashed: boolean };
 
 const routeKey = (linha: string, a: string, b: string) => (a < b ? `${linha}|${a}|${b}` : `${linha}|${b}|${a}`);
 
@@ -429,8 +436,75 @@ export class NetworkRenderer {
       ctx.fill();
     }
 
+    // ---------------------------------------------------------------- a pé (origem/destino)
+    if (state.walk) {
+      if (state.walk.from) this.drawWalkEnd(state.walk.from, "origem");
+      if (state.walk.to) this.drawWalkEnd(state.walk.to, "destino");
+    }
+
     // ---------------------------------------------------------------- rótulos
     this.drawLabels(placed, z, dotR);
+  }
+
+  /**
+   * Marcador de um lugar e o trecho a pé até a estação. No esquemático o lugar acompanha a estação
+   * (mesmo deslocamento que tem na geografia), para não cair longe do diagrama.
+   */
+  private drawWalkEnd(end: WalkEnd, kind: "origem" | "destino") {
+    const { ctx, colors, state } = this;
+    const st = stationBySlug.get(end.station);
+    if (!st) return;
+    const t = state.t;
+    const stLL: LngLat = [lerp(st.geo[0], st.schem[0], t), lerp(st.geo[1], st.schem[1], t)];
+    const placeLL: LngLat = [end.lngLat[0] + (stLL[0] - st.geo[0]), end.lngLat[1] + (stLL[1] - st.geo[1])];
+    const a = this.project(placeLL);
+    const b = this.project(stLL);
+    if (end.dashed) {
+      ctx.save();
+      ctx.strokeStyle = colors.bg;
+      ctx.lineWidth = 6;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+      ctx.strokeStyle = colors.ink;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([0.1, 7]);
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (kind === "origem") {
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = colors.focus;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, 6, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      // Alfinete: gota com a ponta no lugar exato.
+      const r = 10;
+      const cy = a.y - 22;
+      ctx.fillStyle = "#d0271d";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.arc(a.x, cy, r, Math.PI * 0.75, Math.PI * 0.25);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(a.x, cy, 3.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
   private drawLabels(placed: Placed[], z: number, dotR: number) {
