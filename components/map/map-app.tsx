@@ -12,6 +12,10 @@ import { useGeolocation } from "@/components/geo/use-geolocation";
 import { type Route } from "@/components/route/plan";
 import { type RouteOutcome, RoutePlanner, initialOutcome } from "@/components/route/route-planner";
 import { type Spot, decodeSpot, encodeSpot } from "@/components/search/place-search";
+import { FindView } from "@/components/search/find-view";
+import { addRecent } from "@/components/search/recents";
+import { useOps } from "@/components/ops/use-ops";
+import { NowView, alertLines } from "@/components/ops/status-view";
 import { AboutPanel } from "./about-panel";
 import { BottomSheet, type Snap } from "./bottom-sheet";
 import { notices } from "./line-notes";
@@ -21,7 +25,7 @@ import { AlertsView, LineView, LinesGrid, NearView, StationView } from "./panels
 import { Splash } from "./splash";
 import { type MapMode, SubwayMap, type SubwayMapHandle } from "./subway-map";
 
-type Panel = "home" | "line" | "station" | "near" | "alerts" | "search" | "sobre";
+type Panel = "home" | "lines" | "line" | "station" | "near" | "alerts" | "now" | "find" | "search" | "sobre";
 
 const DESKTOP = "(min-width: 768px)";
 function subscribeDesktop(cb: () => void) {
@@ -54,25 +58,6 @@ function ModeTabs({ mode, onChange }: { mode: MapMode; onChange: (m: MapMode) =>
         >
           <span className={`block text-xs font-bold ${mode === t.id ? "text-ink" : "text-ink-muted"}`}>{t.label}</span>
           <span className="block text-xs text-ink-muted">{t.sub}</span>
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function ModePill({ mode, onChange }: { mode: MapMode; onChange: (m: MapMode) => void }) {
-  return (
-    <div role="group" aria-label="Tipo de mapa" className="flex h-control shrink-0 items-center bg-bg p-0.5 text-sm font-bold" style={{ borderRadius: 999 }}>
-      {(["real", "esquematico"] as const).map((m) => (
-        <button
-          key={m}
-          type="button"
-          aria-pressed={mode === m}
-          onClick={() => onChange(m)}
-          className="h-[40px] px-1.5 text-ink-muted aria-pressed:bg-ink aria-pressed:text-bg"
-          style={{ borderRadius: 999 }}
-        >
-          {m === "esquematico" ? "Esquema" : "Real"}
         </button>
       ))}
     </div>
@@ -120,9 +105,9 @@ function LocateIcon() {
   );
 }
 
-function AlertButton({ onClick, count }: { onClick: () => void; count: number }) {
+function AlertButton({ onClick, count, round = false }: { onClick: () => void; count: number; round?: boolean }) {
   return (
-    <IconButton label={`Avisos (${count})`} onClick={onClick}>
+    <IconButton label={`Avisos (${count})`} onClick={onClick} style={round ? { borderRadius: 999 } : undefined}>
       <span aria-hidden className="inline-flex size-3 items-center justify-center rounded-full bg-line-4 text-base font-bold text-[#111]">
         !
       </span>
@@ -158,6 +143,47 @@ function Disclaimer({ className = "" }: { className?: string }) {
   );
 }
 
+/** Botão de linhas do celular: a grade de pontos coloridos do Live Subway Map. */
+function LinesButton({ onClick }: { onClick: () => void }) {
+  // Classes escritas por extenso: o Tailwind só gera a cor de linha que aparece no código.
+  const dots = ["bg-line-1", "bg-line-2", "bg-line-3", "bg-line-4", "bg-line-5", "bg-line-15", "bg-line-17", "bg-line-6", "bg-line-11"];
+  return (
+    <IconButton label="Linhas e tipo de mapa" onClick={onClick} className="rounded-full" style={{ borderRadius: 999 }}>
+      <span aria-hidden className="grid grid-cols-3 gap-[3px]">
+        {dots.map((d) => (
+          <span key={d} className={`block size-[5px] rounded-full ${d}`} />
+        ))}
+      </span>
+    </IconButton>
+  );
+}
+
+// Relógio de minuto em minuto, sem quebrar a hidratação (no servidor não há hora).
+const subscribeMinute = (cb: () => void) => {
+  const id = setInterval(cb, 15_000);
+  return () => clearInterval(id);
+};
+const minuteNow = () => Math.floor(Date.now() / 60_000);
+const clockFmt = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" });
+
+/** "Agora": hora de São Paulo e um resumo da situação das linhas. Abre o painel Agora. */
+function NowPill({ onClick, alerts }: { onClick: () => void; alerts: number }) {
+  const minute = useSyncExternalStore(subscribeMinute, minuteNow, () => 0);
+  const clock = minute ? clockFmt.format(new Date(minute * 60_000)) : "";
+  const sub = alerts > 0 ? `${alerts} ${alerts === 1 ? "linha com alteração" : "linhas com alteração"}` : clock ? `${clock} · ver situação` : "ver situação";
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="pointer-events-auto flex h-control-lg min-w-[160px] flex-col items-center justify-center whitespace-nowrap bg-surface px-3 text-center"
+      style={{ borderRadius: 999, boxShadow: "var(--shadow-card)", border: "1px solid var(--card-border)" }}
+    >
+      <span className="text-sm font-bold">Agora</span>
+      <span className={`text-xs ${alerts > 0 ? "font-semibold text-fg-warning" : "text-ink-muted"}`}>{sub}</span>
+    </button>
+  );
+}
+
 // ---------------------------------------------------------------- app
 
 function parseView(v: string | null): { center: LngLat; zoom: number } | null {
@@ -170,6 +196,9 @@ function parseView(v: string | null): { center: LngLat; zoom: number } | null {
 
 const TITLES: Record<Panel, string> = {
   home: "Linhas",
+  lines: "Linhas",
+  now: "Agora",
+  find: "Buscar",
   line: "Linha",
   station: "Estação",
   near: "Perto de você",
@@ -198,12 +227,16 @@ export function MapApp() {
             ? "near"
             : painel === "avisos"
               ? "alerts"
+              : painel === "agora"
+                ? "now"
+                : painel === "linhas"
+                  ? "lines"
               : selectedStation
                 ? "station"
                 : selectedLine
                   ? "line"
                   : "home";
-    const snap: Snap = panel === "search" ? "expandido" : panel !== "home" || painel === "linhas" ? "meio" : "recolhido";
+    const snap: Snap = panel === "search" ? "expandido" : panel !== "home" ? "meio" : "recolhido";
     return { selectedLine, selectedStation, panel, snap, from, to, view: parseView(params.get("v")) };
   });
   const initialView = initial.view;
@@ -245,9 +278,13 @@ export function MapApp() {
 
   const nearby = useMemo(() => (geo.status === "ok" ? nearestStations(geo.lngLat, 3) : []), [geo]);
   const user = geo.status === "ok" ? { lngLat: geo.lngLat, accuracy: geo.accuracy } : null;
-  const alertCount = notices().length;
+  const ops = useOps();
+  const changedLines = alertLines(ops);
+  const alertCount = notices().length + changedLines;
   // Viés da busca de lugares: centro do mapa, só sem GPS (para não mandar sua posição a ninguém).
   const bias: LngLat | null = geo.status === "idle" && mode === "real" && view ? view.center : null;
+  // "Buscar por perto": o centro da vista do mapa (no modo real), nunca a posição do GPS.
+  const findNear: LngLat | null = mode === "real" ? (view?.center ?? [-46.6333, -23.5505]) : null;
 
   const onReady = useCallback(() => setReady(true), []);
   useEffect(() => {
@@ -271,6 +308,7 @@ export function MapApp() {
       if (!de && !para) u.set("painel", "busca");
     }
     if (panel === "sobre") u.set("painel", "sobre");
+    if (panel === "now") u.set("painel", "agora");
     if (view && geo.status === "idle") u.set("v", `${view.center[0].toFixed(4)},${view.center[1].toFixed(4)},${view.zoom.toFixed(1)}`);
     const qs = u.toString();
     window.history.replaceState(window.history.state, "", qs ? `?${qs}` : window.location.pathname);
@@ -321,7 +359,11 @@ export function MapApp() {
       el?.focus({ preventScroll: true });
       return;
     }
-    if (!byUser.current || panel === "search") return;
+    // Busca e rota cuidam do próprio foco (o campo de texto).
+    if (!byUser.current || panel === "search" || panel === "find") {
+      byUser.current = false;
+      return;
+    }
     byUser.current = false;
     const h = contentRef.current?.querySelector<HTMLElement>("h2");
     if (h) {
@@ -359,7 +401,7 @@ export function MapApp() {
     if (panel === "home" && !opener.current) opener.current = document.activeElement as HTMLElement | null;
     byUser.current = true;
     setPanel(p);
-    setSnap(s ?? (p === "search" ? "expandido" : "meio"));
+    setSnap(s ?? (p === "search" || p === "find" ? "expandido" : "meio"));
   }
 
   const pickStation = (slug: string | null) => {
@@ -389,7 +431,22 @@ export function MapApp() {
   const openSearch = () => {
     setSelectedLine(null);
     setSelectedStation(null);
-    open("search");
+    open("find");
+  };
+
+  /** Escolha na busca: vira o destino da rota (a origem fica para a pessoa dizer, ou "minha localização"). */
+  const pickFind = (s: Spot) => {
+    addRecent(s);
+    const o: RouteOutcome = { route: null, from: null, to: s, board: null, alight: null, walkOnly: false };
+    setOutcome(o);
+    open("search", "expandido");
+    if (s.kind === "station") mapRef.current?.focusStation(s.slug);
+    else {
+      // O lugar e a estação mais próxima juntos: dá para ver por onde se chega.
+      const st = nearestStations(s.lngLat, 1)[0];
+      if (mode === "real" && st) mapRef.current?.focusPoints([s.lngLat, stationBySlug.get(st.slug)!.geo]);
+      else focusOutcome(o);
+    }
   };
 
   const locate = () => {
@@ -448,6 +505,20 @@ export function MapApp() {
   const content = (
     <div key={panel} className="anim-panel">
       {panel === "home" && linesGrid}
+      {panel === "lines" && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold">Linhas</h2>
+            <IconButton variant="plain" label="Fechar linhas" onClick={closeAll}>
+              {Icons.close}
+            </IconButton>
+          </div>
+          <ModeTabs mode={mode} onChange={setMode} />
+          {linesGrid}
+        </div>
+      )}
+      {panel === "now" && <NowView onBack={closeAll} />}
+      {panel === "find" && <FindView near={findNear} onPick={pickFind} onClose={closeAll} />}
       {panel === "line" && selectedLine && (
         <LineView id={selectedLine} selectedStation={selectedStation} onBack={closeAll} onPickStation={(s) => pickStation(s)} />
       )}
@@ -487,18 +558,15 @@ export function MapApp() {
           }}
         />
       )}
-      {panel === "alerts" && <AlertsView onBack={closeAll} onPickLine={pickLine} />}
+      {panel === "alerts" && <AlertsView onBack={closeAll} onPickLine={pickLine} onNow={() => open("now")} />}
       {panel === "sobre" && <AboutPanel onBack={closeAll} />}
     </div>
   );
 
+  // Celular: com o painel fechado não há folha — só os botões sobre o mapa, como no Live Subway Map.
+  const sheetOpen = panel !== "home";
   const peek =
-    panel === "home" ? (
-      <div className="flex items-center gap-1">
-        <SearchButton short onClick={openSearch} buttonRef={searchBtn} />
-        <ModePill mode={mode} onChange={setMode} />
-      </div>
-    ) : snap === "recolhido" ? (
+    snap === "recolhido" ? (
       <div className="flex items-center justify-between">
         <p className="text-base font-bold">{TITLES[panel]}</p>
         <IconButton variant="plain" label="Fechar painel" onClick={closeAll}>
@@ -529,56 +597,91 @@ export function MapApp() {
           </Card>
         </aside>
       ) : (
-        /* Celular: marca e ajustes flutuando no alto. */
-        <div className="pointer-events-none absolute inset-x-1 top-1 z-10 flex flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <p
-              className="pointer-events-auto flex h-control items-center gap-1 bg-surface px-1.5"
-              style={{ borderRadius: 999, boxShadow: "var(--shadow-card)" }}
-              aria-label="Metrô, versão beta"
-            >
+        /* Celular: símbolo (abre os ajustes) e nome no alto, à esquerda. */
+        <div className="pointer-events-none absolute inset-x-1 top-1 z-10 flex flex-col items-start gap-1">
+          <div className="flex items-center gap-1">
+            <ThemeToggle
+              onAbout={() => open("sobre")}
+              trigger={({ label, open: openSettings }) => (
+                <button
+                  type="button"
+                  aria-label={label}
+                  title={label}
+                  aria-haspopup="dialog"
+                  onClick={openSettings}
+                  className="pointer-events-auto flex size-control items-center justify-center rounded-full bg-ink text-lg font-bold text-bg active:scale-95"
+                  style={{ boxShadow: "var(--shadow-card)" }}
+                >
+                  <span aria-hidden>M</span>
+                </button>
+              )}
+            />
+            <p className="flex items-center gap-1 map-halo" aria-label="Metrô, versão beta">
               <span aria-hidden className="text-base font-bold">
                 Metrô
               </span>
               <BetaTag />
             </p>
-            <span className="pointer-events-auto inline-flex size-control items-center justify-center rounded-full bg-surface" style={{ boxShadow: "var(--shadow-card)" }}>
-              <ThemeToggle onAbout={() => open("sobre")} />
-            </span>
           </div>
-          <StaticBadge className="pointer-events-auto self-start" />
+          <StaticBadge className="pointer-events-auto" />
         </div>
       )}
 
-      {/* Base da tela. Celular: botões → folha → aviso. Desktop: botões no canto direito. */}
+      {/* Base da tela. Celular: botões sobre o mapa (ou a folha) e o aviso. Desktop: botões à direita. */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex flex-col items-stretch gap-1 md:inset-x-auto md:right-2 md:bottom-6">
-        <div className="pointer-events-auto flex flex-col items-end gap-1 self-end px-1 md:px-0">
-          <AlertButton count={alertCount} onClick={() => open("alerts")} />
-          <IconButton label="Estação mais perto de mim" onClick={locate}>
-            <LocateIcon />
-          </IconButton>
-          {isDesktop && (
-            <>
-              <IconButton label="Aproximar" onClick={() => mapRef.current?.zoomBy(1)}>
-                <span aria-hidden className="text-lg font-bold">
-                  +
-                </span>
-              </IconButton>
-              <IconButton label="Afastar" onClick={() => mapRef.current?.zoomBy(-1)}>
-                <span aria-hidden className="text-lg font-bold">
-                  −
-                </span>
-              </IconButton>
-            </>
-          )}
-        </div>
-        {!isDesktop && (
-          <BottomSheet title={TITLES[panel]} snap={snap} onSnap={setSnap} peek={peek} onEscape={back}>
+        {isDesktop ? (
+          <div className="pointer-events-auto flex flex-col items-end gap-1">
+            <AlertButton count={alertCount} onClick={() => open("alerts")} />
+            <IconButton label="Estação mais perto de mim" onClick={locate}>
+              <LocateIcon />
+            </IconButton>
+            <IconButton label="Aproximar" onClick={() => mapRef.current?.zoomBy(1)}>
+              <span aria-hidden className="text-lg font-bold">
+                +
+              </span>
+            </IconButton>
+            <IconButton label="Afastar" onClick={() => mapRef.current?.zoomBy(-1)}>
+              <span aria-hidden className="text-lg font-bold">
+                −
+              </span>
+            </IconButton>
+          </div>
+        ) : sheetOpen ? (
+          <BottomSheet title={TITLES[panel]} snap={snap} onSnap={setSnap} peek={peek} onEscape={back} tall={panel === "find"}>
             <div ref={contentRef}>{content}</div>
           </BottomSheet>
+        ) : (
+          <>
+            {/* Coluna da direita: busca (no lugar do ♿ da referência) e localização. */}
+            <div className="pointer-events-auto flex flex-col items-end gap-1 self-end px-1">
+              <IconButton ref={searchBtn} label="Buscar estação, endereço ou lugar" onClick={openSearch} style={{ borderRadius: 999 }}>
+                {Icons.search}
+              </IconButton>
+              <IconButton label="Estação mais perto de mim" onClick={locate} style={{ borderRadius: 999 }}>
+                <LocateIcon />
+              </IconButton>
+            </div>
+            {/* Linha de baixo: linhas · Agora · avisos. */}
+            <div className="relative flex items-center justify-between px-1">
+              <span className="pointer-events-auto">
+                <LinesButton onClick={() => open("lines")} />
+              </span>
+              <span className="absolute left-1/2 -translate-x-1/2">
+                <NowPill alerts={changedLines} onClick={() => open("now")} />
+              </span>
+              <span className="pointer-events-auto">
+                <AlertButton count={alertCount} onClick={() => open("alerts")} round />
+              </span>
+            </div>
+          </>
         )}
         <Disclaimer className="pointer-events-auto flex md:hidden" />
       </div>
+      {isDesktop && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-6 z-10 flex justify-center">
+          <NowPill alerts={changedLines} onClick={() => open("now")} />
+        </div>
+      )}
       <Disclaimer className="absolute inset-x-0 bottom-0 z-10 hidden md:flex" />
       <p className="sr-only" role="status" aria-live="polite">
         {announcement}

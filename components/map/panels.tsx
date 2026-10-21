@@ -11,6 +11,7 @@ import { GEO_MESSAGES, type GeoState } from "@/components/geo/use-geolocation";
 import { Switch } from "@/components/ui/switch";
 import { schedule } from "@/components/route/plan";
 import { lineHoursSummary } from "@/lib/schedule/hours";
+import { Channels } from "@/components/ops/status-view";
 import { lineNote, notices } from "./line-notes";
 import { RAIL_LINES, lineById, lines, neighborsOf, stationBySlug, stationsOfLine } from "./network";
 
@@ -399,9 +400,8 @@ export function OfficialUpdates({ onlyLines, limit = 5 }: { onlyLines?: string[]
                 </ul>
               )}
               <p className="text-xs text-ink-muted">
-                Comunicados publicados pelas operadoras (a data de cada um é a de publicação). Lidos a cada 30 min no máximo;{" "}
+                Comunicados publicados pelas operadoras (a data de cada um é a de publicação), conferidos a cada 15 min;{" "}
                 {lastOk ? <>última atualização bem-sucedida: {dateTimeFmt.format(new Date(lastOk))}.</> : "nenhuma leitura bem-sucedida ainda."}{" "}
-                Não é situação em tempo real.
                 {failed.length > 0 &&
                   ` Fonte indisponível agora: ${failed.map((f) => f.nome).join(", ")}${failed.some((f) => f.preservado) ? " — mostrando os últimos dados válidos" : ""}.`}
               </p>
@@ -413,14 +413,26 @@ export function OfficialUpdates({ onlyLines, limit = 5 }: { onlyLines?: string[]
 }
 
 /** Situação das linhas fora do normal (botão "!"). */
-export function AlertsView({ onBack, onPickLine }: { onBack: () => void; onPickLine: (id: string) => void }) {
+export function AlertsView({ onBack, onPickLine, onNow }: { onBack: () => void; onPickLine: (id: string) => void; onNow: () => void }) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-1">
         <BackButton onClick={onBack} />
         <h2 className="text-lg font-bold">Avisos</h2>
       </div>
-      <h3 className="text-xs font-semibold uppercase text-ink-muted">Linhas fora da operação normal</h3>
+      <button
+        type="button"
+        onClick={onNow}
+        className="flex min-h-control items-center justify-between gap-1 border border-rule px-1.5 text-left"
+        style={{ borderRadius: "var(--radius-card)" }}
+      >
+        <span className="flex flex-col">
+          <span className="text-base font-bold">Situação de cada linha agora</span>
+          <span className="text-xs text-ink-muted">CPTM e ARTESP, conferidas a cada 15 min</span>
+        </span>
+        <span aria-hidden>›</span>
+      </button>
+      <h3 className="text-xs font-semibold uppercase text-ink-muted">Operação especial conhecida</h3>
       <ul className="flex flex-col">
         {notices().map((n) => (
           <li key={n.id} className="flex gap-2 border-b border-rule py-2 last:border-0">
@@ -442,13 +454,7 @@ export function AlertsView({ onBack, onPickLine }: { onBack: () => void; onPickL
         ))}
       </ul>
       <OfficialUpdates />
-      <p className="text-xs text-ink-muted">
-        Projeto conceitual. Para a situação das linhas agora, consulte{" "}
-        <a className="underline" href="https://www.metro.sp.gov.br">
-          metro.sp.gov.br
-        </a>{" "}
-        e os canais de cada operadora.
-      </p>
+      <Channels />
     </div>
   );
 }

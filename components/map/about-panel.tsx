@@ -79,8 +79,10 @@ export function AboutPanel({ onBack }: { onBack: () => void }) {
       </Block>
       <Block title="Avisos">
         <p>
-          Comunicados do feed RSS público do Metrô, lidos no máximo a cada 30 minutos. São comunicados com data e link, não situação em
-          tempo real.
+          A cada 15 minutos: situação das Linhas 10 a 13 pela CPTM e das 4 a 9 pela ARTESP (quando a chave da API está
+          configurada), e comunicados do feed RSS do Metrô. O Metrô não publica a situação das Linhas 1, 2, 3, 15 e 17 em formato
+          aberto — para elas o site mostra o link do canal oficial. O TemTrem aparece só como link: os termos dele não permitem
+          leitura automática.
         </p>
       </Block>
       <Block title="Acessibilidade, voz e privacidade">

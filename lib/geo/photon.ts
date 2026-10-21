@@ -81,3 +81,27 @@ export function parsePhoton(json: unknown): Place[] {
   }
   return out;
 }
+
+/** Categorias do "Buscar por perto" (rótulo, ícone e a etiqueta do OpenStreetMap que o Photon filtra). */
+export const NEARBY = {
+  shopping: { nome: "Shopping centers", icone: "🛍️", tag: "shop:mall" },
+  farmacia: { nome: "Farmácias", icone: "💊", tag: "amenity:pharmacy" },
+  restaurante: { nome: "Restaurantes", icone: "🍴", tag: "amenity:restaurant" },
+} as const;
+export type NearbyKind = keyof typeof NEARBY;
+export const isNearbyKind = (k: string | null): k is NearbyKind => k !== null && Object.hasOwn(NEARBY, k);
+
+/** Raio do "perto", em km. Um ponto da vista do mapa, arredondado a ~1 km — nunca a posição do GPS. */
+export const NEARBY_RADIUS_KM = 2;
+
+export function photonNearbyUrl(kind: NearbyKind, near: LngLat, limit = 8, base = PHOTON_BASE) {
+  const u = new URLSearchParams({
+    lat: near[1].toFixed(2),
+    lon: near[0].toFixed(2),
+    radius: String(NEARBY_RADIUS_KM),
+    limit: String(limit),
+    lang: "default",
+    osm_tag: NEARBY[kind].tag,
+  });
+  return `${base}/reverse?${u}`;
+}

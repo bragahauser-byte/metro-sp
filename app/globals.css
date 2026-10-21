@@ -92,3 +92,16 @@ body {
     opacity: 0.4;
   }
 }
+
+/* Texto solto sobre o mapa (nome no canto do celular): contorno na cor do fundo para ler em qualquer trecho. */
+.map-halo {
+  text-shadow:
+    0 0 2px var(--color-bg),
+    0 0 6px var(--color-bg),
+    0 0 10px var(--color-bg);
+}
+
+/* Campo cujo anel de foco fica no contêiner (focus-within), como a busca: sem anel duplicado. */
+.field-bare:focus-visible {
+  outline: none;
+}

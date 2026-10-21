@@ -66,21 +66,37 @@ function Toggle({ label, checked, onChange, hint }: { label: string; checked: bo
  * Botão de preferências (tema Claro / Escuro / Sistema, movimento, contraste, texto, voz e sons).
  * Abre um <dialog> modal: o foco fica preso nele, Esc fecha e o foco volta para o botão.
  */
-export function ThemeToggle({ onAbout }: { onAbout?: () => void } = {}) {
+export function ThemeToggle({
+  onAbout,
+  trigger,
+}: {
+  onAbout?: () => void;
+  /** Botão próprio (ex.: o símbolo do canto do mapa no celular) no lugar do ícone de ajustes. */
+  trigger?: (props: { label: string; open: () => void }) => ReactNode;
+} = {}) {
   const prefs = usePrefs();
   const dialog = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const label = "Ajustes: tema, acessibilidade, sobre e fontes";
+  const dialogId = `${titleId}-ajustes`;
+  // Pelo id (e não pelo ref): o botão pode ser de quem usa o componente, renderizado aqui.
+  const open = () => (document.getElementById(dialogId) as HTMLDialogElement | null)?.showModal();
 
   // Reaplica a escolha salva: no modo dev o React limpa os atributos ao remontar o <html>.
   useLayoutEffect(() => applyPrefs(getPrefs()), []);
 
   return (
     <>
-      <IconButton variant="plain" label="Ajustes: tema, acessibilidade, sobre e fontes" aria-haspopup="dialog" onClick={() => dialog.current?.showModal()}>
-        {Icons.settings}
-      </IconButton>
+      {trigger ? (
+        trigger({ label, open })
+      ) : (
+        <IconButton variant="plain" label={label} aria-haspopup="dialog" onClick={open}>
+          {Icons.settings}
+        </IconButton>
+      )}
       <dialog
         ref={dialog}
+        id={dialogId}
         aria-labelledby={titleId}
         className="m-auto w-[min(100%-32px,480px)] bg-surface p-0 text-ink backdrop:bg-black/40"
         style={{ borderRadius: "var(--radius-card)", boxShadow: "var(--shadow-card)" }}

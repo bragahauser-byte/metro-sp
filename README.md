@@ -15,7 +15,9 @@ Projeto conceitual independente, sem vínculo com a Companhia do Metropolitano d
 - **Busca por qualquer lugar:** estações (na hora, sem rede) e lugares/endereços (Photon, OpenStreetMap), com tipo, nome e endereço em cada resultado; setas, Enter e Esc; restrita à Grande São Paulo e com viés pela vista do mapa.
 - **Rota de porta a porta:** para cada ponta que é um lugar, as 3 estações mais próximas (2 km, ampliando para 3,5 e 5 km); escolhe a combinação de menor tempo total (a pé + rede + a pé). Caminhada sempre rotulada como estimativa (linha reta × 1,3 a 4,5 km/h). No mapa: marcadores de origem e destino e o trecho a pé tracejado. Lugar a mais de 5 km de qualquer estação: o site diz que não dá, em vez de inventar.
 - **Horários:** só de fonte oficial consultada (Metrô; Motiva para 4, 5, 8 e 9). Sem fonte = "horário não verificado", nunca tratado como aberto.
-- **Avisos:** comunicados do feed RSS do Metrô, com cache de 30 min e última atualização bem-sucedida separada da data de cada comunicado.
+- **Celular como o Live Subway Map:** símbolo (abre os ajustes) e nome no alto; embaixo, botão de linhas, pílula **Agora** e avisos; à direita, busca e localização. A busca abre como no Apple Maps: campo + fechar, **Recentes** (só neste navegador) e **Buscar por perto** (shoppings, farmácias, restaurantes num raio de 2 km do centro do mapa).
+- **Agora (situação das linhas, a cada 15 min):** Linhas 10–13 pelo mesmo endpoint público que o site da CPTM usa; Linhas 4–9 pela API da ARTESP quando `ARTESP_API_KEY` estiver configurada; Linhas 1, 2, 3, 15 e 17 sem leitura automática (o Metrô não publica a situação em formato aberto) — o site mostra o link do canal oficial em vez de supor "normal". Links para TemTrem, ARTESP, Metrô e CPTM (site e X) e concessionárias.
+- **Avisos:** comunicados do feed RSS do Metrô, conferidos a cada 15 min, com última atualização bem-sucedida separada da data de cada comunicado.
 - **Voz:** dizer a rota ("de Rua Otávio Alves Dundas até Shopping Eldorado"), com confirmação quando há mais de um lugar possível; ouvir a rota com tocar, pausar, continuar e parar; bipe opcional (nunca o único aviso).
 - **Acessibilidade:** alvos de 48 px, foco gerenciado, anúncios para leitor de tela, alternativa em texto do mapa, tema Claro/Escuro/Sistema, texto maior, mais contraste e reduzir movimento (no ícone de ajustes, junto com Sobre, fontes e Estilo).
 
@@ -41,7 +43,8 @@ Nenhuma é obrigatória. A geocodificação (Photon) não usa chave.
 
 | Nome | Onde | Para quê |
 |---|---|---|
-| `CRON_SECRET` | Vercel (Settings → Environment Variables) | Libera `GET /api/avisos/atualizar` com `Authorization: Bearer <segredo>` (força nova coleta de avisos). Sem ela o endpoint responde 503; os avisos continuam se atualizando sozinhos a cada 30 min. |
+| `CRON_SECRET` | Vercel (Settings → Environment Variables) | Libera `GET /api/avisos/atualizar` com `Authorization: Bearer <segredo>` (força nova coleta de avisos). Sem ela o endpoint responde 503; os avisos continuam se atualizando sozinhos a cada 15 min. |
+| `ARTESP_API_KEY` | Vercel (Settings → Environment Variables) | Liga a situação das Linhas 4 a 9 (API do CCM da ARTESP). A chave é pessoal: peça em https://ccm.artesp.sp.gov.br → Minha Conta → Minhas APIs. Limite de 12 req/h — o site lê no máximo 4 por hora. Sem ela essas linhas mostram o link da ARTESP. |
 | `DEPLOY_TARGET=pages` | só no build | Usado por `npm run build:pages`; não configure na Vercel. |
 
 ## Geocodificação
@@ -58,7 +61,8 @@ Provedor: **[Photon](https://photon.komoot.io)** (komoot), baseado no OpenStreet
 |---|---|---|
 | Mapa, linhas, estações, rotas entre estações, horários | sim | sim |
 | Busca de endereços e lugares | via `/api/geocode` (cache + limite) | direto no Photon |
-| Avisos (comunicados do Metrô) | sim (`/api/avisos`) | não — mostra "disponível na versão completa" |
+| Avisos e situação das linhas (Agora) | sim (`/api/avisos`, a cada 15 min) | não — mostra "disponível na versão completa" e os links dos canais |
+| Buscar por perto | via `/api/geocode?perto=` | direto no Photon (`/reverse`) |
 | Atualização forçada de avisos | `/api/avisos/atualizar` com `CRON_SECRET` | não |
 | Endereços antigos | redirecionamento 308 no servidor | redirecionamento no navegador |
 | Imagem de compartilhamento (OG) | sim | não |

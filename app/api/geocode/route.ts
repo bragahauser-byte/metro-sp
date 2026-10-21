@@ -1,11 +1,12 @@
 // GET /api/geocode?q=…&lat=…&lon=… — proxy do Photon (OpenStreetMap) para a busca de lugares.
+// GET /api/geocode?perto=farmacia&lat=…&lon=… — lugares de uma categoria perto de um ponto do mapa.
 // Sem chave nem segredo. Cache na CDN (1 dia) e em memória (1 h), limite por IP e um teto global
 // para não pesar no serviço público (política do Photon: "please be fair").
-import { PHOTON_BASE, parsePhoton, photonUrl } from "@/lib/geo/photon";
+import { PHOTON_BASE, isNearbyKind, parsePhoton, photonNearbyUrl, photonUrl } from "@/lib/geo/photon";
 import { inArea } from "@/lib/geo/area";
 import type { LngLat } from "@/lib/geo/walk";
 
-const UA = "metro-sp-conceitual/1.3 (+https://metro-sp-beta.vercel.app; github.com/bragahauser-byte/metro-sp)";
+const UA = "metro-sp-conceitual/1.4 (+https://metro-sp-beta.vercel.app; github.com/bragahauser-byte/metro-sp)";
 const TTL_MS = 60 * 60 * 1000;
 const MAX_ENTRIES = 500;
 const PER_IP = { limit: 30, windowMs: 60_000 };
@@ -27,13 +28,17 @@ const json = (body: string, status: number, cacheControl: string) =>
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  const perto = url.searchParams.get("perto");
   const q = (url.searchParams.get("q") ?? "").trim().replace(/\s+/g, " ");
-  if (q.length < 3 || q.length > 120) return json(JSON.stringify({ erro: "Digite de 3 a 120 caracteres." }), 400, "no-store");
+  if (perto !== null && !isNearbyKind(perto)) return json(JSON.stringify({ erro: "Categoria desconhecida." }), 400, "no-store");
+  if (perto === null && (q.length < 3 || q.length > 120)) return json(JSON.stringify({ erro: "Digite de 3 a 120 caracteres." }), 400, "no-store");
   const lat = Number(url.searchParams.get("lat"));
   const lon = Number(url.searchParams.get("lon"));
   // Viés arredondado a ~1 km: melhora o cache e não carrega posição precisa.
   const near: LngLat | null = Number.isFinite(lat) && Number.isFinite(lon) && inArea([lon, lat]) ? [Number(lon.toFixed(2)), Number(lat.toFixed(2))] : null;
-  const key = `${q.toLowerCase()}|${near?.join(",") ?? ""}`;
+  if (perto !== null && !near) return json(JSON.stringify({ erro: "Ponto fora da Grande São Paulo." }), 400, "no-store");
+  const target = perto !== null && isNearbyKind(perto) && near ? photonNearbyUrl(perto, near, 8, PHOTON_BASE) : photonUrl(q, near, 8, PHOTON_BASE);
+  const key = perto !== null ? `perto:${perto}|${near?.join(",")}` : `${q.toLowerCase()}|${near?.join(",") ?? ""}`;
   const now = Date.now();
 
   const cached = cache.get(key);
@@ -49,9 +54,10 @@ export async function GET(request: Request) {
   if (!all.ok) return json(JSON.stringify({ erro: "Busca de endereços ocupada. Tente em instantes." }), 503, "no-store");
 
   try {
-    const res = await fetch(photonUrl(q, near, 8, PHOTON_BASE), {
+    const res = await fetch(target, {
       headers: { "User-Agent": UA, Accept: "application/json" },
-      signal: AbortSignal.timeout(5000),
+      // O Photon público às vezes leva ~5 s; o cache segura as repetições.
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const body = JSON.stringify({ lugares: parsePhoton(await res.json()), fonte: "Photon · © OpenStreetMap contributors" });

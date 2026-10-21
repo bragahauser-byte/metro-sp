@@ -24,6 +24,7 @@ export function BottomSheet({
   children,
   headingRef,
   onEscape,
+  tall = false,
 }: {
   title: string;
   snap: Snap;
@@ -33,6 +34,8 @@ export function BottomSheet({
   children: ReactNode;
   headingRef?: Ref<HTMLHeadingElement>;
   onEscape: () => void;
+  /** Expandida ocupa a tela toda, mesmo com pouco conteúdo (a busca, como no Apple Maps). */
+  tall?: boolean;
 }) {
   const [dragY, setDragY] = useState<number | null>(null);
   const drag = useRef<{ startY: number; lastY: number; lastT: number; v: number; id: number } | null>(null);
@@ -122,7 +125,7 @@ export function BottomSheet({
           id="folha-conteudo"
           hidden={snap === "recolhido"}
           className="min-h-0 overflow-y-auto overscroll-contain px-2 pb-2"
-          style={{ maxHeight: maxH }}
+          style={{ maxHeight: maxH, minHeight: tall && snap === "expandido" ? "calc(100dvh - 160px)" : undefined }}
         >
           {children}
         </div>

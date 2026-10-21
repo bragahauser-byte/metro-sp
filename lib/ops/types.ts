@@ -1,5 +1,7 @@
 // Atualizações operacionais: comunicados e notícias coletados de fontes públicas.
-// Nada aqui é "status em tempo real": um comunicado diz o que a fonte publicou, quando publicou.
+// Um comunicado diz o que a fonte publicou, quando publicou. A situação das linhas agora vem à parte
+// (`situacao`), só de fontes que publicam esse dado em formato de máquina.
+import type { LineStatus } from "./status.ts";
 
 export type OpsSource = {
   id: string;
@@ -35,21 +37,27 @@ export type OpsItem = {
   expiraEm: string;
 };
 
+export type SourceState = {
+  id: string;
+  nome: string;
+  site: string;
+  ok: boolean;
+  erro?: string;
+  /** Quando esta coleta tentou ler a fonte. */
+  coletadoEm: string;
+  /** Última leitura que deu certo (pode ser de uma coleta anterior); null se nunca deu. */
+  ultimaColetaOkEm: string | null;
+  /** Os itens desta fonte vieram da última coleta boa, porque a de agora falhou. */
+  preservado?: boolean;
+  /** Fonte que precisa de chave e está sem ela (não é falha: está desligada). */
+  desligada?: boolean;
+};
+
 export type OpsSnapshot = {
   itens: OpsItem[];
-  fontes: {
-    id: string;
-    nome: string;
-    site: string;
-    ok: boolean;
-    erro?: string;
-    /** Quando esta coleta tentou ler a fonte. */
-    coletadoEm: string;
-    /** Última leitura que deu certo (pode ser de uma coleta anterior); null se nunca deu. */
-    ultimaColetaOkEm: string | null;
-    /** Os itens desta fonte vieram da última coleta boa, porque a de agora falhou. */
-    preservado?: boolean;
-  }[];
+  fontes: SourceState[];
+  /** Situação de cada linha agora, de quem publica em formato de máquina. */
+  situacao: { linhas: LineStatus[]; fontes: SourceState[] };
   atualizadoEm: string;
   /** Intervalo mínimo entre coletas, em segundos (o cache do servidor segura o resto). */
   intervaloS: number;

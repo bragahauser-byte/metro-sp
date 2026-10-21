@@ -6,11 +6,15 @@ import { IS_STATIC, withBase } from "@/lib/env";
 
 export type OpsState = { status: "loading" } | { status: "ok"; data: OpsSnapshot } | { status: "error" } | { status: "static" };
 
-// Uma leitura por visita: todos os componentes dividem a mesma promessa.
-let pending: Promise<OpsSnapshot> | null = null;
+/** Mesmo intervalo do servidor: a cada 15 min a página pergunta de novo se há novidade. */
+export const POLL_MS = 15 * 60 * 1000;
 
-function load(): Promise<OpsSnapshot> {
-  pending ??= fetch(withBase("/api/avisos"))
+// Uma leitura por vez: todos os componentes dividem a mesma promessa até ela vencer.
+let pending: { at: number; promise: Promise<OpsSnapshot> } | null = null;
+
+function load(force = false): Promise<OpsSnapshot> {
+  if (pending && !force && Date.now() - pending.at < POLL_MS) return pending.promise;
+  const promise = fetch(withBase("/api/avisos"), { cache: "no-store" })
     .then((r) => {
       if (!r.ok) throw new Error(String(r.status));
       return r.json() as Promise<OpsSnapshot>;
@@ -19,7 +23,8 @@ function load(): Promise<OpsSnapshot> {
       pending = null; // deixa tentar de novo depois
       throw e;
     });
-  return pending;
+  pending = { at: Date.now(), promise };
+  return promise;
 }
 
 export function useOps(enabled = true): OpsState & { retry: () => void } {
@@ -29,12 +34,21 @@ export function useOps(enabled = true): OpsState & { retry: () => void } {
   useEffect(() => {
     if (!enabled || IS_STATIC) return;
     let alive = true;
-    load().then(
-      (data) => alive && setState({ status: "ok", data }),
-      () => alive && setState({ status: "error" }),
-    );
+    const run = (force = false) =>
+      load(force).then(
+        (data) => alive && setState({ status: "ok", data }),
+        // Falha numa atualização não apaga o que já está na tela.
+        () => alive && setState((s) => (s.status === "ok" ? s : { status: "error" })),
+      );
+    run(attempt > 0);
+    const id = setInterval(() => document.visibilityState === "visible" && run(), POLL_MS);
+    // Voltou para a aba depois de muito tempo: confere na hora.
+    const onVisible = () => document.visibilityState === "visible" && run();
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       alive = false;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [enabled, attempt]);
   return {
