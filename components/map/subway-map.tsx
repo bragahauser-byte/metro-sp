@@ -289,7 +289,13 @@ export function SubwayMap({
     <div className="absolute inset-0" role="region" aria-label="Mapa interativo da rede. A lista no painel tem as mesmas informações.">
       {/* O CSS do MapLibre põe position: relative no contêiner; o invólucro é que ocupa a tela. */}
       <div className="absolute inset-0">
-        <div ref={containerRef} className="h-full w-full outline-none focus-visible:outline-2" aria-label="Mapa: arraste para mover, use + e − para o zoom" />
+        <div
+          ref={containerRef}
+          role="application"
+          aria-roledescription="mapa"
+          aria-label="Mapa: arraste ou use as setas para mover, + e − para o zoom"
+          className="h-full w-full [outline-offset:-4px]"
+        />
       </div>
       {/* "Papel" que cobre as ruas no modo esquemático. */}
       <div ref={paperRef} aria-hidden className="pointer-events-none absolute inset-0 bg-bg opacity-0" />
