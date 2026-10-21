@@ -15,7 +15,12 @@ export async function generateMetadata({ params }: PageProps<"/estacoes/[slug]">
   const st = stationBySlug.get(slug);
   if (!st) return {};
   const names = st.linhas.map((l) => lineById.get(l)?.nome).join(", ");
-  return { title: `Estação ${st.nome}`, description: `Estação ${st.nome} (${names}): linhas, integrações, vizinhas e mapa do entorno.` };
+  const description = `Estação ${st.nome} (${names}): linhas, integrações, vizinhas e mapa do entorno.`;
+  return {
+    title: `Estação ${st.nome}`,
+    description,
+    openGraph: { title: `Estação ${st.nome} · Metrô (beta)`, description, siteName: "Metrô (beta)", locale: "pt_BR", type: "website" },
+  };
 }
 
 const ACESSO: Record<string, string> = {

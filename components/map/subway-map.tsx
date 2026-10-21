@@ -23,6 +23,7 @@ type Props = {
   selectedStation: string | null;
   user: RenderState["user"];
   target: string | null;
+  route: RenderState["route"];
   onStationClick: (slug: string | null) => void;
   /** Vista inicial vinda do endereço (?v=lng,lat,zoom). */
   initialView?: { center: LngLat; zoom: number } | null;
@@ -80,6 +81,7 @@ export function SubwayMap({
   selectedStation,
   user,
   target,
+  route,
   onStationClick,
   initialView,
   onViewChange,
@@ -98,6 +100,7 @@ export function SubwayMap({
     hoveredStation: null,
     user,
     target,
+    route,
   });
   const clickRef = useRef(onStationClick);
   const viewRef = useRef(onViewChange);
@@ -193,9 +196,9 @@ export function SubwayMap({
 
   // Estado simples: redesenha.
   useEffect(() => {
-    Object.assign(stateRef.current, { showRail, selectedLine, selectedStation, user, target });
+    Object.assign(stateRef.current, { showRail, selectedLine, selectedStation, user, target, route });
     rendererRef.current?.draw();
-  }, [showRail, selectedLine, selectedStation, user, target]);
+  }, [showRail, selectedLine, selectedStation, user, target, route]);
 
   // Troca de modo: anima t e enquadra a rede no destino ao mesmo tempo.
   useEffect(() => {

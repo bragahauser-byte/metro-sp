@@ -16,9 +16,11 @@ export async function generateMetadata({ params }: PageProps<"/linhas/[id]">): P
   const { id } = await params;
   const line = lineById.get(id);
   if (!line) return {};
+  const description = `${line.nome}: estações, integrações e situação. Operação ${line.operador}.`;
   return {
     title: line.nome,
-    description: `${line.nome}: estações, integrações e situação. Operação ${line.operador}.`,
+    description,
+    openGraph: { title: `${line.nome} · Metrô (beta)`, description, siteName: "Metrô (beta)", locale: "pt_BR", type: "website" },
   };
 }
 

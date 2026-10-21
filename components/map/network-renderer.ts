@@ -87,7 +87,11 @@ export type RenderState = {
   hoveredStation: string | null;
   user: { lngLat: LngLat; accuracy: number } | null;
   target: string | null; // estação de destino a pé (GPS)
+  /** Caminho do planejador: trechos ("linha|a|b") e estações a destacar. */
+  route: { trechos: Set<string>; estacoes: Set<string> } | null;
 };
+
+const routeKey = (linha: string, a: string, b: string) => (a < b ? `${linha}|${a}|${b}` : `${linha}|${b}|${a}`);
 
 type Colors = { bg: string; ink: string; muted: string; focus: string; gray: string; font: string };
 
@@ -210,10 +214,8 @@ export class NetworkRenderer {
       ? [...LINE_ORDER.filter((l) => l !== state.selectedLine), state.selectedLine]
       : LINE_ORDER;
 
-    for (const linha of order) {
-      if (!this.visibleLine(linha)) continue;
-      const segs = prepared.filter((s) => s.linha === linha && screen.has(s));
-      const color = this.lineColor(linha);
+    const drawGroup = (segs: Prepared[], color: string) => {
+      if (!segs.length) return;
       ctx.setLineDash([]);
       ctx.lineJoin = "round";
       // Contorno na cor do fundo: separa faixas vizinhas e corta a linha de baixo nos cruzamentos.
@@ -249,6 +251,16 @@ export class NetworkRenderer {
         for (const s of segs) tracePath(ctx, screen.get(s)!, radius);
         ctx.stroke();
       }
+    };
+    const segsOf = (linha: string) => prepared.filter((s) => s.linha === linha && screen.has(s));
+
+    if (state.route) {
+      // Rota: toda a rede em cinza e, por cima, só os trechos do caminho nas cores das linhas.
+      const inRoute = (s: Prepared) => state.route!.trechos.has(routeKey(s.linha, s.de, s.para));
+      for (const linha of LINE_ORDER) if (this.visibleLine(linha)) drawGroup(segsOf(linha), colors.gray);
+      for (const linha of LINE_ORDER) drawGroup(segsOf(linha).filter(inRoute), lineById.get(linha)!.cor);
+    } else {
+      for (const linha of order) if (this.visibleLine(linha)) drawGroup(segsOf(linha), this.lineColor(linha));
     }
     ctx.globalAlpha = 1;
 
@@ -438,7 +450,7 @@ export class NetworkRenderer {
 
     const priority = (slug: string) => {
       const st = stationBySlug.get(slug)!;
-      if (slug === state.selectedStation) return 0;
+      if (slug === state.selectedStation || state.route?.estacoes.has(slug)) return 0;
       if (st.linhas.length > 1) return 1;
       if (TERMINALS.has(slug)) return 2;
       return 3;

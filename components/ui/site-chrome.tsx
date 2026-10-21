@@ -33,7 +33,10 @@ export function SiteHeader() {
         <Link href="/linhas" className="underline-offset-4 hover:underline">
           Linhas
         </Link>
-        <Link href="/perto-de-mim" className="hidden underline-offset-4 hover:underline sm:inline">
+        <Link href="/rota" className="hidden underline-offset-4 hover:underline sm:inline">
+          Como chegar
+        </Link>
+        <Link href="/perto-de-mim" className="hidden underline-offset-4 hover:underline md:inline">
           Perto de mim
         </Link>
         <Link href="/sobre" className="hidden underline-offset-4 hover:underline sm:inline">

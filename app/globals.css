@@ -21,3 +21,23 @@ body {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
+
+/* Micro-interações. As durações vêm dos tokens e vão a zero com "reduzir movimento". */
+@keyframes sheet-in {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@keyframes panel-in {
+  from {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+}
+.anim-sheet {
+  animation: sheet-in var(--duration-slow) var(--ease-standard);
+}
+.anim-panel {
+  animation: panel-in var(--duration-base) var(--ease-standard);
+}

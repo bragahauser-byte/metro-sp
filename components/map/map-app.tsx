@@ -13,8 +13,11 @@ import { notices } from "./line-notes";
 import { type LngLat, RAIL_LINES, lineById, lines, stationBySlug } from "./network";
 import { AlertsView, LineView, LinesGrid, NearView, StationSearch, StationView } from "./panels";
 import { type MapMode, SubwayMap, type SubwayMapHandle } from "./subway-map";
+import { type Route, planRoute } from "@/components/route/plan";
+import { RoutePlanner } from "@/components/route/route-planner";
+import { BackButton } from "./panels";
 
-type Panel = "home" | "line" | "station" | "near" | "alerts";
+type Panel = "home" | "line" | "station" | "near" | "alerts" | "route";
 
 // ---------------------------------------------------------------- peças
 
@@ -144,7 +147,7 @@ function Disclaimer({ className = "" }: { className?: string }) {
 function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   return (
     <section id="folha-do-mapa" aria-label={title} className="pointer-events-auto md:hidden">
-      <Card className="mx-1 flex max-h-[62vh] min-h-0 flex-col" style={{ borderRadius: "16px 16px 12px 12px" }}>
+      <Card className="anim-sheet mx-1 flex max-h-[62vh] min-h-0 flex-col" style={{ borderRadius: "16px 16px 12px 12px" }}>
         <span aria-hidden className="mx-auto mt-1 h-0.5 w-5 rounded-full bg-rule" />
         <div className="flex items-center justify-between px-2 pt-0.5">
           <p className="text-caption font-semibold uppercase tracking-widest text-ink-muted">{title}</p>
@@ -175,6 +178,14 @@ export function MapApp() {
   const initialLine = params.get("linha");
   const initialStation = params.get("estacao");
   const [initialView] = useState(() => parseView(params.get("v")));
+  const valid = (s: string | null) => (s && stationBySlug.has(s) ? s : null);
+  const [routeEnds, setRouteEnds] = useState<{ from: string | null; to: string | null }>(() => ({
+    from: valid(params.get("de")),
+    to: valid(params.get("para")),
+  }));
+  const [route, setRoute] = useState<Route | null>(() =>
+    routeEnds.from && routeEnds.to ? planRoute(routeEnds.from, routeEnds.to) : null,
+  );
   const [mode, setMode] = useState<MapMode>(params.get("modo") === "real" ? "real" : "esquematico");
   const [selectedLine, setSelectedLine] = useState<string | null>(initialLine && lineById.has(initialLine) ? initialLine : null);
   const [selectedStation, setSelectedStation] = useState<string | null>(
@@ -185,9 +196,9 @@ export function MapApp() {
     const s = initialStation ? stationBySlug.get(initialStation) : null;
     return RAIL_LINES.has(l) || Boolean(s && s.linhas.every((x) => RAIL_LINES.has(x)));
   });
-  const [panel, setPanel] = useState<Panel>(selectedStation ? "station" : selectedLine ? "line" : "home");
+  const [panel, setPanel] = useState<Panel>(route ? "route" : selectedStation ? "station" : selectedLine ? "line" : "home");
   // No celular a folha começa fechada (mapa limpo), a não ser que o link já aponte algo.
-  const [sheetOpen, setSheetOpen] = useState(Boolean(selectedStation || selectedLine));
+  const [sheetOpen, setSheetOpen] = useState(Boolean(selectedStation || selectedLine || route));
   const [target, setTarget] = useState<string | null>(null);
   const [view, setView] = useState<{ center: LngLat; zoom: number } | null>(initialView);
   const mapRef = useRef<SubwayMapHandle>(null);
@@ -213,10 +224,29 @@ export function MapApp() {
     if (mode === "real") u.set("modo", "real");
     if (selectedLine) u.set("linha", selectedLine);
     if (selectedStation) u.set("estacao", selectedStation);
+    if (panel === "route" && routeEnds.from) u.set("de", routeEnds.from);
+    if (panel === "route" && routeEnds.to) u.set("para", routeEnds.to);
     if (view && geo.status === "idle") u.set("v", `${view.center[0].toFixed(4)},${view.center[1].toFixed(4)},${view.zoom.toFixed(1)}`);
     const qs = u.toString();
     window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
-  }, [mode, selectedLine, selectedStation, view, geo.status]);
+  }, [mode, selectedLine, selectedStation, view, geo.status, panel, routeEnds]);
+
+  // Rota vinda do endereço: enquadra o caminho quando o mapa estiver pronto.
+  useEffect(() => {
+    if (!route || initialView) return;
+    const id = setTimeout(() => focusRoute(route), 700);
+    return () => clearTimeout(id);
+    // Só na abertura.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const routeState = useMemo(
+    () =>
+      panel === "route" && route
+        ? { trechos: new Set(route.trechos), estacoes: new Set(route.legs.flatMap((l) => l.estacoes)) }
+        : null,
+    [panel, route],
+  );
 
   // Ao abrir pelo link de uma estação (sem vista salva), centraliza nela.
   useEffect(() => {
@@ -256,6 +286,12 @@ export function MapApp() {
     requestGeo();
   };
 
+  function focusRoute(r: Route) {
+    const pts = r.legs.flatMap((l) => l.estacoes).map((s) => stationBySlug.get(s)!);
+    if (pts.some((s) => s.linhas.every((l) => RAIL_LINES.has(l))) || r.legs.some((l) => RAIL_LINES.has(l.linha))) setShowRail(true);
+    mapRef.current?.focusPoints(pts.map((s) => (mode === "real" ? s.geo : s.schem)));
+  }
+
   const backHome = () => {
     setSelectedLine(null);
     setSelectedStation(null);
@@ -265,11 +301,21 @@ export function MapApp() {
   const walkTo = selectedStation ? nearby.find((n) => n.slug === selectedStation) ?? null : null;
 
   const content = (
-    <>
+    <div key={panel} className="anim-panel">
       {panel === "home" && (
         <div className="flex flex-col gap-3">
           <LinesGrid showRail={showRail} onToggleRail={() => setShowRail((v) => !v)} onPickLine={pickLine} />
           <StationSearch onPick={(s) => pickStation(s)} />
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedLine(null);
+              setPanel("route");
+            }}
+            className="flex items-center justify-between border-t border-rule pt-2 text-body font-bold"
+          >
+            Como chegar <span aria-hidden>→</span>
+          </button>
         </div>
       )}
       {panel === "line" && selectedLine && (
@@ -300,8 +346,26 @@ export function MapApp() {
           }}
         />
       )}
+      {panel === "route" && (
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-1">
+            <BackButton onClick={() => setPanel("home")} />
+            <h2 className="text-lead font-bold tracking-tight">Como chegar</h2>
+          </div>
+          <RoutePlanner
+            initialFrom={routeEnds.from}
+            initialTo={routeEnds.to}
+            showMapLink={false}
+            onRoute={(r, from, to) => {
+              setRouteEnds({ from, to });
+              setRoute(r);
+              if (r) focusRoute(r);
+            }}
+          />
+        </div>
+      )}
       {panel === "alerts" && <AlertsView onBack={() => setPanel(selectedLine ? "line" : "home")} onPickLine={pickLine} />}
-    </>
+    </div>
   );
 
   const sheetTitle =
@@ -313,7 +377,9 @@ export function MapApp() {
           ? "Perto de você"
           : panel === "alerts"
             ? "Avisos"
-            : "Linhas";
+            : panel === "route"
+              ? "Rota"
+              : "Linhas";
 
   return (
     <main className="fixed inset-0 overflow-hidden bg-bg">
@@ -326,6 +392,7 @@ export function MapApp() {
         selectedStation={selectedStation}
         user={user}
         target={target}
+        route={routeState}
         onStationClick={pickStation}
         initialView={initialView}
         onViewChange={setView}

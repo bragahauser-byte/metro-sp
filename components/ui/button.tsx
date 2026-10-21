@@ -26,7 +26,7 @@ export function IconButton({ label, className = "", style, children, ...rest }: 
     <button
       aria-label={label}
       title={label}
-      className={`inline-flex size-6 items-center justify-center bg-surface text-ink transition-transform duration-(--duration-fast) ease-standard active:scale-95 ${className}`}
+      className={`inline-flex size-6 items-center justify-center bg-surface text-ink transition-transform duration-(--duration-fast) ease-standard hover:-translate-y-px active:scale-95 ${className}`}
       style={{
         borderRadius: "var(--radius-control)",
         boxShadow: "var(--shadow-card)",

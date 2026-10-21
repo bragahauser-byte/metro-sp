@@ -9,6 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://metro-sp-beta.vercel.app"),
+  openGraph: { locale: "pt_BR", siteName: "Metrô (beta)", type: "website" },
+  twitter: { card: "summary_large_image" },
   title: {
     default: "Metrô (beta) — mapa conceitual da rede de São Paulo",
     template: "%s · Metrô (beta)",
