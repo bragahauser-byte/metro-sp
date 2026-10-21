@@ -31,6 +31,8 @@ const NOW = new Date("2026-10-12T12:00:00Z");
 test("decodifica CDATA, tags e entidades", () => {
   assert.equal(decode("<![CDATA[<b>A &amp; B</b>]]>"), "A & B");
   assert.equal(decode("caf&#233;"), "café");
+  // HTML escapado no feed não pode sobrar como texto.
+  assert.equal(decode('Produtos &lt;img src="/x.png" /&gt; novos'), "Produtos novos");
 });
 
 test("lê o RSS e normaliza", () => {
