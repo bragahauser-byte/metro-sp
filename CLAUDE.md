@@ -48,8 +48,10 @@ A referência de interface é o **Live Subway Map da MTA (Work & Co, 2020)** —
 
 ## Arquitetura do mapa
 
-- `/mapa`: MapLibre só para o fundo e a câmera; linhas, estações e rótulos são desenhados em canvas por `components/map/network-renderer.ts` (faixas paralelas, largura por zoom, curvas de raio constante, rótulos com colisão). A transição esquemático ↔ real interpola cada estação (`t` de 0 a 1).
+- `/mapa`: no modo esquemático a câmera é própria e leve (`components/map/camera.ts`, mesma projeção do MapLibre); o MapLibre só é baixado ao abrir o modo real e assume a mesma vista. Isso mantém o Lighthouse mobile ≥ 90 — não importar `maplibre-gl` de forma estática nem o CSS completo dele (usar `maplibre-min.css`). MapLibre só para o fundo de ruas; linhas, estações e rótulos são desenhados em canvas por `components/map/network-renderer.ts` (faixas paralelas, largura por zoom, curvas de raio constante, rótulos com colisão). A transição esquemático ↔ real interpola cada estação (`t` de 0 a 1).
 - Nível de detalhe por zoom (como no Live Subway Map): longe = linhas finas em troncos; médio = pontos e nomes de baldeações/terminais; perto = todos os nomes com ícones das linhas e ♿, e cada linha vira um par de faixas (ida e volta) com fio branco; máximo = número da linha ao lado do ponto e entradas. Linha selecionada: as outras ficam cinza. Trecho em obras: acinzentado, estação vazada.
+- Planejador de rota (`components/route/plan.ts`): Dijkstra sobre (estação, linha), tempo estimado pela distância do traçado (35 km/h metrô, 30 monotrilho, 45 trem, 30 s por parada) + 5 min por baldeação; sempre apresentado como estimativa. `/rota?de=&para=` e `/mapa?de=&para=`.
+- Imagens de compartilhamento por página em `opengraph-image.tsx` (fonte Inter em `assets/fonts`, OFL); `sitemap.ts` e `robots.ts` com o domínio https://metro-sp-beta.vercel.app.
 - Endereço guarda modo, linha, estação e a vista (`?v=lng,lat,zoom`), mas nunca quando o GPS está ativo.
 - O worker do MapLibre 6 é copiado para `public/vendor` em `predev`/`prebuild` (fora do git).
 - Fontes do mapa de fundo via `font-faces` do estilo (Google Fonts, OFL); tiles do OpenFreeMap.
