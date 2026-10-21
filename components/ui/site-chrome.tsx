@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MetroLogo } from "./metro-logo";
+import { MetroTile } from "./metro-logo";
 import { ThemeToggle } from "./theme-toggle";
 
 export function BetaTag() {
@@ -13,11 +13,12 @@ export function BetaTag() {
   );
 }
 
-/** Marca do Metrô (preto e branco, uso autorizado) + selo BETA. */
+/** Símbolo do Metrô em bloco (preto e branco, uso autorizado) + nome + selo BETA. */
 export function Wordmark() {
   return (
     <Link href="/" className="inline-flex min-h-control items-center gap-1" aria-label="Metrô, versão beta — abrir o mapa">
-      <MetroLogo className="h-4 w-auto" title="Metrô" />
+      <MetroTile className="size-5" title="Metrô" />
+      <span className="text-xl font-bold">Metrô</span>
       <BetaTag />
     </Link>
   );

@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { IconButton, Icons } from "@/components/ui/button";
 import { LineBadge } from "@/components/ui/line-badge";
 import { BetaTag } from "@/components/ui/site-chrome";
-import { MetroLogo } from "@/components/ui/metro-logo";
+import { MetroTile } from "@/components/ui/metro-logo";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { StaticBadge } from "@/components/ui/static-badge";
 import { nearestStations } from "@/components/geo/nearest";
@@ -90,7 +90,10 @@ function Brand({ onAbout }: { onAbout: () => void }) {
   return (
     <div className="flex items-center justify-between">
       <p className="inline-flex items-center gap-1" aria-label="Metrô, versão beta">
-        <MetroLogo className="h-4 w-auto" title="Metrô" />
+        <MetroTile className="size-5" title="Metrô" />
+        <span aria-hidden className="text-lg font-bold">
+          Metrô
+        </span>
         <BetaTag />
       </p>
       <ThemeToggle onAbout={onAbout} />
@@ -722,14 +725,19 @@ export function MapApp() {
                   title={label}
                   aria-haspopup="dialog"
                   onClick={openSettings}
-                  className="pointer-events-auto flex h-control items-center gap-1 bg-surface px-1 text-ink active:scale-95"
-                  style={{ boxShadow: "var(--shadow-card)", borderRadius: "var(--radius-control)" }}
+                  className="pointer-events-auto flex size-control items-center justify-center active:scale-95"
+                  style={{ boxShadow: "var(--shadow-card)" }}
                 >
-                  <MetroLogo className="h-[30px] w-auto" title="Metrô" />
-                  <BetaTag />
+                  <MetroTile className="size-control" title="Metrô" />
                 </button>
               )}
             />
+            <p className="flex items-center gap-1 map-halo" aria-label="Metrô, versão beta">
+              <span aria-hidden className="text-base font-bold">
+                Metrô
+              </span>
+              <BetaTag />
+            </p>
           </div>
           <StaticBadge className="pointer-events-auto" />
         </div>

@@ -31,7 +31,7 @@ Tema escuro:
 
 ## Marca
 
-O logotipo e o símbolo do Metrô são usados **com autorização** da Companhia do Metropolitano de São Paulo, sempre em uma cor só — preto no tema claro e branco no escuro, sem cores aplicadas e sem alteração de desenho. O vetor em [`components/ui/metro-logo.tsx`](components/ui/metro-logo.tsx) foi extraído do arquivo oficial de divulgação. A autorização não transfere nenhum direito sobre a marca, que continua pertencendo ao Metrô; ela não pode ser reutilizada a partir deste repositório e o uso aqui não significa endosso institucional ao projeto.
+O logotipo e o símbolo do Metrô são usados **com autorização** da Companhia do Metropolitano de São Paulo, sempre em uma cor só — preto no tema claro e branco no escuro, sem cores aplicadas e sem alteração de desenho. Na interface aparece o símbolo em bloco (quadrado com o símbolo vazado) ao lado do nome; a marca completa (símbolo + METRÔ) fica na tela de abertura e na imagem de compartilhamento. Os vetores estão em [`components/ui/metro-logo.tsx`](components/ui/metro-logo.tsx). A autorização não transfere nenhum direito sobre a marca, que continua pertencendo ao Metrô; ela não pode ser reutilizada a partir deste repositório e o uso aqui não significa endosso institucional ao projeto.
 
 ## O que tem
 
